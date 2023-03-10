@@ -11,10 +11,20 @@
           <v-row class="mb-4">
             <v-text-field
               color="primary"
-              :label="frappe._('Invoice ID')"
+              :label="frappe._('Participant Name or FS Account')"
               background-color="white"
               hide-details
-              v-model="invoice_name"
+              v-model="invoice_customer_name"
+              dense
+              clearable
+              class="mx-4"
+            ></v-text-field>
+            <v-text-field
+              color="primary"
+              :label="frappe._('Item to Return')"
+              background-color="white"
+              hide-details
+              v-model="item_code"
               dense
               clearable
               class="mx-4"
@@ -76,11 +86,12 @@ export default {
     selected: [],
     dialog_data: '',
     company: '',
-    invoice_name: '',
+    invoice_customer_name: '',    // for return search
+    item_code: '',    // for return search
     headers: [
       {
         text: __('Customer'),
-        value: 'customer',
+        value: 'customer_name',
         align: 'start',
         sortable: true,
       },
@@ -119,7 +130,8 @@ export default {
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.search_invoices_for_return',
         args: {
-          invoice_name: vm.invoice_name,
+          invoice_customer_name: vm.invoice_customer_name,
+          item_code: vm.item_code,
           company: vm.company,
         },
         async: false,
@@ -156,7 +168,7 @@ export default {
     evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
-      this.invoice_name = '';
+      this.invoice_customer_name = '';
       this.dialog_data = '';
       this.selected = [];
     });
