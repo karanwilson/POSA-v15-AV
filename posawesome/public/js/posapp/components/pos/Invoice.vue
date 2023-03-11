@@ -190,7 +190,6 @@
             :headers="items_headers"
             :items="items"
             :single-expand="singleExpand"
-            :expanded.sync="expanded"
             show-expand
             show-select
             item-key="posa_row_id"
