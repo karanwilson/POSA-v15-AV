@@ -190,6 +190,7 @@
             :headers="items_headers"
             :items="items"
             :single-expand="singleExpand"
+            :expanded.sync="expanded"
             show-expand
             show-select
             item-key="posa_row_id"
@@ -1754,6 +1755,7 @@ export default {
       return price_list;
     },
 
+    // the below function updates the customer_price_list or customer_group_price_list, if they are set.
     update_price_list() {
       let price_list = this.get_price_list();
       if (price_list == this.pos_profile.selling_price_list) {
