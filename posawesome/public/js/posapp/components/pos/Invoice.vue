@@ -24,18 +24,48 @@
     >
       <v-row align="center" class="items px-2 py-1">
         <v-col
+          v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
+          cols="1"
+          align="right"
+        >
+          <v-btn
+            text
+            icon
+            color="teal darken-2"
+            @click="request_scale_port"
+            ref="allow_scale_button"
+          >
+            allow
+            <v-icon>mdi-scale</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col
           v-if="pos_profile.posa_allow_sales_order"
-          cols="9"
+          cols="7"
           class="pb-2 pr-0"
         >
           <Customer></Customer>
         </v-col>
         <v-col
           v-if="!pos_profile.posa_allow_sales_order"
-          cols="12"
+          cols="10"
           class="pb-2"
         >
           <Customer></Customer>
+        </v-col>
+        <v-col
+          cols="1"
+          align="center"
+        >
+          <v-btn
+            icon
+            text
+            color="error"
+            @click="remove_items"
+          >
+            <v-icon>mdi-delete</v-icon>
+            item
+          </v-btn>
         </v-col>
         <v-col v-if="pos_profile.posa_allow_sales_order" cols="3" class="pb-2">
           <v-select
@@ -156,11 +186,13 @@
       <div class="my-0 py-0 overflow-y-auto" style="max-height: 60vh">
         <template @mouseover="style = 'cursor: pointer'">
           <v-data-table
+            v-model="selected"
             :headers="items_headers"
             :items="items"
             :single-expand="singleExpand"
             :expanded.sync="expanded"
             show-expand
+            show-select
             item-key="posa_row_id"
             class="elevation-1"
             :items-per-page="itemsPerPage"
@@ -182,12 +214,15 @@
                 )
               }}</template
             >
-            <template v-slot:item.posa_is_offer="{ item }">
+            <!--template v-slot:item.amount="{ item }">{{
+              formtCurrency_amount(item.qty * item.rate)
+            }}</template-->
+            <!--template v-slot:item.posa_is_offer="{ item }">
               <v-simple-checkbox
                 :value="!!item.posa_is_offer || !!item.posa_is_replace"
                 disabled
               ></v-simple-checkbox>
-            </template>
+            </template-->
 
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length" class="ma-0 pa-0">
@@ -249,7 +284,7 @@
                       @change="
                         [
                           setFormatedFloat(item, 'qty', null, false, $event),
-                          calc_stock_qty(item, $event),
+                          QTY_textbox_update(item, $event),
                         ]
                       "
                       :rules="[isNumber]"
@@ -738,6 +773,16 @@
                 hide-details
                 color="success"
               ></v-text-field>
+              <!--v-text-field
+                :value="formtCurrency_amount(subtotal)"
+                :prefix="currencySymbol(pos_profile.currency)"
+                :label="frappe._('Total')"
+                outlined
+                dense
+                readonly
+                hide-details
+                color="success"
+              ></v-text-field-->
             </v-col>
           </v-row>
         </v-col>
@@ -790,6 +835,7 @@
                 class="pa-0"
                 color="success"
                 @click="show_payment"
+                ref="checkout"
                 dark
                 >{{ __("PAY") }}</v-btn
               >
@@ -861,12 +907,14 @@ export default {
           sortable: true,
           value: "item_name",
         },
+        { text: __('Code'), value: 'item_code', align: 'center' },
         { text: __("QTY"), value: "qty", align: "center" },
         { text: __("UOM"), value: "uom", align: "center" },
         { text: __("Rate"), value: "rate", align: "center" },
         { text: __("Amount"), value: "amount", align: "center" },
-        { text: __("is Offer"), value: "posa_is_offer", align: "center" },
+        // { text: __("is Offer"), value: "posa_is_offer", align: "center" },
       ],
+      selected: [], // for v-data-table row selections
     };
   },
 
@@ -899,6 +947,8 @@ export default {
       sum -= this.flt(this.discount_amount);
       sum += this.flt(this.delivery_charges_rate);
       return this.flt(sum, this.currency_precision);
+      //let return_sum = this.bankers_rounding(sum);
+      //return return_sum;
     },
     total_items_discount_amount() {
       let sum = 0;
@@ -925,12 +975,79 @@ export default {
       }
     },
 
+    // Request Serial Port for weighing Scale
+    request_scale_port() {
+      if ("serial" in navigator) {
+        evntBus.$emit('show_mesage', {
+          text: `Weighing Scale Connectivity supported`,
+          color: 'success',
+        });
+
+        const scale_port_promise = navigator.serial.getPorts().then((ports) => {
+          let filters = [];
+          if (ports) {
+            for (let port of ports) {
+              const { usbProductId, usbVendorId } = port.getInfo();
+              // console.log("usbProductId: ", usbProductId);
+              // console.log("usbVendorId: ", usbVendorId);
+              if (usbProductId & usbVendorId) {
+                filters.push({ usbProductId, usbVendorId });
+              }
+            }
+            // console.log("known ports: "+filters);
+          }
+
+          return navigator.serial.requestPort({ filters }).then((port) => {
+            return port;
+          }).catch((error) => {
+            // The user didn't select a port.
+            evntBus.$emit('show_mesage', {
+              text: error,
+              color: 'error',
+            });
+          });
+        })
+
+        // console.log(scale_port_promise);
+        evntBus.$emit('scale_port_promise', scale_port_promise);    // pass event to ItemsSelector.vue
+        evntBus.$emit('input_customer');    // pass event to Customer.vue
+
+      } else {
+        // browser not supported by web-serial-api
+        evntBus.$emit('show_mesage', {
+          text: `Weighing Scale Connects only with Chrome, Edge, Vivaldi, Opera, or any Chromium browser`,
+          color: 'error',
+        });
+      }
+    },
+
+    remove_items() {
+      for (let i = 0; i < this.selected.length; i++) {
+        const index = this.items.indexOf(this.selected[i]);
+        this.items.splice(index, 1);
+      }
+      this.selected = [];  // reset the old item selections after deletion
+    },
+
     add_one(item) {
       item.qty++;
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_stock_qty(item, item.qty);
+      this.calc_sotck_gty(item, item.qty);
+      // in case item_add_on is set, then add the add-on item
+      if (item.item_add_on) {
+        let index = this.items.findIndex(
+          (el) =>
+            el.item_code === item.item_add_on
+        );
+        let add_on_item = this.items[index];
+        add_on_item.qty++;
+        if (add_on_item.qty == 0) {
+        this.remove_item(add_on_item);
+        }
+        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+      }
       this.$forceUpdate();
     },
     subtract_one(item) {
@@ -938,7 +1055,20 @@ export default {
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_stock_qty(item, item.qty);
+      this.calc_sotck_gty(item, item.qty);
+      // in case item_add_on is set, then subtract the add-on item
+      if (item.item_add_on) {
+        let index = this.items.findIndex(
+          (el) =>
+            el.item_code === item.item_add_on
+        );
+        let add_on_item = this.items[index];
+        add_on_item.qty--;
+        if (add_on_item.qty == 0) {
+        this.remove_item(add_on_item);
+        }
+        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+      }
       this.$forceUpdate();
     },
 
@@ -1077,6 +1207,7 @@ export default {
         });
       }
       this.items = [];
+      this.selected = [];  // reset the old item selections when a new invoice loads
       this.posa_offers = [];
       evntBus.$emit("set_pos_coupons", []);
       this.posa_coupons = [];
@@ -1095,6 +1226,7 @@ export default {
       let old_invoice = null;
       evntBus.$emit("set_customer_readonly", false);
       this.expanded = [];
+      this.selected = [];  // reset the old item selections when a new invoice loads
       this.posa_offers = [];
       evntBus.$emit("set_pos_coupons", []);
       this.posa_coupons = [];
@@ -1715,6 +1847,20 @@ export default {
       this.update_item_detail(item);
     },
 
+    QTY_textbox_update(item, qty) {
+      this.calc_sotck_gty(item, qty);
+      // in case item_add_on is set, then add/subtract the add-on item
+      if (item.item_add_on) {
+        let index = this.items.findIndex(
+          (el) =>
+            el.item_code === item.item_add_on
+        );
+        let add_on_item = this.items[index];
+        add_on_item.qty = qty;
+        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+      }
+    },
+
     calc_stock_qty(item, value) {
       item.stock_qty = item.conversion_factor * value;
     },
@@ -1806,6 +1952,55 @@ export default {
       }
       // update item batch_no_data from batch_no_data
       item.batch_no_data = batch_no_data;
+      item.actual_batch_qty = batch_no.batch_qty;
+      item.batch_no_expiry_date = batch_no.expiry_date;
+      if (batch_no.btach_price) {
+        item.btach_price = batch_no.btach_price;
+        item.price_list_rate = batch_no.btach_price;
+        item.rate = batch_no.btach_price;
+      } else if (update) {
+        item.btach_price = null;
+        this.update_item_detail(item);
+      }
+    },
+
+    formtCurrency(value) {
+      value = parseFloat(value);
+      return value
+        .toFixed(this.currency_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
+
+    formtCurrency_amount(value) {
+      value = parseFloat(value);
+      let return_value = this.bankers_rounding(value);
+      return return_value
+        .toFixed(this.currency_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
+
+    bankers_rounding(value) {
+      frappe.call({     // using the flt function defined in frappe.utils as it uses the banker's rounding algorithm
+        method: 'posawesome.posawesome.api.posapp.bankers_rounding',
+        args: {
+          num: value,
+          precision: this.currency_precision,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            value = r.message;
+          }
+        },
+      });
+      return value;
+    },
+
+    formtFloat(value) {
+      value = parseFloat(value);
+      return value
+        .toFixed(this.float_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
     },
 
     shortOpenPayment(e) {
@@ -2652,6 +2847,18 @@ export default {
       this.invoiceType = this.pos_profile.posa_default_sales_order
         ? "Order"
         : "Invoice";
+        this.$nextTick(function() {     // to wait for $el to be initialised
+        if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
+          this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+          console.info('request_scale_port');
+        }
+      });
+    });
+    evntBus.$on('request_scale_port', () => {       // $emit from pos.vue
+      this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+    });
+    evntBus.$on('checkout', () => {
+      this.$refs.checkout.$el.focus();
     });
     evntBus.$on("add_item", (item) => {
       this.add_item(item);

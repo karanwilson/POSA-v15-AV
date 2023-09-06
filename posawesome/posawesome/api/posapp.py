@@ -136,7 +136,6 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
     def __get_items(pos_profile, price_list, item_group, search_value):
         return _get_items(pos_profile, price_list, item_group, search_value)
 
-<<<<<<< HEAD
     def _get_items(pos_profile, price_list, item_group, search_value):
         pos_profile = json.loads(pos_profile)
         today = nowdate()
@@ -148,7 +147,6 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
         warehouse = pos_profile.get("warehouse")
         use_limit_search = pos_profile.get("pose_use_limit_search")
         search_limit = 0
-=======
     # fetching custom field uom_int for checking items with integer (whole number) UOMs
     # fetching custom field item_add_on for adding on returnable containers, or other bundled items..
     items_data = frappe.db.sql(
@@ -184,7 +182,6 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
         ),
         as_dict=1,
     )
->>>>>>> fd1396c (updated posawesome/posawesome/api/posapp.py to merge in POSA version-14, the customisations done in POSA version-13)
 
         if not price_list:
             price_list = pos_profile.get("selling_price_list")

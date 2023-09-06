@@ -8,6 +8,8 @@
       color="primary"
       :label="frappe._('Customer')"
       v-model="customer"
+      ref="input_customer"
+      @keydown.enter="select_items"
       :items="customers"
       item-text="customer_name"
       item-value="name"
@@ -103,6 +105,9 @@ export default {
         },
       });
     },
+    select_items() {
+      evntBus.$emit('select_items');    // pass event to ItemsSelector.vue
+    },
     new_customer() {
       evntBus.$emit('open_update_customer', null);
     },
@@ -141,6 +146,9 @@ export default {
         this.pos_profile = pos_profile;
         this.get_customer_names();
       });
+      evntBus.$on('input_customer', () => {    // $emit from invoice.vue
+        this.$refs.input_customer.focus();
+      })
       evntBus.$on('set_customer', (customer) => {
         this.customer = customer;
       });
