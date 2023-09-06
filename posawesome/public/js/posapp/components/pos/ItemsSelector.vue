@@ -16,7 +16,6 @@
           <v-text-field
             dense
             clearable
-            autofocus
             outlined
             color="primary"
             :label="frappe._('Search Items')"
@@ -26,6 +25,7 @@
             v-model="debounce_search"
             @keydown.esc="esc_event"
             @keydown.enter="search_onchange"
+            @keydown.right="checkout"
             ref="debounce_search"
           ></v-text-field>
         </v-col>
@@ -39,9 +39,24 @@
             hide-details
             v-model.number="qty"
             type="number"
-            @keydown.enter="enter_event"
             @keydown.esc="esc_event"
+            @keydown.enter="enter_event"
+            @keydown.right="scale_button"
+            ref="input_qty"
           ></v-text-field>
+        </v-col>
+        <v-col cols="1" v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale">
+          <v-btn
+            icon
+            text
+            color="teal darken-2"
+            @click="get_weight_from_scale"
+            @keydown.esc="esc_event"
+            ref="weighing_scale"
+          >
+            wt
+            <v-icon>mdi-scale</v-icon>
+          </v-btn>
         </v-col>
         <v-col cols="2" class="pb-0 mb-2" v-if="pos_profile.posa_new_line">
           <v-checkbox
@@ -105,7 +120,7 @@
                   class="elevation-1"
                   :items-per-page="itemsPerPage"
                   hide-default-footer
-                  @click:row="add_item"
+                  @click:row="click_add_item"
                 >
                   <template v-slot:item.rate="{ item }">
                     <span class="primary--text"
@@ -188,8 +203,12 @@ export default {
     couponsCount: 0,
     appliedCouponsCount: 0,
     customer_price_list: null,
+    float_precision: 2,   // check if needed
+    currency_precision: 2,    // check if needed
     new_line: false,
     qty: 1,
+    qty_entry_okay: true, // adding this variable to verify whole number entries for Integer UOMs
+    scale_port_promise: '',
   }),
 
   watch: {
@@ -334,7 +353,43 @@ export default {
           item.qty = Math.abs(this.qty);
         }
         evntBus.$emit('add_item', item);
+        // in case item_add_on is set, then add the add-on item
+        if (item.item_add_on) {
+          let index = this.items.findIndex(
+            (el) =>
+              el.item_code === item.item_add_on
+          );
+          let add_on_item = this.items[index];
+          add_on_item.qty = item.qty;
+          evntBus.$emit('add_item', add_on_item);
+          evntBus.$emit('show_mesage', {
+            text: __(`added add-on item {0}`, [
+              add_on_item.item_name,
+            ]),
+            color: 'success',
+          });
+        }
         this.qty = 1;
+      }
+    },
+    click_add_item(item) {
+      this.first_search = item.item_code;
+      this.enter_qty();
+    },
+    verify_input_qty(new_item) {
+      /*
+      if (!new_item.uom) {
+        new_item.uom = new_item.stock_uom;
+      }
+      */
+      // uom_int is a custom field added in Item doctype (which pulls uom_int from must_be_whole_number in UOM doctype) for verifying fractional inputs
+      if (new_item.uom_int == 1 && ((new_item.qty - parseInt(new_item.qty)) > 0.0000001)) {
+        evntBus.$emit('show_mesage', {
+          text: __(`QTY Must be Whole Number`),
+          color: 'error',
+        });
+        frappe.utils.play_sound('error');
+        this.qty_entry_okay = false;
       }
     },
     enter_event() {
@@ -342,7 +397,7 @@ export default {
       if (!this.filtred_items.length || !this.first_search) {
         return;
       }
-      const qty = this.get_item_qty(this.first_search);
+      const qty = this.get_item_qty(this.first_search);   // does Math.abs on qty, and checks for weight (qty) from barcodes printed by weighing scale..
       const new_item = { ...this.filtred_items[0] };
       new_item.qty = flt(qty);
       new_item.item_barcode.forEach((element) => {
@@ -383,7 +438,12 @@ export default {
         new_item.to_set_batch_no = this.flags.batch_no;
       }
       if (match) {
-        this.add_item(new_item);
+        // reset qty_entry_okay to true for next verify, after any wrong entry (if decimal value enetered for items requiring whole number qty)
+        this.qty_entry_okay = true;
+        this.verify_input_qty(new_item);
+        if (this.qty_entry_okay) {
+          this.add_item(new_item);
+        }
         this.search = null;
         this.first_search = null;
         this.debounce_search = null;
@@ -400,6 +460,169 @@ export default {
       } else {
         vm.enter_event();
       }
+    },
+    enter_qty() {
+      this.qty = '';
+      this.$refs.input_qty.focus();
+    },
+
+    scale_button() {
+      this.$refs.weighing_scale.$el.focus();
+    },
+
+    get_weight_from_scale() {
+      let verify_scale_reading = true;
+      const isDigit_isPeriod = (character) => {
+        const code = character.codePointAt(0);
+        return (code > 47 && code < 58) || code == 46;
+      }
+
+      if (this.scale_port_promise) {
+        let weight_string_array = [];
+
+        const qty_promise = this.scale_port_promise.then((port) => {
+          return port.open({ baudRate: 9600 }).then(() => {   // Open connection to weighing scale
+            evntBus.$emit('show_mesage', {
+              text: `Weighing Scale Connected successfully`,
+              color: 'success',
+            });
+
+            const textDecoder = new TextDecoderStream();
+            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+            const reader = textDecoder.readable.getReader();
+
+            function reader_loop() {
+              return reader.read().then(({ value, done }) => {
+                if (done) {     // in case the port is closed from sender..
+			            console.log('[readLoop] DONE', done);
+                  // reader.releaseLock();
+                  // return;
+                  reader.cancel();
+                  return readableStreamClosed.then(
+                    error => {
+                      /* Ignore the error */
+                      console.log("Ignore the error: ", error);
+                    },
+                    () => {
+                      return port.close().then(() => {
+                        return parseFloat(weight_string_array.join(''));
+                      })
+                    }
+                  );
+		            }
+		            if (value) {
+                  // console.log("value = "+value);
+                  if (!value.match(/^[\x00-\x7F]+$/g)) {
+                    // checks for non-ASCII characters in the value
+                    // we can also use this 'check' for assessing whether the BaudRate is correct for connected scale..
+                    evntBus.$emit('show_mesage', {
+                      text: `Receiving un-readable characters, kindly check the scale connectivity/settings, and try again`,
+                      color: 'error',
+                    });
+                    console.log('Receiving un-readable characters, kindly check the scale connectivity/settings, and try again');
+                    reader.cancel();
+                    return readableStreamClosed.then(
+                      error => {
+                        /* Ignore the error */
+                        console.log("Ignore the error: ", error);
+                      },
+                      () => {
+                        return port.close().then(() => {
+                          return;
+                        })
+                      }
+                    );
+                  }
+
+                  for (let character of value) {
+                    if (character.codePointAt(0) == 45) {   // Minus character
+                      evntBus.$emit('show_mesage', {
+                        text: `Receiving Minus (-) Weight Reading, kindly reset and weigh again`,
+                        color: 'error',
+                      });
+                      console.log('Receiving Minus (-) Weight Reading, kindly reset and weigh again');
+                      reader.cancel();
+                      return readableStreamClosed.then(
+                        error => {
+                          /* Ignore the error */
+                          console.log("Ignore the error: ", error);
+                        },
+                        () => {
+                          return port.close().then(() => {
+                            return;
+                          })
+                        }
+                      );
+                    }
+
+                    if (isDigit_isPeriod(character)) {
+                      weight_string_array.push(character);
+                      // console.log("weight_string_array = "+weight_string_array);
+                    }
+
+                    if (weight_string_array.length == 7 && weight_string_array[3].codePointAt(0) == 46) {
+                      // in case the array has 7 characters, with first 3 characters as digits, then decimal at 4th character,
+                      // then 3 digits, then this is a valid weight reading - join, parseFloat & return this array, after closing the port
+
+                      // console.log("final weight_string_array: " + weight_string_array);
+                      // console.log("Final weight string after parseFloat: ", parseFloat(weight_string_array.join('')));
+                      // console.log('[readLoop] DONE, calling reader.cancel()');
+
+                      reader.cancel();
+                      return readableStreamClosed.then(
+                        error => {
+                          /* Ignore the error */
+                          console.log("Ignore the error: ", error);
+                        },
+                        () => {
+                          return port.close().then(() => {
+                            return parseFloat(weight_string_array.join(''));
+                          })
+                        }
+                      );
+                    } else if (weight_string_array.length > 7) {
+                      evntBus.$emit('show_mesage', {
+                        text: `Data Loss in Serial Port: taking the Weight Reading again`,
+                        color: 'error',
+                      });
+                      weight_string_array = [];
+                    }
+                  }
+			            return reader_loop();
+		            }
+	            })
+
+            }
+            return reader_loop();
+
+          }).catch((error) => {
+            // port not opened successfully
+            evntBus.$emit('show_mesage', {
+              text: `Port.open block : "${error}"`,
+              color: 'error',
+            });
+          })
+
+        })
+        qty_promise.then((qty) => {
+          this.qty = qty;
+        })
+
+      } else {
+        verify_scale_reading = false;
+        evntBus.$emit('show_mesage', {
+          text: `Scale not connected - please press the 'ALLOW scale' button`,
+          color: 'error',
+        });
+        evntBus.$emit('request_scale_port'); // pass event to invoice.vue
+      }
+      if (verify_scale_reading) {
+        this.$refs.input_qty.focus();;
+      }
+    },
+
+    checkout() {
+      evntBus.$emit('checkout');
     },
     get_item_qty(first_search) {
       let scal_qty = Math.abs(this.qty);
@@ -496,6 +719,18 @@ export default {
         this.search = null;
       }
     },
+    formtCurrency(value) {    // check if needed
+      value = parseFloat(value);
+      return value
+        .toFixed(this.currency_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
+    formtFloat(value) {   // check if needed
+      value = parseFloat(value);
+      return value
+        .toFixed(this.float_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
   },
 
   computed: {
@@ -513,7 +748,8 @@ export default {
         } else {
           filtred_group_list = this.items;
         }
-        if (!this.search || this.search.length < 3) {
+        // if (!this.search || this.search.length < 3) {
+        if (!this.search || this.search.length < 2) {     // reduced minimum search count to 2, as we also have 2 digit item codes
           if (
             this.pos_profile.posa_show_template_items &&
             this.pos_profile.posa_hide_variants_items
@@ -537,7 +773,10 @@ export default {
           });
           if (filtred_list.length == 0) {
             filtred_list = filtred_group_list.filter((item) =>
-              item.item_code.toLowerCase().includes(this.search.toLowerCase())
+              {
+              return item.item_code == this.search;     // does an exact match of item codes
+            }
+            // item.item_code.toLowerCase().includes(this.search.toLowerCase())
             );
             if (filtred_list.length == 0) {
               filtred_list = filtred_group_list.filter((item) =>
@@ -608,9 +847,25 @@ export default {
       this.pos_profile = data.pos_profile;
       this.get_items();
       this.get_items_groups();
+      this.float_precision =      // check if needed
+        frappe.defaults.get_default('float_precision') || 2;
+      this.currency_precision =   // check if needed
+        frappe.defaults.get_default('currency_precision') || 2;
       this.items_view = this.pos_profile.posa_default_card_view
         ? 'card'
         : 'list';
+    });
+    evntBus.$on('select_items', () => {     // $emit from Customer.vue
+      this.$refs.debounce_search.focus();
+    });
+    evntBus.$on('scale_port_promise', (scale_port_promise) => {     // $emit (receive the scale_port_promise object) from invoice.vue
+      this.scale_port_promise = scale_port_promise;
+    });
+    evntBus.$on('select_items', () => {     // $emit from Customer.vue
+      this.$refs.debounce_search.focus();
+    });
+    evntBus.$on('scale_port_promise', (scale_port_promise) => {     // $emit (receive the scale_port_promise object) from invoice.vue
+      this.scale_port_promise = scale_port_promise;
     });
     evntBus.$on('update_cur_items_details', () => {
       this.update_cur_items_details();
