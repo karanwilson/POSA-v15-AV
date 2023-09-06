@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import json
 import frappe
-from frappe.utils import nowdate, flt, cstr
+from frappe.utils import nowdate, flt, cstr, cint, get_last_day # for fetching the last date of the month
 from frappe import _
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
 from erpnext.stock.get_item_details import get_item_details
@@ -136,6 +136,7 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
     def __get_items(pos_profile, price_list, item_group, search_value):
         return _get_items(pos_profile, price_list, item_group, search_value)
 
+<<<<<<< HEAD
     def _get_items(pos_profile, price_list, item_group, search_value):
         pos_profile = json.loads(pos_profile)
         today = nowdate()
@@ -147,6 +148,43 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
         warehouse = pos_profile.get("warehouse")
         use_limit_search = pos_profile.get("pose_use_limit_search")
         search_limit = 0
+=======
+    # fetching custom field uom_int for checking items with integer (whole number) UOMs
+    # fetching custom field item_add_on for adding on returnable containers, or other bundled items..
+    items_data = frappe.db.sql(
+        """
+        SELECT
+            name AS item_code,
+            item_add_on,
+            item_name,
+            description,
+            stock_uom,
+            uom_int,
+            image,
+            is_stock_item,
+            has_variants,
+            variant_of,
+            item_group,
+            idx as idx,
+            has_batch_no,
+            has_serial_no,
+            max_discount,
+            brand
+        FROM
+            `tabItem`
+        WHERE
+            disabled = 0
+                AND is_sales_item = 1
+                AND is_fixed_asset = 0
+                {0}
+        ORDER BY
+            name asc
+            """.format(
+            condition
+        ),
+        as_dict=1,
+    )
+>>>>>>> fd1396c (updated posawesome/posawesome/api/posapp.py to merge in POSA version-14, the customisations done in POSA version-13)
 
         if not price_list:
             price_list = pos_profile.get("selling_price_list")
@@ -483,6 +521,11 @@ def add_taxes_from_tax_template(item, parent_doc):
 
 
 @frappe.whitelist()
+def bankers_rounding(num, precision):
+    return flt(num, precision)
+
+
+@frappe.whitelist()
 def update_invoice(data):
     data = json.loads(data)
     if data.get("name"):
@@ -579,7 +622,9 @@ def submit_invoice(invoice, data):
 
     # calculating cash
     total_cash = 0
-    if data.get("redeemed_customer_credit"):
+    if data.get("redeemed_customer_credit") and not data.get("to_be_paid"):
+    # factoring in our PTDC scenario where there are no cash transactions only 'customer credits' (advance payments) and 'credit sale'
+    # with subsequent 'payment entries' against the total 'credit sale' for the month.
         total_cash = invoice_doc.total - float(data.get("redeemed_customer_credit"))
 
     is_payment_entry = 0
@@ -605,7 +650,7 @@ def submit_invoice(invoice, data):
     if frappe.get_value("POS Profile", invoice_doc.pos_profile, "posa_auto_set_batch"):
         set_batch_nos(invoice_doc, "warehouse", throw=True)
     set_batch_nos_for_bundels(invoice_doc, "warehouse", throw=True)
-    invoice_doc.due_date = data.get("due_date")
+    invoice_doc.due_date = invoice.get("due_date")      # fetch the due_date from client-side invoice_doc
     invoice_doc.flags.ignore_permissions = True
     frappe.flags.ignore_account_permission = True
     invoice_doc.posa_is_printed = 1
@@ -837,6 +882,14 @@ def get_available_credit(customer, company):
 
 
 @frappe.whitelist()
+def get_last_day_of_Month():
+    today = nowdate()
+    last_day_of_Month = get_last_day(today)
+
+    return last_day_of_Month
+
+
+@frappe.whitelist()
 def get_draft_invoices(pos_opening_shift):
     invoices_list = frappe.get_list(
         "Sales Invoice",
@@ -955,7 +1008,6 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
     today = nowdate()
     item_code = item.get("item_code")
-<<<<<<< HEAD
     batch_no_data = []
     if warehouse and item.get("has_batch_no"):
         batch_list = get_batch_qty(warehouse=warehouse, item_code=item_code)
@@ -977,7 +1029,6 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
                             }
                         )
 
-=======
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
         item["batch_no"] = get_batch_no(
             # item_code, warehouse, item.get("qty"), False, item.get("d")
@@ -985,7 +1036,6 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
             ## reference: from erpnext.stock.doctype.batch.batch import get_batch_no
             item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
->>>>>>> dfb5c81 (In invoice.vue :-)
     item["selling_price_list"] = price_list
 
     max_discount = frappe.get_value("Item", item_code, "max_discount")
@@ -1194,20 +1244,21 @@ def set_customer_info(customer, fieldname, value=""):
 
 
 @frappe.whitelist()
-def search_invoices_for_return(invoice_name, company):
+def search_invoices_for_return(invoice_customer_name, item_code, company):
     invoices_list = frappe.get_list(
         "Sales Invoice",
         filters={
-            "name": ["like", f"%{invoice_name}%"],
+            "customer_name": ["like", f"%{invoice_customer_name}%"],
             "company": company,
             "docstatus": 1,
             "is_return": 0,
         },
         fields=["name"],
         limit_page_length=0,
-        order_by="customer",
+        order_by="posting_date desc",    # sort by posting_date, latest first..
     )
     data = []
+    """
     is_returned = frappe.get_all(
         "Sales Invoice",
         filters={"return_against": invoice_name, "docstatus": 1},
@@ -1218,6 +1269,50 @@ def search_invoices_for_return(invoice_name, company):
         return data
     for invoice in invoices_list:
         data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
+    return data
+    """
+    
+    if item_code:
+        for invoice in invoices_list:
+            item_list = frappe.get_all(
+                "Sales Invoice Item",
+                filters={
+                    "parent": invoice["name"],
+                    "item_code": item_code,
+                },
+                fields=["name", "qty"],
+            )
+            # now check if there were any returns against the Sales Invoice
+            if len(item_list):
+                is_returned = frappe.get_all(
+                    "Sales Invoice",
+                    filters={"return_against": invoice["name"], "docstatus": 1},
+                    order_by="posting_date",
+                )
+                # if there are returns, then fetch the return invoices which have the item_code in it (if any)
+                if is_returned:
+                    total_returned_item_qty = 0
+                    for returned_invoice in is_returned:
+                        returned_items_qty = frappe.get_all(
+                            "Sales Invoice Item",
+                            filters={
+                                "parent": returned_invoice["name"],
+                                "item_code": item_code,
+                            },
+                            fields=["name", "qty"],
+                        )
+                        for returned_item_qty in returned_items_qty:
+                            total_returned_item_qty += abs(returned_item_qty["qty"])    # abs because returned qty is recorded in negative
+
+                    # now compare if the qty of the item_code in the 'sales Invoice' is greater than that in the 'return invoices'
+                    # in order to know if there are any more returable items for the item_code in the 'sales invoice'
+                    if item_list[0]["qty"] > total_returned_item_qty:
+                        data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
+                else:
+                    data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
+    else:
+        for invoice in invoices_list:
+            data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
     return data
 
 
