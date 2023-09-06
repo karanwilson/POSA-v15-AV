@@ -955,6 +955,7 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     item = json.loads(item)
     today = nowdate()
     item_code = item.get("item_code")
+<<<<<<< HEAD
     batch_no_data = []
     if warehouse and item.get("has_batch_no"):
         batch_list = get_batch_qty(warehouse=warehouse, item_code=item_code)
@@ -976,6 +977,15 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
                             }
                         )
 
+=======
+    if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
+        item["batch_no"] = get_batch_no(
+            # item_code, warehouse, item.get("qty"), False, item.get("d")
+            ## updated item.get("d") above to correct parameter item.get("serial_no") below
+            ## reference: from erpnext.stock.doctype.batch.batch import get_batch_no
+            item_code, warehouse, item.get("qty"), False, item.get("serial_no")
+        )
+>>>>>>> dfb5c81 (In invoice.vue :-)
     item["selling_price_list"] = price_list
 
     max_discount = frappe.get_value("Item", item_code, "max_discount")

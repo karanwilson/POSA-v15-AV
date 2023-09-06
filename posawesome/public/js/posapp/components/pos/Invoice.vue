@@ -1492,7 +1492,9 @@ export default {
         args: {
           warehouse: this.pos_profile.warehouse,
           doc: this.get_invoice_doc(),
-          price_list: this.pos_profile.price_list,
+          // price_list: this.pos_profile.price_list,
+          // commented the above line, as the docfield price_list does not exist in the doctype pos_profile
+          price_list: this.get_price_list(),  // as per the price_list evaluation within item below
           item: {
             item_code: item.item_code,
             customer: this.customer,
@@ -1507,11 +1509,14 @@ export default {
             currency: this.pos_profile.currency,
             // plc_conversion_rate: 1,
             pos_profile: this.pos_profile.name,
+            // price_list: this.pos_profile.selling_price_list,
+            // commented price_list above as seems redundant; plus the latest one seems to be defined further below (also commented)
             uom: item.uom,
             tax_category: "",
             transaction_type: "selling",
             update_stock: this.pos_profile.update_stock,
-            price_list: this.get_price_list(),
+            // price_list: this.get_price_list(),
+            // shifted price_list definition to the price_list argument above
             has_batch_no: item.has_batch_no,
             serial_no: item.serial_no,
             batch_no: item.batch_no,
