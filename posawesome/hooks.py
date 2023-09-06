@@ -228,6 +228,7 @@ fixtures = [
                     "POS Profile-posa_allow_write_off_change",
                     "POS Profile-posa_new_line",
                     "POS Profile-posa_input_qty",
+                    "POS Profile-posa_input_weighing_scale"     # adding a setting to enable reading from weighing scale
                     "POS Profile-posa_display_item_code",
                     "POS Profile-posa_allow_zero_rated_items",
                     "POS Profile-posa_allow_print_draft_invoices",
