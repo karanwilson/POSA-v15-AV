@@ -72,7 +72,7 @@
         </v-row>
         <v-divider></v-divider>
 
-        <div v-if="is_cashback">
+        <!--div v-if="is_cashback">
           <v-row
             class="pyments px-1 py-0"
             v-for="payment in invoice_doc.payments"
@@ -151,7 +151,7 @@
               </v-btn>
             </v-col>
           </v-row>
-        </div>
+        </div-->
 
         <v-row
           class="pyments px-1 py-0"
@@ -586,7 +586,7 @@
           </v-row>
         </div>
         <v-divider></v-divider>
-        <v-row class="pb-0 mb-2" align="start">
+        <!--v-row class="pb-0 mb-2" align="start">
           <v-col cols="12">
             <v-autocomplete
               dense
@@ -621,7 +621,7 @@
               </template>
             </v-autocomplete>
           </v-col>
-        </v-row>
+        </v-row-->
       </div>
     </v-card>
 
@@ -634,6 +634,7 @@
             color="primary"
             dark
             @click="submit"
+            ref="submit_payments"
             :disabled="vaildatPayment"
             >{{ __("Submit") }}</v-btn
           >
@@ -722,6 +723,7 @@ export default {
     is_return: false,
     is_cashback: true,
     redeem_customer_credit: false,
+    customer_outstanding_amount: 0,
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -873,6 +875,7 @@ export default {
       data["total_change"] = !this.invoice_doc.is_return
         ? -this.diff_payment
         : 0;
+      data['to_be_paid'] = this.diff_payment;  // factoring in 'part payments' with 'credit sale' instead of cash transactions
       data["paid_change"] = !this.invoice_doc.is_return ? this.paid_change : 0;
       data["credit_change"] = -this.credit_change;
       data["redeemed_customer_credit"] = this.redeemed_customer_credit;
@@ -962,6 +965,18 @@ export default {
         }, 0);
       }
     },
+    formtCurrency(value) {    // check if needed
+      value = parseFloat(value);
+      return value
+        .toFixed(this.currency_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
+    formtFloat(value) {       // check if needed
+      value = parseFloat(value);
+      return value
+        .toFixed(this.float_precision)
+        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    },
     shortPay(e) {
       if (e.key === "x" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
@@ -979,6 +994,20 @@ export default {
         ];
         this.credit_change = 0;
       }
+    },
+    customer_credit_redemption() {
+      this.customer_outstanding_amount = this.invoice_doc.grand_total;
+	    this.customer_credit_dict.forEach((row) => {
+        if (row.total_credit - this.customer_outstanding_amount > 0) {
+          row.credit_to_redeem = this.customer_outstanding_amount;
+          this.customer_outstanding_amount = 0;
+			    return;
+		    }
+		    else {
+		      row.credit_to_redeem = row.total_credit;
+		      this.customer_outstanding_amount -= row.total_credit;
+		    }
+      });
     },
     get_available_credit(e) {
       this.clear_all_amounts();
@@ -1010,13 +1039,37 @@ export default {
               });
 
               this.customer_credit_dict = data;
+              this.redeem_customer_credit = true;
+              this.customer_credit_redemption();
+              if (this.customer_outstanding_amount > 0) {
+                this.is_credit_sale = 1;    // in case of partial payments, where available customer credit is less than the grand total amount.
+                // setting the is_credit_sale due_date to last day of the month
+                this.set_last_day_of_Month();
+              } else {
+                this.is_credit_sale = 0;
+              }
             } else {
               this.customer_credit_dict = [];
+              this.is_credit_sale = 1;
+              // setting the is_credit_sale due_date to last day of the month
+              this.set_last_day_of_Month();
             }
           });
       } else {
         this.customer_credit_dict = [];
+        this.is_credit_sale = 1;
+        // setting the is_credit_sale due_date to last day of the month
+        this.set_last_day_of_Month();
       }
+    },
+    set_last_day_of_Month() {
+      const vm = this;
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.get_last_day_of_Month',
+        callback: function (r) {
+          vm.invoice_doc.due_date = r.message;
+        },
+      });
     },
     get_addresses() {
       const vm = this;
@@ -1360,7 +1413,15 @@ export default {
             payment.base_amount = 0;
           });
         }
+
+        // check if below custom code is needed after new merged-code above
+        //
+        //if (this.invoice_doc.is_return) {
+        //  this.is_cashback = false;
+        //}
+        
         this.loyalty_amount = 0;
+        this.get_available_credit(1);
         this.get_addresses();
         this.get_sales_person_names();
       });
@@ -1439,8 +1500,12 @@ export default {
         this.invoice_doc.payments.forEach((payment) => {
           payment.amount = 0;
           payment.base_amount = 0;
+          this.$refs.submit_payments.$el.focus();
         });
       }
+    },
+    total_payments() {
+      this.$refs.submit_payments.$el.focus();
     },
     is_write_off_change(value) {
       if (value == 1) {
