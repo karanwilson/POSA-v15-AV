@@ -1034,7 +1034,7 @@ export default {
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_sotck_gty(item, item.qty);
+      this.calc_stock_qty(item, item.qty);      //corrected spelling of function
       // in case item_add_on is set, then add the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1046,7 +1046,7 @@ export default {
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
-        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+        this.calc_stock_qty(add_on_item, add_on_item.qty);      //corrected spelling of function
       }
       this.$forceUpdate();
     },
@@ -1055,7 +1055,7 @@ export default {
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_sotck_gty(item, item.qty);
+      this.calc_stock_qty(item, item.qty);      //corrected spelling of function
       // in case item_add_on is set, then subtract the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1067,27 +1067,38 @@ export default {
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
-        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+        this.calc_stock_qty(add_on_item, add_on_item.qty);    //corrected spelling of this function
       }
       this.$forceUpdate();
     },
 
     add_item(item) {
+      let item_to_add;
+      // adding this variable/object as when we do update_item_detail directly on the item object (in order to set item.batch_no)
+      // then the array value items[].actual_batch_qty gets reset to '', and some parts of the code logic below fails..
+      if (item.has_batch_no && !item.batch_no) {
+        item_to_add = { ...item };
+        this.update_item_detail(item_to_add);
+      }
       if (!item.uom) {
         item.uom = item.stock_uom;
       }
       let index = -1;
       if (!this.new_line) {
+        //console.log("3 this.new_line: ", this.new_line);
         index = this.items.findIndex(
           (el) =>
             el.item_code === item.item_code &&
             el.uom === item.uom &&
             !el.posa_is_offer &&
             !el.posa_is_replace &&
-            el.batch_no === item.batch_no
+            //el.batch_no === item.batch_no
+            el.batch_no === item_to_add.batch_no
         );
+        //console.log("5 Index: ", index);
       }
       if (index === -1 || this.new_line) {
+        //console.log("6 entered if clause, with new_item");
         const new_item = this.get_new_item(item);
         if (item.has_serial_no && item.to_set_serial_no) {
           new_item.serial_no_selected = [];
@@ -1103,6 +1114,7 @@ export default {
         this.items.unshift(new_item);
         this.update_item_detail(new_item);
       } else {
+        //console.log("9 entered else clause, with cur_item");
         const cur_item = this.items[index];
         this.update_items_details([cur_item]);
         if (item.has_serial_no && item.to_set_serial_no) {
@@ -1120,23 +1132,35 @@ export default {
           item.to_set_serial_no = null;
         }
         if (!cur_item.has_batch_no) {
-          cur_item.qty += item.qty || 1;
-          this.calc_stock_qty(cur_item, cur_item.qty);
+          //cur_item.qty += item.qty || 1;
+          // type-casting all fields to Float because when the item qty is edited from the invoice (using QTY_textbox_update), -
+          // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
+          cur_item.qty = parseFloat(cur_item.qty);
+          cur_item.qty += parseFloat(item.qty) || parseFloat(1);
+          this.calc_stock_qty(cur_item, cur_item.qty);      //corrected spelling of function
         } else {
+          //console.log("10 entered else clause with cur_item.has_batch_no set");
+          //console.log(`cur_item.stock_qty: ${cur_item.stock_qty}, cur_item.actual_batch_qty: ${cur_item.actual_batch_qty}, cur_item.batch_no: ${cur_item.batch_no}, item_to_add.batch_no: ${item_to_add.batch_no}`);
           if (
             (cur_item.stock_qty < cur_item.actual_batch_qty &&
-              cur_item.batch_no == item.batch_no) ||
+              cur_item.batch_no == item_to_add.batch_no) ||
             !cur_item.batch_no
           ) {
-            cur_item.qty += item.qty || 1;
-            this.calc_stock_qty(cur_item, cur_item.qty);
+            console.log("11 entered if clause with Label-A");
+            cur_item.qty = parseFloat(cur_item.qty);
+            //console.log(`cur_item.qty: ${cur_item.qty}, item_to_add.qty: ${item_to_add.qty}, item.qty: ${item.qty}`);
+            cur_item.qty += parseFloat(item.qty) || parseFloat(1);
+            //console.log("cur_item.qty: ", cur_item.qty);
+            this.calc_stock_qty(cur_item, cur_item.qty);      //corrected spelling of function
           } else {
+            //console.log("12 entered else clause with Label-B");
             const new_item = this.get_new_item(cur_item);
             new_item.batch_no = item.batch_no || item.to_set_batch_no;
             new_item.batch_no_expiry_date = "";
             new_item.actual_batch_qty = "";
             new_item.qty = item.qty || 1;
             if (new_item.batch_no) {
+              //console.log("13 entered if clause with new_item.batch_no set");
               this.set_batch_qty(new_item, new_item.batch_no, false);
               item.to_set_batch_no = null;
               item.batch_no = null;
@@ -1621,6 +1645,7 @@ export default {
       const vm = this;
       frappe.call({
         method: "posawesome.posawesome.api.posapp.get_item_detail",
+        async: false,  // set this AJAX call to synchronous, so that the function add_item(item) get updated data when it calls update_item_detail(item)
         args: {
           warehouse: this.pos_profile.warehouse,
           doc: this.get_invoice_doc(),
@@ -1669,6 +1694,7 @@ export default {
             ) {
               item.batch_no_data = data.batch_no_data;
               vm.set_batch_qty(item, item.batch_no, false);
+              // item.batch_no is a dummy parameter here (it was used in previous POSA version, and may be used in other function calls of set_batch_qty)
             }
             if (data.has_pricing_rule) {
             } else if (
@@ -1849,7 +1875,8 @@ export default {
     },
 
     QTY_textbox_update(item, qty) {
-      this.calc_sotck_gty(item, qty);
+      //console.log(`Inside QTY_textbox_update:- item.qty: ${item.qty}, qty: ${qty}`);
+      this.calc_stock_qty(item, qty);      //corrected spelling of function
       // in case item_add_on is set, then add/subtract the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1858,12 +1885,14 @@ export default {
         );
         let add_on_item = this.items[index];
         add_on_item.qty = qty;
-        this.calc_sotck_gty(add_on_item, add_on_item.qty);
+        this.calc_stock_qty(add_on_item, add_on_item.qty);      //corrected spelling of function
       }
     },
 
-    calc_stock_qty(item, value) {
+    calc_stock_qty(item, value) {      //corrected spelling of function
+      //console.log(`Inside calc_stock_qty(item, value):- item.stock_qty: ${item.stock_qty}, item.conversion_factor: ${item.conversion_factor}, value: ${value}`);
       item.stock_qty = item.conversion_factor * value;
+      //console.log("(item.stock_qty = item.conversion_factor * value): ", item.stock_qty);
     },
 
     set_serial_no(item) {
@@ -1875,7 +1904,7 @@ export default {
       item.serial_no_selected_count = item.serial_no_selected.length;
       if (item.serial_no_selected_count != item.stock_qty) {
         item.qty = item.serial_no_selected_count;
-        this.calc_stock_qty(item, item.qty);
+        this.calc_stock_qty(item, item.qty);      //corrected spelling of function
         this.$forceUpdate();
       }
     },
@@ -1953,16 +1982,6 @@ export default {
       }
       // update item batch_no_data from batch_no_data
       item.batch_no_data = batch_no_data;
-      item.actual_batch_qty = batch_no.batch_qty;
-      item.batch_no_expiry_date = batch_no.expiry_date;
-      if (batch_no.btach_price) {
-        item.btach_price = batch_no.btach_price;
-        item.price_list_rate = batch_no.btach_price;
-        item.rate = batch_no.btach_price;
-      } else if (update) {
-        item.btach_price = null;
-        this.update_item_detail(item);
-      }
     },
 
     formtCurrency(value) {

@@ -147,41 +147,6 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
         warehouse = pos_profile.get("warehouse")
         use_limit_search = pos_profile.get("pose_use_limit_search")
         search_limit = 0
-    # fetching custom field uom_int for checking items with integer (whole number) UOMs
-    # fetching custom field item_add_on for adding on returnable containers, or other bundled items..
-    items_data = frappe.db.sql(
-        """
-        SELECT
-            name AS item_code,
-            item_add_on,
-            item_name,
-            description,
-            stock_uom,
-            uom_int,
-            image,
-            is_stock_item,
-            has_variants,
-            variant_of,
-            item_group,
-            idx as idx,
-            has_batch_no,
-            has_serial_no,
-            max_discount,
-            brand
-        FROM
-            `tabItem`
-        WHERE
-            disabled = 0
-                AND is_sales_item = 1
-                AND is_fixed_asset = 0
-                {0}
-        ORDER BY
-            name asc
-            """.format(
-            condition
-        ),
-        as_dict=1,
-    )
 
         if not price_list:
             price_list = pos_profile.get("selling_price_list")
@@ -217,13 +182,18 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
 
         result = []
 
+        # fetching custom field uom_int for checking items with integer (whole number) UOMs
+        # fetching custom field item_add_on for adding on returnable containers, or other bundled items..
+
         items_data = frappe.db.sql(
             """
             SELECT
                 name AS item_code,
+                item_add_on,
                 item_name,
                 description,
                 stock_uom,
+                uom_int,
                 image,
                 is_stock_item,
                 has_variants,
@@ -291,6 +261,9 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
                 batch_no_data = []
                 if search_batch_no:
                     batch_list = get_batch_qty(warehouse=warehouse, item_code=item_code)
+                    #frappe.throw(
+                    #    _("batch_list: {0}").format(batch_list)
+                    #)
                     if batch_list:
                         for batch in batch_list:
                             if batch.qty > 0 and batch.batch_no:
@@ -310,6 +283,9 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
                                             "manufacturing_date": batch_doc.manufacturing_date,
                                         }
                                     )
+                #frappe.throw(
+                #    _("batch_no_data: {0}").format(batch_no_data)
+                #)
                 serial_no_data = []
                 if search_serial_no:
                     serial_no_data = frappe.get_all(
@@ -339,8 +315,10 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
                 if posa_display_items_in_stock and (
                     not item_stock_qty or item_stock_qty < 0
                 ):
+                    #frappe.throw("Just before 'pass' statement")
                     pass
                 else:
+                    #frappe.throw("Inside 'else' statement")
                     row = {}
                     row.update(item)
                     row.update(
@@ -357,6 +335,7 @@ def get_items(pos_profile, price_list=None, item_group="", search_value=""):
                         }
                     )
                     result.append(row)
+        #frappe.throw(result)
         return result
 
     if _pos_profile.get("posa_use_server_cache"):
@@ -1026,6 +1005,8 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
                             }
                         )
 
+    # below code was removed in current POSA version
+    """
     if warehouse and item.get("has_batch_no") and not item.get("batch_no"):
         item["batch_no"] = get_batch_no(
             # item_code, warehouse, item.get("qty"), False, item.get("d")
@@ -1033,6 +1014,8 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
             ## reference: from erpnext.stock.doctype.batch.batch import get_batch_no
             item_code, warehouse, item.get("qty"), False, item.get("serial_no")
         )
+    """    
+
     item["selling_price_list"] = price_list
 
     max_discount = frappe.get_value("Item", item_code, "max_discount")

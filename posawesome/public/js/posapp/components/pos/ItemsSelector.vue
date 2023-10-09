@@ -207,7 +207,7 @@ export default {
     currency_precision: 2,    // check if needed
     new_line: false,
     qty: 1,
-    qty_entry_okay: true, // adding this variable to verify whole number entries for Integer UOMs
+    //qty_entry_okay: true, // adding this variable to verify whole number entries for Integer UOMs
     scale_port_promise: '',
   }),
 
@@ -376,23 +376,22 @@ export default {
       this.first_search = item.item_code;
       this.enter_qty();
     },
+
     verify_input_qty(new_item) {
-      /*
-      if (!new_item.uom) {
-        new_item.uom = new_item.stock_uom;
-      }
-      */
-      // uom_int is a custom field added in Item doctype (which pulls uom_int from must_be_whole_number in UOM doctype) for verifying fractional inputs
-      if (new_item.uom_int == 1 && ((new_item.qty - parseInt(new_item.qty)) > 0.0000001)) {
-        evntBus.$emit('show_mesage', {
-          text: __(`QTY Must be Whole Number`),
-          color: 'error',
-        });
-        frappe.utils.play_sound('error');
-        this.qty_entry_okay = false;
-      }
+      return new Promise((resolve, reject) => {
+        // uom_int is a custom field added in Item doctype (which pulls uom_int from must_be_whole_number in UOM doctype) for verifying fractional inputs
+        if (new_item.uom_int == 1 && ((new_item.qty - parseInt(new_item.qty)) > 0.0000001)) {
+          evntBus.$emit('show_mesage', {
+            text: __(`QTY Must be Whole Number`),
+            color: 'error',
+          });
+          frappe.utils.play_sound('error');
+          resolve(false);
+        } else resolve(true);
+      })
     },
-    enter_event() {
+
+    async enter_event() {
       let match = false;
       if (!this.filtred_items.length || !this.first_search) {
         return;
@@ -434,16 +433,14 @@ export default {
           }
         });
       }
+      if (this.pos_profile.posa_regular_search)
+        match = true;
       if (this.flags.batch_no) {
         new_item.to_set_batch_no = this.flags.batch_no;
       }
       if (match) {
-        // reset qty_entry_okay to true for next verify, after any wrong entry (if decimal value enetered for items requiring whole number qty)
-        this.qty_entry_okay = true;
-        this.verify_input_qty(new_item);
-        if (this.qty_entry_okay) {
+        if (await this.verify_input_qty(new_item))
           this.add_item(new_item);
-        }
         this.search = null;
         this.first_search = null;
         this.debounce_search = null;
@@ -458,7 +455,8 @@ export default {
       if (vm.pos_profile.pose_use_limit_search) {
         vm.get_items();
       } else {
-        vm.enter_event();
+        //vm.enter_event();
+        vm.enter_qty();
       }
     },
     enter_qty() {
