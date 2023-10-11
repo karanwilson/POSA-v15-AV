@@ -1146,7 +1146,7 @@ export default {
               cur_item.batch_no == item_to_add.batch_no) ||
             !cur_item.batch_no
           ) {
-            console.log("11 entered if clause with Label-A");
+            //console.log("11 entered if clause with Label-A");
             cur_item.qty = parseFloat(cur_item.qty);
             //console.log(`cur_item.qty: ${cur_item.qty}, item_to_add.qty: ${item_to_add.qty}, item.qty: ${item.qty}`);
             cur_item.qty += parseFloat(item.qty) || parseFloat(1);
