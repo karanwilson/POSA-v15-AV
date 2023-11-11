@@ -72,7 +72,7 @@
         </v-row>
         <v-divider></v-divider>
 
-        <!--div v-if="is_cashback">
+        <div v-if="is_cashback">
           <v-row
             class="pyments px-1 py-0"
             v-for="payment in invoice_doc.payments"
@@ -151,7 +151,7 @@
               </v-btn>
             </v-col>
           </v-row>
-        </div-->
+        </div>
 
         <v-row
           class="pyments px-1 py-0"

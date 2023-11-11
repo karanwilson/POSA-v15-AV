@@ -838,6 +838,8 @@ def get_available_credit(customer, company):
             "unallocated_amount": [">", 0],
             "party_type": "Customer",
             "party": customer,
+            "posting_date": ["between", "last_day(curdate() - interval 1 month)", "last_day(curdate()) + interval 1 day"],
+            # the above filter matches rows from current month only: a requirement for PTDC
             "company": company,
             "docstatus": 1,
         },
