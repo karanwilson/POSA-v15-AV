@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import json
 import frappe
-from frappe.utils import nowdate, flt, cstr, cint, get_last_day # for fetching the last date of the month
+from frappe.utils import nowdate, flt, cstr, cint, get_first_day, get_last_day # for fetching the first and last date of the month
 from frappe import _
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
 from erpnext.stock.get_item_details import get_item_details
@@ -690,6 +690,7 @@ def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):
                     )
 
 
+@frappe.whitelist()
 def redeeming_customer_credit(
     invoice_doc, data, is_payment_entry, total_cash, cash_account, payments
 ):
@@ -832,13 +833,18 @@ def get_available_credit(customer, company):
 
         total_credit.append(row)
 
+    # calculating these date parameters for filtering the advances below
+    today = nowdate()
+    first_day_of_Month = get_first_day(today)
+    last_day_of_Month = get_last_day(today)
+
     advances = frappe.get_all(
         "Payment Entry",
         {
             "unallocated_amount": [">", 0],
             "party_type": "Customer",
             "party": customer,
-            "posting_date": ["between", "last_day(curdate() - interval 1 month)", "last_day(curdate()) + interval 1 day"],
+            "posting_date": ["between", [first_day_of_Month, last_day_of_Month]],
             # the above filter matches rows from current month only: a requirement for PTDC
             "company": company,
             "docstatus": 1,

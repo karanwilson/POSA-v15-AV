@@ -723,7 +723,7 @@ export default {
     is_return: false,
     is_cashback: true,
     redeem_customer_credit: false,
-    customer_outstanding_amount: 0,
+    // customer_outstanding_amount: 0,    // commented this custom variable, because it is now redundant (check comments in the related function below)
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -995,6 +995,9 @@ export default {
         this.credit_change = 0;
       }
     },
+    // the below function incrementally uses the credit-vouchers/Advance-payments
+    // this was needed in the earlier version of POSA because this feature was not part of the main code branch
+    // but now it is added in the main get_available_credit function below, hence I have commented this function's call below
     customer_credit_redemption() {
       this.customer_outstanding_amount = this.invoice_doc.grand_total;
 	    this.customer_credit_dict.forEach((row) => {
@@ -1018,7 +1021,7 @@ export default {
             company: this.pos_profile.company,
           })
           .then((r) => {
-            const data = r.message;
+            const data = r.message;   // receives both 'outstanding invoices' (if any) and 'advance payments' (if any)
             if (data.length) {
               const amount =
                 this.invoice_doc.rounded_total || this.invoice_doc.grand_total;
@@ -1028,6 +1031,8 @@ export default {
                 if (remainAmount > 0) {
                   if (remainAmount >= row.total_credit) {
                     row.credit_to_redeem = row.total_credit;
+                    // here in case the row.total_credit is an 'outstanding amount',
+                    // then it will add on to the remainAmount in the below statement, because (-) * (-) = (+)
                     remainAmount = remainAmount - row.total_credit;
                   } else {
                     row.credit_to_redeem = remainAmount;
@@ -1040,8 +1045,11 @@ export default {
 
               this.customer_credit_dict = data;
               this.redeem_customer_credit = true;
-              this.customer_credit_redemption();
-              if (this.customer_outstanding_amount > 0) {
+              // the below function call is commented because it is now redundant in this POSA version (check the comments with the function definition above)
+              // this.customer_credit_redemption();
+              //if (this.customer_outstanding_amount > 0) {
+              // the above variable was replaced with below variable, because we are now using the newly introduced variable in this POSA version
+              if (this.remainAmount > 0) {
                 this.is_credit_sale = 1;    // in case of partial payments, where available customer credit is less than the grand total amount.
                 // setting the is_credit_sale due_date to last day of the month
                 this.set_last_day_of_Month();
