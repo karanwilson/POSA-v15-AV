@@ -965,18 +965,6 @@ export default {
         }, 0);
       }
     },
-    formtCurrency(value) {    // check if needed
-      value = parseFloat(value);
-      return value
-        .toFixed(this.currency_precision)
-        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    },
-    formtFloat(value) {       // check if needed
-      value = parseFloat(value);
-      return value
-        .toFixed(this.float_precision)
-        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    },
     shortPay(e) {
       if (e.key === "x" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
@@ -995,6 +983,7 @@ export default {
         this.credit_change = 0;
       }
     },
+    /*
     // the below function incrementally uses the credit-vouchers/Advance-payments
     // this was needed in the earlier version of POSA because this feature was not part of the main code branch
     // but now it is added in the main get_available_credit function below, hence I have commented this function's call below
@@ -1012,6 +1001,7 @@ export default {
 		    }
       });
     },
+    */
     get_available_credit(e) {
       this.clear_all_amounts();
       if (e) {
@@ -1429,7 +1419,7 @@ export default {
         //}
         
         this.loyalty_amount = 0;
-        this.get_available_credit(1);
+        this.get_available_credit(1); // pre-loads customer credit in payments screen
         this.get_addresses();
         this.get_sales_person_names();
       });

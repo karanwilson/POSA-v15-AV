@@ -798,6 +798,20 @@
                 >{{ __("Held") }}</v-btn
               >
             </v-col>
+            <v-col
+              v-if="pos_profile.custom_allow_select_sales_order === 1"
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="info"
+                dark
+                @click="get_draft_orders"
+                >{{ __("Select S.O") }}</v-btn
+              >
+            </v-col>
             <v-col cols="6" class="pa-1">
               <v-btn
                 block
@@ -988,8 +1002,6 @@ export default {
           if (ports) {
             for (let port of ports) {
               const { usbProductId, usbVendorId } = port.getInfo();
-              // console.log("usbProductId: ", usbProductId);
-              // console.log("usbVendorId: ", usbVendorId);
               if (usbProductId & usbVendorId) {
                 filters.push({ usbProductId, usbVendorId });
               }
@@ -1034,7 +1046,7 @@ export default {
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_stock_qty(item, item.qty);      //corrected spelling of function
+      this.calc_stock_qty(item, item.qty);
       // in case item_add_on is set, then add the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1046,7 +1058,7 @@ export default {
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
-        this.calc_stock_qty(add_on_item, add_on_item.qty);      //corrected spelling of function
+        this.calc_stock_qty(add_on_item, add_on_item.qty);
       }
       this.$forceUpdate();
     },
@@ -1055,7 +1067,7 @@ export default {
       if (item.qty == 0) {
         this.remove_item(item);
       }
-      this.calc_stock_qty(item, item.qty);      //corrected spelling of function
+      this.calc_stock_qty(item, item.qty);
       // in case item_add_on is set, then subtract the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1067,7 +1079,7 @@ export default {
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
-        this.calc_stock_qty(add_on_item, add_on_item.qty);    //corrected spelling of this function
+        this.calc_stock_qty(add_on_item, add_on_item.qty);
       }
       this.$forceUpdate();
     },
@@ -1085,7 +1097,6 @@ export default {
       }
       let index = -1;
       if (!this.new_line) {
-        //console.log("3 this.new_line: ", this.new_line);
         index = this.items.findIndex(
           (el) =>
             el.item_code === item.item_code &&
@@ -1095,10 +1106,8 @@ export default {
             //el.batch_no === item.batch_no
             el.batch_no === item_to_add.batch_no
         );
-        //console.log("5 Index: ", index);
       }
       if (index === -1 || this.new_line) {
-        //console.log("6 entered if clause, with new_item");
         const new_item = this.get_new_item(item);
         if (item.has_serial_no && item.to_set_serial_no) {
           new_item.serial_no_selected = [];
@@ -1114,7 +1123,6 @@ export default {
         this.items.unshift(new_item);
         this.update_item_detail(new_item);
       } else {
-        //console.log("9 entered else clause, with cur_item");
         const cur_item = this.items[index];
         this.update_items_details([cur_item]);
         if (item.has_serial_no && item.to_set_serial_no) {
@@ -1137,30 +1145,23 @@ export default {
           // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
           cur_item.qty = parseFloat(cur_item.qty);
           cur_item.qty += parseFloat(item.qty) || parseFloat(1);
-          this.calc_stock_qty(cur_item, cur_item.qty);      //corrected spelling of function
+          this.calc_stock_qty(cur_item, cur_item.qty);
         } else {
-          //console.log("10 entered else clause with cur_item.has_batch_no set");
-          //console.log(`cur_item.stock_qty: ${cur_item.stock_qty}, cur_item.actual_batch_qty: ${cur_item.actual_batch_qty}, cur_item.batch_no: ${cur_item.batch_no}, item_to_add.batch_no: ${item_to_add.batch_no}`);
           if (
             (cur_item.stock_qty < cur_item.actual_batch_qty &&
               cur_item.batch_no == item_to_add.batch_no) ||
             !cur_item.batch_no
           ) {
-            //console.log("11 entered if clause with Label-A");
             cur_item.qty = parseFloat(cur_item.qty);
-            //console.log(`cur_item.qty: ${cur_item.qty}, item_to_add.qty: ${item_to_add.qty}, item.qty: ${item.qty}`);
             cur_item.qty += parseFloat(item.qty) || parseFloat(1);
-            //console.log("cur_item.qty: ", cur_item.qty);
-            this.calc_stock_qty(cur_item, cur_item.qty);      //corrected spelling of function
+            this.calc_stock_qty(cur_item, cur_item.qty);
           } else {
-            //console.log("12 entered else clause with Label-B");
             const new_item = this.get_new_item(cur_item);
             new_item.batch_no = item.batch_no || item.to_set_batch_no;
             new_item.batch_no_expiry_date = "";
             new_item.actual_batch_qty = "";
             new_item.qty = item.qty || 1;
             if (new_item.batch_no) {
-              //console.log("13 entered if clause with new_item.batch_no set");
               this.set_batch_qty(new_item, new_item.batch_no, false);
               item.to_set_batch_no = null;
               item.batch_no = null;
@@ -1212,7 +1213,9 @@ export default {
 
     cancel_invoice() {
       const doc = this.get_invoice_doc();
-      this.invoiceType = "Invoice";
+      this.invoiceType = this.pos_profile.posa_default_sales_order
+        ? "Order"
+        : "Invoice";
       this.invoiceTypes = ["Invoice", "Order"];
       this.posting_date = frappe.datetime.nowdate();
       if (doc.name && this.pos_profile.posa_allow_delete) {
@@ -1263,6 +1266,63 @@ export default {
           old_invoice = this.update_invoice(doc);
         }
       }
+      if (!data.name && !data.is_return) {
+        this.items = [];
+        this.customer = this.pos_profile.customer;
+        this.invoice_doc = "";
+        this.discount_amount = 0;
+        this.additional_discount_percentage = 0;
+        this.invoiceType = this.pos_profile.posa_default_sales_order
+          ? "Order"
+          : "Invoice";
+        this.invoiceTypes = ["Invoice", "Order"];
+      } else {
+        if (data.is_return) {
+          evntBus.$emit("set_customer_readonly", true);
+          this.invoiceType = "Return";
+          this.invoiceTypes = ["Return"];
+        }
+        this.invoice_doc = data;
+        this.items = data.items;
+        this.update_items_details(this.items);
+        this.posa_offers = data.posa_offers || [];
+        this.items.forEach((item) => {
+          if (!item.posa_row_id) {
+            item.posa_row_id = this.makeid(20);
+          }
+          if (item.batch_no) {
+            this.set_batch_qty(item, item.batch_no);
+          }
+        });
+        this.customer = data.customer;
+        this.posting_date = data.posting_date || frappe.datetime.nowdate();
+        this.discount_amount = data.discount_amount;
+        this.additional_discount_percentage =
+          data.additional_discount_percentage;
+        this.items.forEach((item) => {
+          if (item.serial_no) {
+            item.serial_no_selected = [];
+            const serial_list = item.serial_no.split("\n");
+            serial_list.forEach((element) => {
+              if (element.length) {
+                item.serial_no_selected.push(element);
+              }
+            });
+            item.serial_no_selected_count = item.serial_no_selected.length;
+          }
+        });
+      }
+      return old_invoice;
+    },
+
+    async new_order(data = {}) {
+      let old_invoice = null;
+      evntBus.$emit("set_customer_readonly", false);
+      this.expanded = [];
+      this.posa_offers = [];
+      evntBus.$emit("set_pos_coupons", []);
+      this.posa_coupons = [];
+      this.return_doc = "";
       if (!data.name && !data.is_return) {
         this.items = [];
         this.customer = this.pos_profile.customer;
@@ -1343,7 +1403,101 @@ export default {
       return doc;
     },
 
+    async get_invoice_from_order_doc() {
+      let doc = {};
+      if (this.invoice_doc.doctype == "Sales Order") {
+        await frappe.call({
+          method:
+            "posawesome.posawesome.api.posapp.create_sales_invoice_from_order",
+          args: {
+            sales_order: this.invoice_doc.name,
+          },
+          // async: false,
+          callback: function (r) {
+            if (r.message) {
+              doc = r.message;
+            }
+          },
+        });
+      } else {
+        doc = this.invoice_doc;
+      }
+      const Items = [];
+      const updatedItemsData = this.get_invoice_items();
+      doc.items.forEach((item) => {
+        const updatedData = updatedItemsData.find(
+          (updatedItem) => updatedItem.item_code === item.item_code
+        );
+        if (updatedData) {
+          item.item_code = updatedData.item_code;
+          item.posa_row_id = updatedData.posa_row_id;
+          item.posa_offers = updatedData.posa_offers;
+          item.posa_offer_applied = updatedData.posa_offer_applied;
+          item.posa_is_offer = updatedData.posa_is_offer;
+          item.posa_is_replace = updatedData.posa_is_replace;
+          item.is_free_item = updatedData.is_free_item;
+          item.qty = flt(updatedData.qty);
+          item.rate = flt(updatedData.rate);
+          item.uom = updatedData.uom;
+          item.amount = flt(updatedData.qty) * flt(updatedData.rate);
+          item.conversion_factor = updatedData.conversion_factor;
+          item.serial_no = updatedData.serial_no;
+          item.discount_percentage = flt(updatedData.discount_percentage);
+          item.discount_amount = flt(updatedData.discount_amount);
+          item.batch_no = updatedData.batch_no;
+          item.posa_notes = updatedData.posa_notes;
+          item.posa_delivery_date = updatedData.posa_delivery_date;
+          item.price_list_rate = updatedData.price_list_rate;
+          Items.push(item);
+        }
+      });
+
+      doc.items = Items;
+      const newItems = [...doc.items];
+      const existingItemCodes = new Set(newItems.map((item) => item.item_code));
+      updatedItemsData.forEach((updatedItem) => {
+        if (!existingItemCodes.has(updatedItem.item_code)) {
+          newItems.push(updatedItem);
+        }
+      });
+      doc.items = newItems;
+      doc.update_stock = 1;
+      doc.is_pos = 1;
+      doc.payments = this.get_payments();
+      return doc;
+    },
+
     get_invoice_items() {
+      const items_list = [];
+      this.items.forEach((item) => {
+        const new_item = {
+          item_code: item.item_code,
+          posa_row_id: item.posa_row_id,
+          posa_offers: item.posa_offers,
+          posa_offer_applied: item.posa_offer_applied,
+          posa_is_offer: item.posa_is_offer,
+          posa_is_replace: item.posa_is_replace,
+          is_free_item: item.is_free_item,
+          qty: flt(item.qty),
+          rate: flt(item.rate),
+          uom: item.uom,
+          amount: flt(item.qty) * flt(item.rate),
+          conversion_factor: item.conversion_factor,
+          serial_no: item.serial_no,
+          discount_percentage: flt(item.discount_percentage),
+          discount_amount: flt(item.discount_amount),
+          batch_no: item.batch_no,
+          posa_notes: item.posa_notes,
+          posa_delivery_date: item.posa_delivery_date,
+          price_list_rate: item.price_list_rate,
+        };
+        items_list.push(new_item);
+      });
+
+      return items_list;
+    },
+
+    get_order_items() {
       const items_list = [];
       this.items.forEach((item) => {
         const new_item = {
@@ -1403,7 +1557,24 @@ export default {
       return this.invoice_doc;
     },
 
-    proces_invoice() {
+    update_invoice_from_order(doc) {
+      const vm = this;
+      frappe.call({
+        method: "posawesome.posawesome.api.posapp.update_invoice_from_order",
+        args: {
+          data: doc,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            vm.invoice_doc = r.message;
+          }
+        },
+      });
+      return this.invoice_doc;
+    },
+
+    process_invoice() {
       const doc = this.get_invoice_doc();
       if (doc.name) {
         return this.update_invoice(doc);
@@ -1412,7 +1583,18 @@ export default {
       }
     },
 
-    show_payment() {
+    async process_invoice_from_order() {
+      const doc = await this.get_invoice_from_order_doc();
+      var up_invoice;
+      if (doc.name) {
+        up_invoice = await this.update_invoice_from_order(doc);
+        return up_invoice;
+      } else {
+        return this.update_invoice_from_order(doc);
+      }
+    },
+
+    async show_payment() {
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
@@ -1430,15 +1612,50 @@ export default {
       if (!this.validate()) {
         return;
       }
-      evntBus.$emit("show_payment", "true");
-      const invoice_doc = this.proces_invoice();
-      evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+      if (this.invoice_doc.doctype == "Sales Order") {
+        evntBus.$emit("show_payment", "true");
+        const invoice_doc = await this.process_invoice_from_order();
+        evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+      } else if (this.invoice_doc.doctype == "Sales Invoice") {
+        const sales_invoice_item = this.invoice_doc.items[0];
+        var sales_invoice_item_doc = {};
+        frappe.call({
+          method:
+            "posawesome.posawesome.api.posapp.get_sales_invoice_child_table",
+          args: {
+            sales_invoice: this.invoice_doc.name,
+            sales_invoice_item: sales_invoice_item.name,
+          },
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              sales_invoice_item_doc = r.message;
+            }
+          },
+        });
+        if (sales_invoice_item_doc.sales_order) {
+          evntBus.$emit("show_payment", "true");
+          const invoice_doc = await this.process_invoice_from_order();
+          evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+        } else {
+          evntBus.$emit("show_payment", "true");
+          const invoice_doc = this.process_invoice();
+          evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+        }
+      } else {
+        evntBus.$emit("show_payment", "true");
+        const invoice_doc = this.process_invoice();
+        evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+      }
     },
 
     validate() {
       let value = true;
       this.items.forEach((item) => {
-        if (this.pos_profile.posa_max_discount_allowed) {
+        if (
+          this.pos_profile.posa_max_discount_allowed &&
+          !item.posa_offer_applied
+        ) {
           if (item.discount_amount && this.flt(item.discount_amount) > 0) {
             // calc discount percentage
             const discount_percentage =
@@ -1544,7 +1761,7 @@ export default {
             value = false;
             return value;
           }
-          if (this.subtotal * -1 > this.return_doc.total) {
+          if (Math.abs(this.subtotal) > Math.abs(this.return_doc.total)) {
             evntBus.$emit("show_mesage", {
               text: __(`Return Invoice Total should not be higher than {0}`, [
                 this.return_doc.total,
@@ -1569,7 +1786,10 @@ export default {
               });
               value = false;
               return value;
-            } else if (item.qty * -1 > return_item.qty || item.qty >= 0) {
+            } else if (
+              Math.abs(item.qty) > Math.abs(return_item.qty) ||
+              Math.abs(item.qty) == 0
+            ) {
               evntBus.$emit("show_mesage", {
                 text: __(`The QTY of the item {0} cannot be greater than {1}`, [
                   item.item_name,
@@ -1597,6 +1817,23 @@ export default {
         callback: function (r) {
           if (r.message) {
             evntBus.$emit("open_drafts", r.message);
+          }
+        },
+      });
+    },
+
+    get_draft_orders() {
+      const vm = this;
+      frappe.call({
+        method: "posawesome.posawesome.api.posapp.search_orders",
+        args: {
+          company: this.pos_profile.company,
+          currency: this.pos_profile.currency,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            evntBus.$emit("open_orders", r.message);
           }
         },
       });
@@ -1642,6 +1879,9 @@ export default {
     },
 
     update_item_detail(item) {
+      if (!item.item_code || this.invoice_doc.is_return) {
+        return;
+      }
       const vm = this;
       frappe.call({
         method: "posawesome.posawesome.api.posapp.get_item_detail",
@@ -1649,9 +1889,8 @@ export default {
         args: {
           warehouse: this.pos_profile.warehouse,
           doc: this.get_invoice_doc(),
-          // price_list: this.pos_profile.price_list,
-          // commented the above line, as the docfield price_list does not exist in the doctype pos_profile
-          price_list: this.get_price_list(),  // as per the price_list evaluation within item below
+          //price_list: this.pos_profile.price_list,
+          price_list: this.pos_profile.selling_price_list, // the correct docfield in doctype pos_profile is selling_price_list
           item: {
             item_code: item.item_code,
             customer: this.customer,
@@ -1666,14 +1905,11 @@ export default {
             currency: this.pos_profile.currency,
             // plc_conversion_rate: 1,
             pos_profile: this.pos_profile.name,
-            // price_list: this.pos_profile.selling_price_list,
-            // commented price_list above as seems redundant; plus the latest one seems to be defined further below (also commented)
             uom: item.uom,
             tax_category: "",
             transaction_type: "selling",
             update_stock: this.pos_profile.update_stock,
-            // price_list: this.get_price_list(),
-            // shifted price_list definition to the price_list argument above
+            price_list: this.get_price_list(),
             has_batch_no: item.has_batch_no,
             serial_no: item.serial_no,
             batch_no: item.batch_no,
@@ -1875,8 +2111,7 @@ export default {
     },
 
     QTY_textbox_update(item, qty) {
-      //console.log(`Inside QTY_textbox_update:- item.qty: ${item.qty}, qty: ${qty}`);
-      this.calc_stock_qty(item, qty);      //corrected spelling of function
+      this.calc_stock_qty(item, qty);
       // in case item_add_on is set, then add/subtract the add-on item
       if (item.item_add_on) {
         let index = this.items.findIndex(
@@ -1885,14 +2120,12 @@ export default {
         );
         let add_on_item = this.items[index];
         add_on_item.qty = qty;
-        this.calc_stock_qty(add_on_item, add_on_item.qty);      //corrected spelling of function
+        this.calc_stock_qty(add_on_item, add_on_item.qty);
       }
     },
 
-    calc_stock_qty(item, value) {      //corrected spelling of function
-      //console.log(`Inside calc_stock_qty(item, value):- item.stock_qty: ${item.stock_qty}, item.conversion_factor: ${item.conversion_factor}, value: ${value}`);
+    calc_stock_qty(item, value) {
       item.stock_qty = item.conversion_factor * value;
-      //console.log("(item.stock_qty = item.conversion_factor * value): ", item.stock_qty);
     },
 
     set_serial_no(item) {
@@ -1904,7 +2137,7 @@ export default {
       item.serial_no_selected_count = item.serial_no_selected.length;
       if (item.serial_no_selected_count != item.stock_qty) {
         item.qty = item.serial_no_selected_count;
-        this.calc_stock_qty(item, item.qty);      //corrected spelling of function
+        this.calc_stock_qty(item, item.qty);
         this.$forceUpdate();
       }
     },
@@ -1984,6 +2217,7 @@ export default {
       item.batch_no_data = batch_no_data;
     },
 
+    /*
     formtCurrency(value) {
       value = parseFloat(value);
       return value
@@ -2022,6 +2256,7 @@ export default {
         .toFixed(this.float_precision)
         .replace(/\d(?=(\d{3})+\.)/g, '$&,');
     },
+    */
 
     shortOpenPayment(e) {
       if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
@@ -2895,7 +3130,19 @@ export default {
     });
     evntBus.$on("load_invoice", (data) => {
       this.new_invoice(data);
-      evntBus.$emit("set_pos_coupons", data.posa_coupons);
+
+      if (this.invoice_doc.is_return) {
+        this.discount_amount = -data.discount_amount;
+        this.additional_discount_percentage =
+          -data.additional_discount_percentage;
+        this.return_doc = data;
+      } else {
+        evntBus.$emit("set_pos_coupons", data.posa_coupons);
+      }
+    });
+    evntBus.$on("load_order", (data) => {
+      this.new_order(data);
+      // evntBus.$emit("set_pos_coupons", data.posa_coupons);
     });
     evntBus.$on("set_offers", (data) => {
       this.posOffers = data;

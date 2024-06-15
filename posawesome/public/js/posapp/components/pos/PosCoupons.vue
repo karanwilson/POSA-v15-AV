@@ -85,7 +85,7 @@ export default {
     pos_profile: '',
     customer: '',
     posa_coupons: [],
-    expanded: [],   // this was undefined, but is being referenced in the template <v-data-table> above
+    //expanded: [],   // this was undefined, but is being referenced in the template <v-data-table> above
     new_coupon: null,
     itemsPerPage: 1000,
     singleExpand: true,
