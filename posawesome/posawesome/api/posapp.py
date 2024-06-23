@@ -488,9 +488,9 @@ def add_taxes_from_tax_template(item, parent_doc):
                 tax_row.db_insert()
 
 
-@frappe.whitelist()
-def bankers_rounding(num, precision):
-    return flt(num, precision)
+# @frappe.whitelist()
+# def bankers_rounding(num, precision):
+#     return flt(num, precision)
 
 
 @frappe.whitelist()

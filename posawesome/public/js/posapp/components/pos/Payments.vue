@@ -1412,11 +1412,10 @@ export default {
           });
         }
 
-        // check if below custom code is needed after new merged-code above
-        //
-        //if (this.invoice_doc.is_return) {
-        //  this.is_cashback = false;
-        //}
+        // Auto-disable is_cashback in order to create credit-notes
+        if (this.invoice_doc.is_return) {
+          this.is_cashback = false;
+        }
         
         this.loyalty_amount = 0;
         this.get_available_credit(1); // pre-loads customer credit in payments screen

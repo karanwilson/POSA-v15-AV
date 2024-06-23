@@ -209,8 +209,8 @@
               >{{ currencySymbol(pos_profile.currency) }}
               {{
                 formtCurrency(
-                  flt(item.qty, float_precision) *
-                    flt(item.rate, currency_precision)
+                  flt(item.qty, float_precision, undefined, rounding_method) *
+                    flt(item.rate, currency_precision, undefined, rounding_method)
                 )
               }}</template
             >
@@ -764,7 +764,7 @@
 
             <v-col cols="6" class="pa-1 mt-2">
               <v-text-field
-                :value="formtCurrency(subtotal)"
+                :value="formtCurrency(subtotal, currency_precision, undefined, rounding_method)"
                 :prefix="currencySymbol(pos_profile.currency)"
                 :label="frappe._('Total')"
                 outlined
@@ -908,6 +908,7 @@ export default {
       cancel_dialog: false,
       float_precision: 2,
       currency_precision: 2,
+      rounding_method: "",
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -2218,13 +2219,6 @@ export default {
     },
 
     /*
-    formtCurrency(value) {
-      value = parseFloat(value);
-      return value
-        .toFixed(this.currency_precision)
-        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    },
-
     formtCurrency_amount(value) {
       value = parseFloat(value);
       let return_value = this.bankers_rounding(value);
@@ -2248,13 +2242,6 @@ export default {
         },
       });
       return value;
-    },
-
-    formtFloat(value) {
-      value = parseFloat(value);
-      return value
-        .toFixed(this.float_precision)
-        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
     },
     */
 
@@ -3099,6 +3086,8 @@ export default {
         frappe.defaults.get_default("float_precision") || 2;
       this.currency_precision =
         frappe.defaults.get_default("currency_precision") || 2;
+      this.rounding_method = 
+        frappe.defaults.get_default("rounding_method");
       this.invoiceType = this.pos_profile.posa_default_sales_order
         ? "Order"
         : "Invoice";

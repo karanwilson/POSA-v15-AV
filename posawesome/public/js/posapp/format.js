@@ -15,10 +15,11 @@ export default {
             }
             return flt(value, precision, number_format, rounding_method);
         },
-        formtCurrency (value, precision) {
+        formtCurrency (value, precision, number_format, rounding_method) {
+            value_flt = this.flt(value, precision, number_format, rounding_method);
             const format = get_number_format(this.pos_profile?.currency);
             value = format_number(
-                value,
+                value_flt,
                 format,
                 precision || this.currency_precision || 2
             );
