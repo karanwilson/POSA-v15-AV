@@ -22,6 +22,24 @@
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
+
+      <v-col
+        v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
+        cols="1"
+        align="center"
+      >
+        <v-btn
+          text
+          icon
+          color="primary"
+          @click="request_scale_port"
+          ref="allow_scale_button"
+        >
+          allow
+          <v-icon>mdi-scale</v-icon>
+        </v-btn>
+      </v-col>
+
       <v-btn style="cursor: unset" text color="primary">
         <span right>{{ pos_profile.name }}</span>
       </v-btn>
@@ -167,6 +185,50 @@ export default {
     };
   },
   methods: {
+    // Request Serial Port for weighing Scale
+    request_scale_port() {
+      if ("serial" in navigator) {
+        evntBus.$emit('show_mesage', {
+          text: `Weighing Scale Connectivity supported`,
+          color: 'success',
+        });
+
+        const scale_port_promise = navigator.serial.getPorts().then((ports) => {
+          let filters = [];
+          if (ports) {
+            for (let port of ports) {
+              const { usbProductId, usbVendorId } = port.getInfo();
+              if (usbProductId & usbVendorId) {
+                filters.push({ usbProductId, usbVendorId });
+              }
+            }
+            // console.log("known ports: "+filters);
+          }
+
+          return navigator.serial.requestPort({ filters }).then((port) => {
+            return port;
+          }).catch((error) => {
+            // The user didn't select a port.
+            evntBus.$emit('show_mesage', {
+              text: error,
+              color: 'error',
+            });
+          });
+        })
+
+        // console.log(scale_port_promise);
+        evntBus.$emit('scale_port_promise', scale_port_promise);    // pass event to ItemsSelector.vue
+        evntBus.$emit('input_customer');    // pass event to Customer.vue
+
+      } else {
+        // browser not supported by web-serial-api
+        evntBus.$emit('show_mesage', {
+          text: `Weighing Scale Connects only with Chrome, Edge, Vivaldi, Opera, or any Chromium browser`,
+          color: 'error',
+        });
+      }
+    },
+
     changePage(key) {
       this.$emit('changePage', key);
     },
@@ -248,6 +310,15 @@ export default {
         ) {
           this.items.push(payments);
         }
+        this.$nextTick(function() {     // to wait for $el to be initialised
+          if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
+            this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+            console.info('request_scale_port');
+          }
+        });
+      });
+      evntBus.$on('request_scale_port', () => {       // $emit from ItemsSelector.vue
+        this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
       });
       evntBus.$on('set_last_invoice', (data) => {
         this.last_invoice = data;

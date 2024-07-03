@@ -24,38 +24,8 @@
     >
       <v-row align="center" class="items px-2 py-1">
         <v-col
-          v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
           cols="1"
           align="right"
-        >
-          <v-btn
-            text
-            icon
-            color="teal darken-2"
-            @click="request_scale_port"
-            ref="allow_scale_button"
-          >
-            allow
-            <v-icon>mdi-scale</v-icon>
-          </v-btn>
-        </v-col>
-        <v-col
-          v-if="pos_profile.posa_allow_sales_order"
-          cols="7"
-          class="pb-2 pr-0"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          v-if="!pos_profile.posa_allow_sales_order"
-          cols="10"
-          class="pb-2"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          cols="1"
-          align="center"
         >
           <v-btn
             icon
@@ -67,6 +37,74 @@
             item
           </v-btn>
         </v-col>
+        <!--v-col
+          v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
+          cols="1"
+          align="center"
+        >
+          <v-btn
+            text
+            icon
+            color="teal darken-2"
+            @click="request_scale_port"
+            ref="allow_scale_button"
+          >
+            allow
+            <v-icon>mdi-scale</v-icon>
+          </v-btn>
+        </v-col-->
+        <v-col
+          v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
+          cols="7"
+          class="pb-2 pr-0"
+        >
+          <Customer></Customer>
+        </v-col>
+        <v-col
+          v-if="pos_profile.posa_allow_sales_order && !pos_profile.posa_enable_fs_payments"
+          cols="8"
+          class="pb-2 pr-0"
+        >
+          <Customer></Customer>
+        </v-col>
+        <v-col
+          v-if="!pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
+          cols="10"
+          class="pb-2"
+        >
+          <Customer></Customer>
+        </v-col>
+
+        <v-col
+          v-if="!pos_profile.posa_allow_sales_order && !pos_profile.posa_enable_fs_payments"
+          cols="11"
+          class="pb-2"
+        >
+          <Customer></Customer>
+        </v-col>
+        <v-col
+          v-if="pos_profile.posa_enable_fs_payments && this.fs_balance"
+          cols="1"
+          align="left"
+        >
+          <v-btn
+            text icon color="primary"
+          >
+            FS<v-icon>mdi-bank</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col
+          v-if="pos_profile.posa_enable_fs_payments && !this.fs_balance"
+          cols="1"
+          align="left"
+        >
+          <v-btn
+            text icon color="error"
+          >
+            FS<v-icon>mdi-bank</v-icon>
+          </v-btn>
+        </v-col>
+
         <v-col v-if="pos_profile.posa_allow_sales_order" cols="3" class="pb-2">
           <v-select
             dense
@@ -908,7 +946,8 @@ export default {
       cancel_dialog: false,
       float_precision: 2,
       currency_precision: 2,
-      rounding_method: "",
+      rounding_method: "", // for pulling the 'rounding method' value from ERPNext
+      fs_balance: "", // for checking availability of FS balance
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -990,6 +1029,7 @@ export default {
       }
     },
 
+    /*
     // Request Serial Port for weighing Scale
     request_scale_port() {
       if ("serial" in navigator) {
@@ -1033,6 +1073,7 @@ export default {
         });
       }
     },
+    */
 
     remove_items() {
       for (let i = 0; i < this.selected.length; i++) {
@@ -3091,16 +3132,18 @@ export default {
       this.invoiceType = this.pos_profile.posa_default_sales_order
         ? "Order"
         : "Invoice";
-        this.$nextTick(function() {     // to wait for $el to be initialised
+      /*
+      this.$nextTick(function() {     // to wait for $el to be initialised
         if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
           this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
           console.info('request_scale_port');
         }
       });
+      */
     });
-    evntBus.$on('request_scale_port', () => {       // $emit from pos.vue
-      this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
-    });
+    //evntBus.$on('request_scale_port', () => {       // $emit from ItemsSelector.vue
+    //  this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+    //});
     evntBus.$on('checkout', () => {
       this.$refs.checkout.$el.focus();
     });

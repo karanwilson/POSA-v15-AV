@@ -255,6 +255,7 @@ fixtures = [
                     "POS Profile-posa_search_batch_no",
                     "POS Profile-pos_awesome_payments",
                     "POS Profile-posa_use_pos_awesome_payments",
+                    "POS Profile-posa_enable_fs_payments", # adding a setting to enable FS payments
                     "POS Profile-posa_allow_make_new_payments",
                     "POS Profile-posa_allow_reconcile_payments",
                     "POS Profile-column_break_uolvm",
