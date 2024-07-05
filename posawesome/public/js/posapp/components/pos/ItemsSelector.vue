@@ -11,7 +11,7 @@
         top
         color="info"
       ></v-progress-linear>
-      <v-row class="items px-2 py-1">
+      <v-row class="items px-2 py-1" no-gutters>
         <v-col class="pb-0 mb-2">
           <v-text-field
             dense
@@ -45,7 +45,11 @@
             ref="input_qty"
           ></v-text-field>
         </v-col>
-        <v-col cols="1" v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale">
+        <v-col
+          cols="1"
+          v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
+          align="center"
+        >
           <v-btn
             icon
             text

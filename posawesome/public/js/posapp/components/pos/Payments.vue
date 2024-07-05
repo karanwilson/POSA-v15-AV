@@ -875,7 +875,7 @@ export default {
       data["total_change"] = !this.invoice_doc.is_return
         ? -this.diff_payment
         : 0;
-      data['to_be_paid'] = this.diff_payment;  // factoring in 'part payments' with 'credit sale' instead of cash transactions
+      data["to_be_paid"] = this.diff_payment;  // factoring in 'part payments' with 'credit sale' instead of cash transactions
       data["paid_change"] = !this.invoice_doc.is_return ? this.paid_change : 0;
       data["credit_change"] = -this.credit_change;
       data["redeemed_customer_credit"] = this.redeemed_customer_credit;

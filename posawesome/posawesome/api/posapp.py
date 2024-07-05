@@ -640,6 +640,8 @@ def submit_invoice(invoice, data):
     invoice_doc.posa_is_printed = 1
     invoice_doc.save()
 
+    # the following if statement seems redundant, as data["due_date"] is not configured at the calling method in payments.vue
+    # however the custom config invoice_doc.due_date above is setting it.
     if data.get("due_date"):
         frappe.db.set_value(
             "Sales Invoice",
