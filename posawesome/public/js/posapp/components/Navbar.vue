@@ -23,6 +23,27 @@
 
       <v-spacer></v-spacer>
 
+      <v-btn
+        v-if="pos_profile.posa_enable_fs_payments && fs_online"
+        text
+        icon
+        color="primary"
+      >
+        fs
+        <v-icon>mdi-server-network</v-icon>
+      </v-btn>
+
+      <v-btn
+        v-if="pos_profile.posa_enable_fs_payments && !fs_online"
+        text
+        icon
+        color="error"
+      >
+        fs
+        <v-icon>mdi-server-network-off</v-icon>
+      </v-btn>
+
+
       <v-col
         v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
         cols="1"
@@ -35,7 +56,7 @@
           @click="request_scale_port"
           ref="allow_scale_button"
         >
-          allow
+          access
           <v-icon>mdi-scale</v-icon>
         </v-btn>
       </v-col>
@@ -182,6 +203,7 @@ export default {
       freezeTitle: '',
       freezeMsg: '',
       last_invoice: '',
+      fs_online: "", // for checking whether FS server is online or offline
     };
   },
   methods: {

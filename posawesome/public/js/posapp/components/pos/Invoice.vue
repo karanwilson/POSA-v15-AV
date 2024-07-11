@@ -83,7 +83,7 @@
           <Customer></Customer>
         </v-col>
         <v-col
-          v-if="pos_profile.posa_enable_fs_payments && this.fs_balance"
+          v-if="pos_profile.posa_enable_fs_payments && fs_balance"
           cols="1"
           align="left"
         >
@@ -94,14 +94,14 @@
           </v-btn>
         </v-col>
         <v-col
-          v-if="pos_profile.posa_enable_fs_payments && !this.fs_balance"
+          v-if="pos_profile.posa_enable_fs_payments && !fs_balance"
           cols="1"
           align="left"
         >
           <v-btn
             text icon color="error"
           >
-            FS<v-icon>mdi-bank</v-icon>
+            FS<v-icon>mdi-bank-off</v-icon>
           </v-btn>
         </v-col>
 
