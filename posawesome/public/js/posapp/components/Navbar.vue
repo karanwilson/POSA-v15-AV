@@ -24,25 +24,14 @@
       <v-spacer></v-spacer>
 
       <v-btn
-        v-if="pos_profile.posa_enable_fs_payments && fs_online"
+        v-if="pos_profile.posa_enable_fs_payments"
         text
         icon
-        color="primary"
+        :color="dynamic_fs_online_color"
       >
         fs
-        <v-icon>mdi-server-network</v-icon>
+        <v-icon>{{ dynamic_fs_online_icon }}</v-icon>
       </v-btn>
-
-      <v-btn
-        v-if="pos_profile.posa_enable_fs_payments && !fs_online"
-        text
-        icon
-        color="error"
-      >
-        fs
-        <v-icon>mdi-server-network-off</v-icon>
-      </v-btn>
-
 
       <v-col
         v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
@@ -52,7 +41,7 @@
         <v-btn
           text
           icon
-          color="primary"
+          :color="dynamic_scale_color"
           @click="request_scale_port"
           ref="allow_scale_button"
         >
@@ -203,7 +192,10 @@ export default {
       freezeTitle: '',
       freezeMsg: '',
       last_invoice: '',
-      fs_online: "", // for checking whether FS server is online or offline
+      //fs_online: '', // for checking whether FS server is online or offline
+      dynamic_scale_color: 'primary', // for dynamically setting color based on browser compatibility
+      dynamic_fs_online_color: 'error', // 'primary'
+      dynamic_fs_online_icon: 'mdi-server-network-off', // 'mdi-server-network'
     };
   },
   methods: {
@@ -244,10 +236,12 @@ export default {
 
       } else {
         // browser not supported by web-serial-api
+        this.dynamic_scale_color = 'error';
         evntBus.$emit('show_mesage', {
           text: `Weighing Scale Connects only with Chrome, Edge, Vivaldi, Opera, or any Chromium browser`,
           color: 'error',
         });
+        evntBus.$emit('input_customer');    // pass event to Customer.vue
       }
     },
 

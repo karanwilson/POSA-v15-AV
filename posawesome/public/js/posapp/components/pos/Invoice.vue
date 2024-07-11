@@ -37,22 +37,6 @@
             item
           </v-btn>
         </v-col>
-        <!--v-col
-          v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
-          cols="1"
-          align="center"
-        >
-          <v-btn
-            text
-            icon
-            color="teal darken-2"
-            @click="request_scale_port"
-            ref="allow_scale_button"
-          >
-            allow
-            <v-icon>mdi-scale</v-icon>
-          </v-btn>
-        </v-col-->
         <v-col
           v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
           cols="7"
@@ -83,28 +67,16 @@
           <Customer></Customer>
         </v-col>
         <v-col
-          v-if="pos_profile.posa_enable_fs_payments && fs_balance"
+          v-if="pos_profile.posa_enable_fs_payments"
           cols="1"
           align="left"
         >
           <v-btn
-            text icon color="primary"
+            text icon :color="dynamic_fs_balance_color"
           >
-            FS<v-icon>mdi-bank</v-icon>
+            FS<v-icon>{{ dynamic_fs_balance_icon }}</v-icon>
           </v-btn>
         </v-col>
-        <v-col
-          v-if="pos_profile.posa_enable_fs_payments && !fs_balance"
-          cols="1"
-          align="left"
-        >
-          <v-btn
-            text icon color="error"
-          >
-            FS<v-icon>mdi-bank-off</v-icon>
-          </v-btn>
-        </v-col>
-
         <v-col v-if="pos_profile.posa_allow_sales_order" cols="3" class="pb-2">
           <v-select
             dense
@@ -969,6 +941,8 @@ export default {
         // { text: __("is Offer"), value: "posa_is_offer", align: "center" },
       ],
       selected: [], // for v-data-table row selections
+      dynamic_fs_balance_color: 'error',  // 'primary'
+      dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank'
     };
   },
 
