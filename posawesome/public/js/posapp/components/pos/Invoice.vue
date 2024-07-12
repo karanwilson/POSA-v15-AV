@@ -920,6 +920,8 @@ export default {
       currency_precision: 2,
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
       fs_balance: "", // for checking availability of FS balance
+      dynamic_fs_balance_color: 'error',  // 'success'
+      dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank'
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -941,8 +943,6 @@ export default {
         // { text: __("is Offer"), value: "posa_is_offer", align: "center" },
       ],
       selected: [], // for v-data-table row selections
-      dynamic_fs_balance_color: 'error',  // 'primary'
-      dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank'
     };
   },
 

@@ -192,9 +192,9 @@ export default {
       freezeTitle: '',
       freezeMsg: '',
       last_invoice: '',
-      //fs_online: '', // for checking whether FS server is online or offline
-      dynamic_scale_color: 'primary', // for dynamically setting color based on browser compatibility
-      dynamic_fs_online_color: 'error', // 'primary'
+      fs_online: '', // for checking whether FS server is online or offline
+      dynamic_scale_color: 'grey-darken-4', // for dynamically setting color based on browser compatibility
+      dynamic_fs_online_color: 'error', // 'success'
       dynamic_fs_online_icon: 'mdi-server-network-off', // 'mdi-server-network'
     };
   },
@@ -202,6 +202,7 @@ export default {
     // Request Serial Port for weighing Scale
     request_scale_port() {
       if ("serial" in navigator) {
+        this.dynamic_scale_color = 'success';
         evntBus.$emit('show_mesage', {
           text: `Weighing Scale Connectivity supported`,
           color: 'success',
