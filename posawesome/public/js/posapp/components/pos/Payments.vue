@@ -737,7 +737,7 @@ export default {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
     },
-    submit(event, payment_received = false, print = false) {
+    async submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
         evntBus.$emit("show_mesage", {
           text: `Payments not correct`,
@@ -848,6 +848,28 @@ export default {
         return;
       }
 
+      let payment_handlers = [];
+      let totalPayedAmount = 0;
+
+      this.invoice_doc.payments.forEach((payment) => {
+        payment.amount = flt(payment.amount);
+        totalPayedAmount += payment.amount;
+        // Checking for external modes of Payment
+        if (payment.amount > 0)
+          switch(payment.mode_of_payment) {
+            case "Razorpay":
+              rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
+              payment_handlers.push(this.make_rzp_payment(rzp_amount_paisa));
+              break;
+            case "FS":
+              payment_handlers.push(this.make_fs_payment(payment.amount));
+              break;
+          }
+      });
+
+      const payment_responses = await Promise.all(payment_handlers);
+      console.log("Payment Responses: ", payment_responses);
+
       this.submit_invoice(print);
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
@@ -858,11 +880,14 @@ export default {
       this.back_to_invoice();
     },
     submit_invoice(print) {
+      // shifted the below statements to Submit method above
+      /*
       let totalPayedAmount = 0;
       this.invoice_doc.payments.forEach((payment) => {
         payment.amount = flt(payment.amount);
         totalPayedAmount += payment.amount;
       });
+      */
       if (this.invoice_doc.is_return && totalPayedAmount == 0) {
         this.invoice_doc.is_pos = 0;
       }
@@ -1037,27 +1062,12 @@ export default {
               this.redeem_customer_credit = true;
               // the below function call is commented because it is now redundant in this POSA version (check the comments with the function definition above)
               // this.customer_credit_redemption();
-              //if (this.customer_outstanding_amount > 0) {
-              // the above variable was replaced with below variable, because we are now using the newly introduced variable in this POSA version
-              if (this.remainAmount > 0) {
-                this.is_credit_sale = 1;    // in case of partial payments, where available customer credit is less than the grand total amount.
-                // setting the is_credit_sale due_date to last day of the month
-                this.set_last_day_of_Month();
-              } else {
-                this.is_credit_sale = 0;
-              }
             } else {
               this.customer_credit_dict = [];
-              this.is_credit_sale = 1;
-              // setting the is_credit_sale due_date to last day of the month
-              this.set_last_day_of_Month();
             }
           });
       } else {
         this.customer_credit_dict = [];
-        this.is_credit_sale = 1;
-        // setting the is_credit_sale due_date to last day of the month
-        this.set_last_day_of_Month();
       }
     },
     set_last_day_of_Month() {
@@ -1148,6 +1158,32 @@ export default {
         textOne.indexOf(searchText) > -1 || textTwo.indexOf(searchText) > -1
       );
     },
+
+    make_rzp_payment(rzp_amount_paisa) {
+      return new Promise((resolve, reject) => {
+        let options = {
+          "name": this.pos_profile.company,
+          "description": "Checkout Note - Razorpay",
+          "amount": rzp_amount_paisa,
+          "currency": this.invoice_doc.currency,
+          "receipt": this.invoice_doc.name,
+          "prefill": {
+            "name": this.invoice_doc.customer_name
+          },
+          "doctype": "Customer",
+          "docname": this.invoice_doc.customer
+        };
+
+        razorpay = new frappe.checkout.razorpay(options);
+        //razorpay.on_open = (response) => { resolve(response); };
+        razorpay.on_success = (response) => { resolve(response); };
+        //razorpay.on_fail = (response) => { resolve(response); };
+        razorpay.init();
+      })
+    },
+
+    make_fs_payment(fs_amount) {},
+
     request_payment() {
       this.phone_dialog = false;
       const vm = this;
@@ -1413,12 +1449,11 @@ export default {
         }
 
         // Auto-disable is_cashback in order to create credit-notes
-        if (this.invoice_doc.is_return) {
-          this.is_cashback = false;
-        }
+        if (this.invoice_doc.is_return) this.is_cashback = false;
         
         this.loyalty_amount = 0;
         this.get_available_credit(1); // pre-loads customer credit in payments screen
+        this.set_last_day_of_Month(); // setting the due_date for is_credit_sale (if set) to last day of the month
         this.get_addresses();
         this.get_sales_person_names();
       });
@@ -1458,6 +1493,8 @@ export default {
   },
   created() {
     document.addEventListener("keydown", this.shortPay.bind(this));
+    // Integrating Razorpay
+    frappe.require('/assets/payments/js/razorpay.js');
   },
   beforeDestroy() {
     evntBus.$off("send_invoice_doc_payment");
@@ -1491,6 +1528,11 @@ export default {
         this.invoice_doc.loyalty_points =
           this.flt(this.loyalty_amount) / this.customer_info.conversion_factor;
       }
+    },
+    //configuring is_credit_sale in case there is a "Pending Amount" in Invoice.
+    diff_payment(value) {
+      if (value > 0) this.is_credit_sale = 1;
+      if (value == 0) this.is_credit_sale = 0;
     },
     is_credit_sale(value) {
       if (value == 1) {

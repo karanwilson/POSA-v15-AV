@@ -615,7 +615,7 @@ export default {
           text: `Scale not connected - please press the 'ALLOW scale' button`,
           color: 'error',
         });
-        evntBus.$emit('request_scale_port'); // pass event to invoice.vue
+        evntBus.$emit('request_scale_port'); // pass event to Navbar.vue
       }
       if (verify_scale_reading) {
         this.$refs.input_qty.focus();;
