@@ -2186,7 +2186,7 @@ export default {
       // 3. we should not use batch with remaining_qty = 0
       // 4. we should the highest remaining_qty
       const batch_no_data = Object.values(used_batches)
-        .filter((batch) => batch.remaining_qty > 0)
+        //.filter((batch) => batch.remaining_qty > 0)
         .sort((a, b) => {
           if (a.expiry_date && b.expiry_date) {
             return a.expiry_date - b.expiry_date;
@@ -2234,14 +2234,6 @@ export default {
     },
 
     /*
-    formtCurrency_amount(value) {
-      value = parseFloat(value);
-      let return_value = this.bankers_rounding(value);
-      return return_value
-        .toFixed(this.currency_precision)
-        .replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    },
-
     bankers_rounding(value) {
       frappe.call({     // using the flt function defined in frappe.utils as it uses the banker's rounding algorithm
         method: 'posawesome.posawesome.api.posapp.bankers_rounding',

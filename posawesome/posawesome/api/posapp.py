@@ -966,7 +966,8 @@ def get_items_details(pos_profile, items_data):
 
                 if batch_list:
                     for batch in batch_list:
-                        if batch.qty > 0 and batch.batch_no:
+                        #if batch.qty > 0 and batch.batch_no:
+                        if batch.batch_no:
                             batch_doc = frappe.get_cached_doc("Batch", batch.batch_no)
                             if (
                                 str(batch_doc.expiry_date) > str(today)

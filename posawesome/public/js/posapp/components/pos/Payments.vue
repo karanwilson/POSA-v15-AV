@@ -737,7 +737,7 @@ export default {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
     },
-    async submit(event, payment_received = false, print = false) {
+    submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
         evntBus.$emit("show_mesage", {
           text: `Payments not correct`,
@@ -848,9 +848,25 @@ export default {
         return;
       }
 
-      let payment_handlers = [];
+      this.submit_invoice(print);
+
+      // shifted the below statements to the end of the submit_invoice method,
+      // in order to first process the external mode of payments (included in the forEach statment in submit_invoice method)
+      /*
+      this.customer_credit_dict = [];
+      this.redeem_customer_credit = false;
+      this.is_cashback = true;
+      this.sales_person = "";
+
+      evntBus.$emit("new_invoice", "false");
+      this.back_to_invoice();
+      */
+    },
+
+    async submit_invoice(print) {
       let totalPayedAmount = 0;
 
+      let payment_handlers = [];
       this.invoice_doc.payments.forEach((payment) => {
         payment.amount = flt(payment.amount);
         totalPayedAmount += payment.amount;
@@ -867,27 +883,11 @@ export default {
           }
       });
 
-      const payment_responses = await Promise.all(payment_handlers);
-      console.log("Payment Responses: ", payment_responses);
+      if (payment_handlers.length > 0) {
+        const payment_responses = await Promise.all(payment_handlers);
+        console.log("Payment Responses: ", payment_responses);
+      }
 
-      this.submit_invoice(print);
-      this.customer_credit_dict = [];
-      this.redeem_customer_credit = false;
-      this.is_cashback = true;
-      this.sales_person = "";
-
-      evntBus.$emit("new_invoice", "false");
-      this.back_to_invoice();
-    },
-    submit_invoice(print) {
-      // shifted the below statements to Submit method above
-      /*
-      let totalPayedAmount = 0;
-      this.invoice_doc.payments.forEach((payment) => {
-        payment.amount = flt(payment.amount);
-        totalPayedAmount += payment.amount;
-      });
-      */
       if (this.invoice_doc.is_return && totalPayedAmount == 0) {
         this.invoice_doc.is_pos = 0;
       }
@@ -930,6 +930,16 @@ export default {
           }
         },
       });
+
+      // The below statements were moved here from the Submit method above,
+      // in order to first process the external mode of payments (included in the forEach statment above)
+      this.customer_credit_dict = [];
+      this.redeem_customer_credit = false;
+      this.is_cashback = true;
+      this.sales_person = "";
+
+      evntBus.$emit("new_invoice", "false");
+      this.back_to_invoice();
     },
     set_full_amount(idx) {
       this.invoice_doc.payments.forEach((payment) => {
