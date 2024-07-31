@@ -426,9 +426,11 @@ def get_customer_names(pos_profile):
         pos_profile = json.loads(pos_profile)
         condition = ""
         condition += get_customer_group_condition(pos_profile)
+        # Added custom_fs_account_number in the DB fetch, to be able to filter/search based on FS Account Numbers
+        # custom_fs_account_number is a custom field added via fixtures from ptdc_av app
         customers = frappe.db.sql(
             """
-            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
+            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address, custom_fs_account_number
             FROM `tabCustomer`
             WHERE {0}
             ORDER by name
@@ -1064,10 +1066,13 @@ def get_stock_availability(item_code, warehouse):
     return actual_qty
 
 
+# Added custom_fs_account_number to be able to filter/search Customers based on FS Account Numbers
+# custom_fs_account_number is a custom field added via fixtures from ptdc_av app
 @frappe.whitelist()
 def create_customer(
     customer_id,
     customer_name,
+    custom_fs_account_number,
     company,
     pos_profile_doc,
     tax_id=None,
@@ -1089,6 +1094,7 @@ def create_customer(
                 {
                     "doctype": "Customer",
                     "customer_name": customer_name,
+                    "custom_fs_account_number": custom_fs_account_number,
                     "posa_referral_company": company,
                     "tax_id": tax_id,
                     "mobile_no": mobile_no,
@@ -1115,6 +1121,7 @@ def create_customer(
     elif method == "update":
         customer_doc = frappe.get_doc("Customer", customer_id)
         customer_doc.customer_name = customer_name
+        customer_doc.custom_fs_account_number = custom_fs_account_number
         customer_doc.posa_referral_company = company
         customer_doc.tax_id = tax_id
         customer_doc.posa_referral_code = referral_code
@@ -1753,12 +1760,15 @@ def get_active_gift_coupons(customer, company):
     return coupons
 
 
+# Added custom_fs_account_number to be able to filter/search Customers based on FS Account Numbers
+# custom_fs_account_number is a custom field added via fixtures from ptdc_av app
 @frappe.whitelist()
 def get_customer_info(customer):
     customer = frappe.get_doc("Customer", customer)
 
     res = {"loyalty_points": None, "conversion_factor": None}
 
+    res["custom_fs_account_number"] = customer.custom_fs_account_number
     res["email_id"] = customer.email_id
     res["mobile_no"] = customer.mobile_no
     res["image"] = customer.image

@@ -30,6 +30,11 @@
               class="primary--text subtitle-1"
               v-html="data.item.customer_name"
             ></v-list-item-title>
+            <!--including custom_fs_account_number in the search-->
+            <v-list-item-subtitle
+              v-if="data.item.custom_fs_account_number"
+              v-html="`FS Account: ${data.item.custom_fs_account_number}`"
+            ></v-list-item-subtitle>
             <v-list-item-subtitle
               v-if="data.item.customer_name != data.item.name"
               v-html="`ID: ${data.item.name}`"
@@ -114,6 +119,8 @@ export default {
     edit_customer() {
       evntBus.$emit('open_update_customer', this.customer_info);
     },
+    // Added testSixth in customFilter below, to include custom_fs_account_number in the search
+    // custom_fs_account_number is a custom field added via fixtures from ptdc_av app
     customFilter(item, queryText, itemText) {
       const textOne = item.customer_name
         ? item.customer_name.toLowerCase()
@@ -122,6 +129,7 @@ export default {
       const textThree = item.email_id ? item.email_id.toLowerCase() : '';
       const textFour = item.mobile_no ? item.mobile_no.toLowerCase() : '';
       const textFifth = item.name.toLowerCase();
+      const testSixth = item.custom_fs_account_number ? item.custom_fs_account_number.toLowerCase() : '';
       const searchText = queryText.toLowerCase();
 
       return (
@@ -129,7 +137,8 @@ export default {
         textTwo.indexOf(searchText) > -1 ||
         textThree.indexOf(searchText) > -1 ||
         textFour.indexOf(searchText) > -1 ||
-        textFifth.indexOf(searchText) > -1
+        textFifth.indexOf(searchText) > -1 ||
+        testSixth.indexOf(searchText) > -1
       );
     },
   },
