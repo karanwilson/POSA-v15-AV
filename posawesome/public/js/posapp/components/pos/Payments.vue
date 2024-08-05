@@ -868,7 +868,7 @@ export default {
 
       let payment_handlers = [];
       this.invoice_doc.payments.forEach((payment) => {
-        payment.amount = flt(payment.amount);
+        payment.amount = flt(payment.amount, this.currency_precision);
         totalPayedAmount += payment.amount;
         // Checking for external modes of Payment
         if (payment.amount > 0)
@@ -1192,7 +1192,17 @@ export default {
       })
     },
 
-    make_fs_payment(fs_amount) {},
+    // To Do
+    make_fs_payment(fs_amount) {
+      //const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
+        //args: { fAmount: fs_amount },
+        callback: function (r) {
+          //vm.invoice_doc.due_date = r.message;
+        },
+      });
+    },
 
     request_payment() {
       this.phone_dialog = false;
