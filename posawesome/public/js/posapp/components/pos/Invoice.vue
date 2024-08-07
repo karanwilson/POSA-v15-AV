@@ -919,9 +919,8 @@ export default {
       float_precision: 2,
       currency_precision: 2,
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
-      fs_balance: "", // for checking availability of FS balance
-      dynamic_fs_balance_color: 'error',  // 'success'
-      dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank'
+      dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
+      dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -988,6 +987,39 @@ export default {
   },
 
   methods: {
+    fs_balance_check(fs_acc_customer) {
+      const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.get_account_max_amount',
+        args: {fs_acc_customer: fs_acc_customer},
+        callback: function (r) {
+          if (r.message) {
+            if (r.message['Result'] == 'OK') {
+              if ((parseInt(r.message['maxAmount']) > 0) || (parseInt(r.message['maxAmount']) == -1)) {
+                vm.dynamic_fs_balance_color = 'success';
+                vm.dynamic_fs_balance_icon = 'mdi-bank';
+              }
+              else {
+                vm.dynamic_fs_balance_color = 'error';
+                vm.dynamic_fs_balance_icon = 'mdi-bank';
+              }
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: r.message['Result'],
+                color: 'warning',
+              });
+              vm.dynamic_fs_balance_color = 'warning';
+              vm.dynamic_fs_balance_icon = 'mdi-bank';
+            }
+          }
+          else {
+            vm.dynamic_fs_balance_color = 'grey';
+            vm.dynamic_fs_balance_icon = 'mdi-bank-off';
+          }
+        }
+      })
+    },
     remove_item(item) {
       const index = this.items.findIndex(
         (el) => el.posa_row_id == item.posa_row_id
@@ -3052,18 +3084,7 @@ export default {
       this.invoiceType = this.pos_profile.posa_default_sales_order
         ? "Order"
         : "Invoice";
-      /*
-      this.$nextTick(function() {     // to wait for $el to be initialised
-        if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
-          this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
-          console.info('request_scale_port');
-        }
-      });
-      */
     });
-    //evntBus.$on('request_scale_port', () => {       // $emit from ItemsSelector.vue
-    //  this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
-    //});
     evntBus.$on('checkout', () => {
       this.$refs.checkout.$el.focus();
     });
@@ -3072,6 +3093,8 @@ export default {
     });
     evntBus.$on("update_customer", (customer) => {
       this.customer = customer;
+      if (customer && this.pos_profile.posa_enable_fs_payments) this.fs_balance_check(customer);
+      // called if "Enable FS Payments" is set in POS Profile settings
     });
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();

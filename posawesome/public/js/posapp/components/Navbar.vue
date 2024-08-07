@@ -30,6 +30,7 @@
       >
         <v-switch
           v-model="fs_online"
+          flat
           :label="frappe._('FS Online')"
           hide-details
         ></v-switch>
