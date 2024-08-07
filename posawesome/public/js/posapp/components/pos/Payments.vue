@@ -948,6 +948,7 @@ export default {
             ? this.invoice_doc.rounded_total || this.invoice_doc.grand_total
             : 0;
       });
+      this.redeem_customer_credit = false;
     },
     set_rest_amount(idx) {
       this.invoice_doc.payments.forEach((payment) => {
@@ -1192,7 +1193,6 @@ export default {
       })
     },
 
-    // To Do
     make_fs_payment(fs_amount) {
       return new Promise((resolve, reject) => {
         const vm = this;
