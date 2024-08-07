@@ -1194,14 +1194,24 @@ export default {
 
     // To Do
     make_fs_payment(fs_amount) {
-      //const vm = this;
-      frappe.call({
-        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
-        //args: { fAmount: fs_amount },
-        callback: function (r) {
-          //vm.invoice_doc.due_date = r.message;
-        },
-      });
+      return new Promise((resolve, reject) => {
+        const vm = this;
+        frappe.call({
+          method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
+          args: {
+            invoice_doc: vm.invoice_doc,
+            fAmount: fs_amount
+          },
+          async: false,
+          callback: function (r) {
+            vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"]
+            vm.invoice_doc.remarks = r.message["remarks"]
+
+            if (r.message["custom_fs_transfer_status"] == "OK") resolve("OK")
+            else reject
+          },
+        });
+      })
     },
 
     request_payment() {

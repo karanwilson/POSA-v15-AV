@@ -23,15 +23,32 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn
+      <v-col
         v-if="pos_profile.posa_enable_fs_payments"
-        text
-        icon
-        :color="dynamic_fs_online_color"
+        cols="1"
+        align="center"
       >
-        fs
-        <v-icon>{{ dynamic_fs_online_icon }}</v-icon>
-      </v-btn>
+        <v-switch
+          v-model="fs_online"
+          :label="frappe._('FS Online')"
+          hide-details
+        ></v-switch>
+      </v-col>
+
+      <v-col
+        v-if="pos_profile.posa_enable_fs_payments"
+        cols="1"
+        align="center"
+      >
+        <v-btn
+          icon
+          text
+          :color="dynamic_fs_online_color"
+        >
+          <v-icon>{{ dynamic_fs_online_icon }}</v-icon>
+          fs login
+        </v-btn>
+      </v-col>
 
       <v-col
         v-if="pos_profile.posa_input_qty && pos_profile.posa_input_weighing_scale"
@@ -192,13 +209,37 @@ export default {
       freezeTitle: '',
       freezeMsg: '',
       last_invoice: '',
-      fs_online: '', // for checking whether FS server is online or offline
+      fs_online: false, // for checking whether FS server is online or offline
       dynamic_scale_color: 'grey-darken-4', // for dynamically setting color based on browser compatibility
       dynamic_fs_online_color: 'error', // 'success'
       dynamic_fs_online_icon: 'mdi-server-network-off', // 'mdi-server-network'
     };
   },
   methods: {
+    fapi_login() {
+      const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.login',
+        callback: function (r) {
+          if (r.message = 'OK') {
+            vm.dynamic_fs_online_color = 'success';
+            vm.dynamic_fs_online_icon = 'mdi-server-network';
+          }
+        },
+      });
+    },
+    fapi_logout() {
+      const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.logout',
+        callback: function (r) {
+          if (r.message = 'OK') {
+            vm.dynamic_fs_online_color = 'error';
+            vm.dynamic_fs_online_icon = 'mdi-server-network-off';
+          }
+        },
+      });
+    },
     // Request Serial Port for weighing Scale
     request_scale_port() {
       if ("serial" in navigator) {
@@ -328,6 +369,7 @@ export default {
           this.items.push(payments);
         }
         this.$nextTick(function() {     // to wait for $el to be initialised
+          this.fs_online = true;
           if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
             this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
             console.info('request_scale_port');
@@ -352,6 +394,12 @@ export default {
       });
     });
   },
+  watch: {
+    fs_online(value) {
+      if (value == 1) this.fapi_login()
+      //else this.fapi_logout() // logout function is not working/defined in the FS sandbox API
+    }
+  }
 };
 </script>
 
