@@ -3085,7 +3085,7 @@ export default {
         ? "Order"
         : "Invoice";
     });
-    evntBus.$on('checkout', () => {
+    evntBus.$on("checkout", () => {
       this.$refs.checkout.$el.focus();
     });
     evntBus.$on("add_item", (item) => {
@@ -3096,6 +3096,10 @@ export default {
       if (customer && this.pos_profile.posa_enable_fs_payments) this.fs_balance_check(customer);
       // called if "Enable FS Payments" is set in POS Profile settings
     });
+    evntBus.$on("reset_fs_balance_status", () => {
+      this.dynamic_fs_balance_color = 'grey';
+      this.dynamic_fs_balance_icon = 'mdi-bank-off';
+    })
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
     });

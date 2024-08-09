@@ -871,7 +871,7 @@ export default {
         payment.amount = flt(payment.amount, this.currency_precision);
         totalPayedAmount += payment.amount;
         // Checking for external modes of Payment
-        if (payment.amount > 0)
+        if (payment.amount != 0) // if < 0 then it is a return transaction
           switch(payment.mode_of_payment) {
             case "Razorpay":
               rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
@@ -1207,8 +1207,16 @@ export default {
             vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"]
             vm.invoice_doc.remarks = r.message["remarks"]
 
-            if (r.message["custom_fs_transfer_status"] == "OK") resolve("OK")
-            else reject
+            if (r.message["custom_fs_transfer_status"] == "OK") {
+              resolve("OK")
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: r.message['custom_fs_transfer_status'],
+                color: 'warning',
+              });
+              reject(r.message["custom_fs_transfer_status"])
+            }
           },
         });
       })
@@ -1478,11 +1486,13 @@ export default {
           });
         }
 
-        // Auto-disable is_cashback in order to create credit-notes
-        if (this.invoice_doc.is_return) this.is_cashback = false;
-        
+        // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
+        if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
+          this.is_cashback = false;
+
         this.loyalty_amount = 0;
-        this.get_available_credit(1); // pre-loads customer credit in payments screen
+        if (!this.pos_profile.posa_enable_fs_payments)
+          this.get_available_credit(1); // pre-loads customer credit in payments screen
         this.set_last_day_of_Month(); // setting the due_date for is_credit_sale (if set) to last day of the month
         this.get_addresses();
         this.get_sales_person_names();

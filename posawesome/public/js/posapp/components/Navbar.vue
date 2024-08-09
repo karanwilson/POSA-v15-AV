@@ -375,7 +375,8 @@ export default {
         }
         this.$nextTick(function() {     // to wait for $el to be initialised
           //this.fs_online = true;
-          this.fapi_login();
+          if (this.pos_profile.posa_enable_fs_payments)
+            this.fapi_login();
           if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
             this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
             console.info('request_scale_port');

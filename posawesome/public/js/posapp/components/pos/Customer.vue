@@ -10,6 +10,7 @@
       v-model="customer"
       ref="input_customer"
       @keydown.enter="select_items"
+      @click:clear="reset_fs_balance_status"
       :items="customers"
       item-text="customer_name"
       item-value="name"
@@ -111,7 +112,10 @@ export default {
       });
     },
     select_items() {
-      evntBus.$emit('select_items');    // pass event to ItemsSelector.vue
+      evntBus.$emit('select_items'); // pass event to ItemsSelector.vue
+    },
+    reset_fs_balance_status() {
+      evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
     },
     new_customer() {
       evntBus.$emit('open_update_customer', null);
