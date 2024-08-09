@@ -938,6 +938,7 @@ export default {
       this.is_cashback = true;
       this.sales_person = "";
 
+      evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
       evntBus.$emit("new_invoice", "false");
       this.back_to_invoice();
     },

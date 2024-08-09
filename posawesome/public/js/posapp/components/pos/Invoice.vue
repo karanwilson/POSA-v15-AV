@@ -774,7 +774,7 @@
 
             <v-col cols="6" class="pa-1 mt-2">
               <v-text-field
-                :value="formtCurrency(subtotal, currency_precision, undefined, rounding_method)"
+                :value="formtCurrency(subtotal)"
                 :prefix="currencySymbol(pos_profile.currency)"
                 :label="frappe._('Total')"
                 outlined
@@ -973,7 +973,7 @@ export default {
       });
       sum -= this.flt(this.discount_amount);
       sum += this.flt(this.delivery_charges_rate);
-      return this.flt(sum, this.currency_precision);
+      return this.flt(sum, this.currency_precision, undefined, this.rounding_method);
       //let return_sum = this.bankers_rounding(sum);
       //return return_sum;
     },
