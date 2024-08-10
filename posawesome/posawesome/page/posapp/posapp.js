@@ -15,6 +15,7 @@ frappe.pages['posapp'].on_page_load = function (wrapper) {
 	$("head").append("<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900' />");
 };
 
+/*
 if (frappe.boot.lang == "en") {
 	$.extend(
 		frappe._messages, {
@@ -32,6 +33,7 @@ if (frappe.boot.lang == "en") {
 			"Submit Payments": "SUBMIT",
 		});
 	};
+*/
 
 //Only if PT as we are not being able to load from pt.csv
 if (frappe.boot.lang == "pt") {

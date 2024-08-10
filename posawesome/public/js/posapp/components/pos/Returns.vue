@@ -9,34 +9,51 @@
         </v-card-title>
         <v-container>
           <v-row class="mb-4">
-            <v-text-field
-              color="primary"
-              :label="frappe._('Participant Name or FS Account')"
-              background-color="white"
-              hide-details
-              v-model="invoice_customer_name"
-              dense
-              clearable
-              class="mx-4"
-            ></v-text-field>
-            <v-text-field
-              color="primary"
-              :label="frappe._('Item to Return')"
-              background-color="white"
-              hide-details
-              v-model="item_code"
-              dense
-              clearable
-              class="mx-4"
-            ></v-text-field>
-            <v-btn
-              text
-              class="ml-2"
-              color="primary"
-              dark
-              @click="search_invoices"
-              >{{ __('Search') }}</v-btn
-            >
+            <v-col cols="4">
+              <v-text-field
+                color="primary"
+                :label="frappe._('Customer Name *')"
+                background-color="white"
+                hide-details
+                v-model="customer_name"
+                dense
+                clearable
+                class="mx-4"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="3">
+              <v-text-field
+                color="primary"
+                :label="frappe._('FS Account *')"
+                background-color="white"
+                hide-details
+                v-model="custom_fs_account_number"
+                dense
+                clearable
+                class="mx-4"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="3">
+              <v-text-field
+                color="primary"
+                :label="frappe._('Item Code')"
+                background-color="white"
+                hide-details
+                v-model="item_code"
+                dense
+                clearable
+                class="mx-4"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="2">
+              <v-btn
+                text
+                class="ml-2"
+                color="primary"
+                dark
+                @click="search_invoices"
+              >{{ __('Search') }}</v-btn>
+            </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
@@ -86,8 +103,9 @@ export default {
     selected: [],
     dialog_data: '',
     company: '',
-    invoice_customer_name: '',    // for return search
-    item_code: '',    // for return search
+    customer_name: '', // for return search
+    custom_fs_account_number: '', // for return search
+    item_code: '', // for return search
     headers: [
       {
         text: __('Customer'),
@@ -130,14 +148,23 @@ export default {
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.search_invoices_for_return',
         args: {
-          invoice_customer_name: vm.invoice_customer_name,
+          customer_name: vm.customer_name,
+          custom_fs_account_number: vm.custom_fs_account_number,
           item_code: vm.item_code,
           company: vm.company,
         },
         async: false,
         callback: function (r) {
           if (r.message) {
-            vm.dialog_data = r.message;
+            if (r.message instanceof Array) { // check whether there is a result or an error message
+              vm.dialog_data = r.message;
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: r.message,
+                color: 'warning',
+              });
+            }
           }
         },
       });
@@ -168,7 +195,9 @@ export default {
     evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
-      this.invoice_customer_name = '';
+      this.customer_name = '';
+      this.custom_fs_account_number = '';
+      this.item_code = '';
       this.dialog_data = '';
       this.selected = [];
     });

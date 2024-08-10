@@ -1247,22 +1247,76 @@ def set_customer_info(customer, fieldname, value=""):
 
 
 @frappe.whitelist()
-def search_invoices_for_return(invoice_customer_name, item_code, company):
-    invoices_list = frappe.get_list(
-        "Sales Invoice",
-        filters={
-            "customer_name": ["like", f"%{invoice_customer_name}%"],
-            "company": company,
-            "docstatus": 1,
-            "is_return": 0,
-        },
-        fields=["name"],
-        limit_page_length=0,
-        order_by="posting_date desc",    # sort by posting_date, latest first..
-    )
+def search_invoices_for_return(customer_name, custom_fs_account_number, item_code, company):
+
+    if customer_name and custom_fs_account_number:
+        customer = frappe.get_all("Customer", 
+            filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
+            fields=["name"]
+        )
+
+        if customer:
+            invoices_list = frappe.get_all(
+                "Sales Invoice",
+                filters={
+                    "customer": customer[0]["name"],
+                    "customer_name": ["like", f"%{customer_name}%"],
+                    "company": company,
+                    "docstatus": 1,
+                    "is_return": 0,
+                },
+                fields=["name"],
+                limit_page_length=0,
+                order_by="posting_date desc",    # sort by posting_date, latest first..
+            )
+        else:
+            msg = "FS Account not found"
+            return msg
+
+    elif custom_fs_account_number:
+        customer = frappe.get_all("Customer", 
+            filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
+            fields=["name"]
+        )
+
+        if customer:
+            invoices_list = frappe.get_all(
+                "Sales Invoice",
+                filters={
+                    "customer": customer[0]["name"],
+                    "company": company,
+                    "docstatus": 1,
+                    "is_return": 0,
+                },
+                fields=["name"],
+                limit_page_length=0,
+                order_by="posting_date desc",    # sort by posting_date, latest first..
+            )
+        else:
+            msg = "FS Account not found"
+            return msg
+
+    elif customer_name:
+        invoices_list = frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "customer_name": ["like", f"%{customer_name}%"],
+                "company": company,
+                "docstatus": 1,
+                "is_return": 0,
+            },
+            fields=["name"],
+            limit_page_length=0,
+            order_by="posting_date desc",    # sort by posting_date, latest first..
+        )
+
+    else:
+        msg = "At least one of 'Customer Name' or 'FS Account' is needed for this search"
+        return msg
+
     data = []
 
-    # the below code is commented because it was replaced by modified search-code for PTDC
+    # the below code is commented because it was replaced by modified search-code for AV
     """
     is_returned = frappe.get_all(
         "Sales Invoice",
@@ -1276,10 +1330,10 @@ def search_invoices_for_return(invoice_customer_name, item_code, company):
         data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
     return data
     """
-    
+
     if item_code:
         for invoice in invoices_list:
-            item_list = frappe.get_all(
+            item = frappe.get_all(
                 "Sales Invoice Item",
                 filters={
                     "parent": invoice["name"],
@@ -1288,7 +1342,7 @@ def search_invoices_for_return(invoice_customer_name, item_code, company):
                 fields=["name", "qty"],
             )
             # now check if there were any returns against the Sales Invoice
-            if len(item_list):
+            if item:
                 is_returned = frappe.get_all(
                     "Sales Invoice",
                     filters={"return_against": invoice["name"], "docstatus": 1},
@@ -1298,7 +1352,7 @@ def search_invoices_for_return(invoice_customer_name, item_code, company):
                 if is_returned:
                     total_returned_item_qty = 0
                     for returned_invoice in is_returned:
-                        returned_items_qty = frappe.get_all(
+                        returned_item_qty = frappe.get_all(
                             "Sales Invoice Item",
                             filters={
                                 "parent": returned_invoice["name"],
@@ -1306,12 +1360,11 @@ def search_invoices_for_return(invoice_customer_name, item_code, company):
                             },
                             fields=["name", "qty"],
                         )
-                        for returned_item_qty in returned_items_qty:
-                            total_returned_item_qty += abs(returned_item_qty["qty"])    # abs because returned qty is recorded in negative
+                        total_returned_item_qty += abs(returned_item_qty[0]["qty"])    # abs because returned qty is recorded in negative
 
                     # now compare if the qty of the item_code in the 'sales Invoice' is greater than that in the 'return invoices'
                     # in order to know if there are any more returable items for the item_code in the 'sales invoice'
-                    if item_list[0]["qty"] > total_returned_item_qty:
+                    if item[0]["qty"] > total_returned_item_qty:
                         data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
                 else:
                     data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
