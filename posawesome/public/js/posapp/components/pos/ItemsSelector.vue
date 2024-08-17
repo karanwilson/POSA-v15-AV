@@ -784,10 +784,19 @@ export default {
           });
           if (filtred_list.length == 0) {
             filtred_list = filtred_group_list.filter((item) => {
+              //item.item_code.toLowerCase().includes(this.search.toLowerCase())
               return item.item_code == this.search;     // does an exact match of item codes
             }
-            //item.item_code.toLowerCase().includes(this.search.toLowerCase())
             );
+            if (filtred_list.length == 0) {
+              // search for specific words in the 'Item Names'
+              filtred_list = filtred_group_list.filter((item) => {
+                searchText = item.item_name.toLowerCase();
+                queryText = this.search.toLowerCase();
+                search_index = searchText.indexOf(queryText);
+                return search_index > -1;
+              })
+            };
             if (filtred_list.length == 0) {
               const search_combinations = this.generateWordCombinations(
                 this.search
