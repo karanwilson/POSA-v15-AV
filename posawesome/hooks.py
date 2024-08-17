@@ -231,8 +231,8 @@ fixtures = [
                     "POS Profile-posa_allow_write_off_change",
                     "POS Profile-posa_new_line",
                     "POS Profile-posa_input_qty",
-                    "POS Profile-posa_input_weighing_scale"     # adding a setting to enable reading from weighing scale
-                    "POS Profile-posa_regular_search"           # adding a setting to use the regular item_code & item_name search
+                    "POS Profile-posa_input_weighing_scale" # to enable reading from weighing scale
+                    "POS Profile-posa_regular_search" # to use the regular item_code & item_name search
                     "POS Profile-posa_display_item_code",
                     "POS Profile-posa_allow_zero_rated_items",
                     "POS Profile-posa_allow_print_draft_invoices",
@@ -255,7 +255,8 @@ fixtures = [
                     "POS Profile-posa_search_batch_no",
                     "POS Profile-pos_awesome_payments",
                     "POS Profile-posa_use_pos_awesome_payments",
-                    "POS Profile-posa_enable_fs_payments", # adding a setting to enable FS payments
+                    "POS Profile-posa_enable_fs_payments", # to enable FS payments
+                    "POS Profile-custom_monthly_balance_reset" # to refresh monthly balance for PTDC
                     "POS Profile-posa_allow_make_new_payments",
                     "POS Profile-posa_allow_reconcile_payments",
                     "POS Profile-column_break_uolvm",

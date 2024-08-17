@@ -1098,7 +1098,7 @@ export default {
         item.uom = item.stock_uom;
       }
       let index = -1;
-      if (!this.new_line) {
+      if (!this.new_line && item.has_batch_no) { // matching items with same item_code and batch, to be put in the same line with increased qty.
         index = this.items.findIndex(
           (el) =>
             el.item_code === item.item_code &&
@@ -1108,8 +1108,23 @@ export default {
             //el.batch_no === item.batch_no
             el.batch_no === item_to_add.batch_no
         );
+        //console.log(item.item_code, item.uom, item_to_add.batch_no);
+        //console.log("index: ", index);
+      } else {
+        index = this.items.findIndex(
+          (el) =>
+            el.item_code === item.item_code &&
+            el.uom === item.uom &&
+            !el.posa_is_offer &&
+            !el.posa_is_replace &&
+            el.batch_no === item.batch_no
+            //el.batch_no === item_to_add.batch_no
+        );
+        //console.log(item.item_code, item.uom, item.batch_no);
+        //console.log("index: ", index);
       }
       if (index === -1 || this.new_line) {
+        //console.log("Label-A");
         const new_item = this.get_new_item(item);
         if (item.has_serial_no && item.to_set_serial_no) {
           new_item.serial_no_selected = [];
@@ -1117,6 +1132,7 @@ export default {
           item.to_set_serial_no = null;
         }
         if (item.has_batch_no && item.to_set_batch_no) {
+          //console.log("Label-B");
           new_item.batch_no = item.to_set_batch_no;
           item.to_set_batch_no = null;
           item.batch_no = null;
@@ -1125,6 +1141,7 @@ export default {
         this.items.unshift(new_item);
         this.update_item_detail(new_item);
       } else {
+        //console.log("Label-C");
         const cur_item = this.items[index];
         this.update_items_details([cur_item]);
         if (item.has_serial_no && item.to_set_serial_no) {
@@ -1142,6 +1159,7 @@ export default {
           item.to_set_serial_no = null;
         }
         if (!cur_item.has_batch_no) {
+          //console.log("Label-D");
           //cur_item.qty += item.qty || 1;
           // type-casting all fields to Float because when the item qty is edited from the invoice (using QTY_textbox_update), -
           // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
@@ -1149,21 +1167,28 @@ export default {
           cur_item.qty += parseFloat(item.qty) || parseFloat(1);
           this.calc_stock_qty(cur_item, cur_item.qty);
         } else {
+          //console.log("Label-E");
           if (
             (cur_item.stock_qty < cur_item.actual_batch_qty &&
               cur_item.batch_no == item_to_add.batch_no) ||
             !cur_item.batch_no
           ) {
+            //console.log("Label-F");
+            //cur_item.qty += item.qty || 1;
+            // type-casting all fields to Float because when the item qty is edited from the invoice (using QTY_textbox_update), -
+            // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
             cur_item.qty = parseFloat(cur_item.qty);
             cur_item.qty += parseFloat(item.qty) || parseFloat(1);
             this.calc_stock_qty(cur_item, cur_item.qty);
           } else {
+            //console.log("Label-G");
             const new_item = this.get_new_item(cur_item);
             new_item.batch_no = item.batch_no || item.to_set_batch_no;
             new_item.batch_no_expiry_date = "";
             new_item.actual_batch_qty = "";
             new_item.qty = item.qty || 1;
             if (new_item.batch_no) {
+              //console.log("Label-H");
               this.set_batch_qty(new_item, new_item.batch_no, false);
               item.to_set_batch_no = null;
               item.batch_no = null;
@@ -2113,6 +2138,7 @@ export default {
     },
 
     QTY_textbox_update(item, qty) {
+      //console.log("item.stock_qty, qty : ", item.stock_qty, qty);
       this.calc_stock_qty(item, qty);
       // in case item_add_on is set, then add/subtract the add-on item
       if (item.item_add_on) {
@@ -2128,6 +2154,7 @@ export default {
 
     calc_stock_qty(item, value) {
       item.stock_qty = item.conversion_factor * value;
+      //console.log("item.stock_qty: ", item.stock_qty);
     },
 
     set_serial_no(item) {

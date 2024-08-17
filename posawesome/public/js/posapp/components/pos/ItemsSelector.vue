@@ -760,7 +760,7 @@ export default {
           filtred_group_list = this.items;
         }
         // if (!this.search || this.search.length < 3) {
-        if (!this.search || this.search.length < 2) {     // reduced minimum search count to 2, as we also have 2 digit item codes
+        if (!this.search || this.search.length < 2) { // reduced minimum search count to 2, as PT also has 2 digit item codes
           if (
             this.pos_profile.posa_show_template_items &&
             this.pos_profile.posa_hide_variants_items

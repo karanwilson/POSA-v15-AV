@@ -827,7 +827,7 @@ def submit_in_background_job(kwargs):
 
 
 @frappe.whitelist()
-def get_available_credit(customer, company):
+def get_available_credit(customer, company, monthly_balance_reset):
     total_credit = []
 
     outstanding_invoices = frappe.get_all(
@@ -858,19 +858,35 @@ def get_available_credit(customer, company):
     first_day_of_Month = get_first_day(today)
     last_day_of_Month = get_last_day(today)
 
-    advances = frappe.get_all(
-        "Payment Entry",
-        {
-            "unallocated_amount": [">", 0],
-            "party_type": "Customer",
-            "party": customer,
-            "posting_date": ["between", [first_day_of_Month, last_day_of_Month]],
-            # the above filter matches rows from current month only: a requirement for PTDC
-            "company": company,
-            "docstatus": 1,
-        },
-        ["name", "unallocated_amount"],
-    )
+    if monthly_balance_reset == '1' :
+        advances = frappe.get_all(
+            "Payment Entry",
+            {
+                "unallocated_amount": [">", 0],
+                "party_type": "Customer",
+                "party": customer,
+                "posting_date": ["between", [first_day_of_Month, last_day_of_Month]],
+                # the above filter matches rows from current month only: a requirement for PTDC
+                "company": company,
+                "docstatus": 1,
+            },
+            ["name", "unallocated_amount"],
+        )
+
+    else:
+        advances = frappe.get_all(
+            "Payment Entry",
+            {
+                "unallocated_amount": [">", 0],
+                "party_type": "Customer",
+                "party": customer,
+                #"posting_date": ["between", [first_day_of_Month, last_day_of_Month]],
+                # the above filter matches rows from current month only: a requirement for PTDC
+                "company": company,
+                "docstatus": 1,
+            },
+            ["name", "unallocated_amount"],
+        )
 
     for row in advances:
         row = {

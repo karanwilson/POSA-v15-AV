@@ -223,9 +223,17 @@ export default {
       frappe.call({
         method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.login',
         callback: function (r) {
-          if (r.message = 'OK') {
-            vm.dynamic_fs_online_color = 'success';
-            vm.dynamic_fs_online_icon = 'mdi-server-network';
+          if (r.message) {
+            if (r.message == 'OK') {
+              vm.dynamic_fs_online_color = 'success';
+              vm.dynamic_fs_online_icon = 'mdi-server-network';
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: r.message,
+                color: 'error',
+              });
+            }
           }
         },
       });
