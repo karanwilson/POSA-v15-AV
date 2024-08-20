@@ -1049,11 +1049,11 @@ export default {
         this.remove_item(item);
       }
       this.calc_stock_qty(item, item.qty);
-      // in case item_add_on is set, then add the add-on item
-      if (item.item_add_on) {
+      // in case custom_item_add_on is set, then add the add-on item
+      if (item.custom_item_add_on) {
         let index = this.items.findIndex(
           (el) =>
-            el.item_code === item.item_add_on
+            el.item_code === item.custom_item_add_on
         );
         let add_on_item = this.items[index];
         add_on_item.qty++;
@@ -1070,11 +1070,11 @@ export default {
         this.remove_item(item);
       }
       this.calc_stock_qty(item, item.qty);
-      // in case item_add_on is set, then subtract the add-on item
-      if (item.item_add_on) {
+      // in case custom_item_add_on is set, then subtract the add-on item
+      if (item.custom_item_add_on) {
         let index = this.items.findIndex(
           (el) =>
-            el.item_code === item.item_add_on
+            el.item_code === item.custom_item_add_on
         );
         let add_on_item = this.items[index];
         add_on_item.qty--;
@@ -2140,11 +2140,11 @@ export default {
     QTY_textbox_update(item, qty) {
       //console.log("item.stock_qty, qty : ", item.stock_qty, qty);
       this.calc_stock_qty(item, qty);
-      // in case item_add_on is set, then add/subtract the add-on item
-      if (item.item_add_on) {
+      // in case custom_item_add_on is set, then add/subtract the add-on item
+      if (item.custom_item_add_on) {
         let index = this.items.findIndex(
           (el) =>
-            el.item_code === item.item_add_on
+            el.item_code === item.custom_item_add_on
         );
         let add_on_item = this.items[index];
         add_on_item.qty = qty;

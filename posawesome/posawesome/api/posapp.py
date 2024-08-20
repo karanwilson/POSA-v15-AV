@@ -185,18 +185,18 @@ def get_items(
 
         result = []
 
-        # fetching custom field uom_int for checking items with integer (whole number) UOMs
-        # fetching custom field item_add_on for adding on returnable containers, or other bundled items..
+        # fetching custom field custom_uom_int for checking items with integer (whole number) UOMs
+        # fetching custom field custom_item_add_on for adding on returnable containers, or other bundled items..
 
         items_data = frappe.db.sql(
             """
             SELECT
                 name AS item_code,
-                item_add_on,
+                custom_item_add_on,
                 item_name,
                 description,
                 stock_uom,
-                uom_int,
+                custom_uom_int,
                 image,
                 is_stock_item,
                 has_variants,

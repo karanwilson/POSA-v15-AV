@@ -356,11 +356,11 @@ export default {
           item.qty = Math.abs(this.qty);
         }
         evntBus.$emit('add_item', item);
-        // in case item_add_on is set, then add the add-on item
-        if (item.item_add_on) {
+        // in case custom_item_add_on is set, then add the add-on item
+        if (item.custom_item_add_on) {
           let index = this.items.findIndex(
             (el) =>
-              el.item_code === item.item_add_on
+              el.item_code === item.custom_item_add_on
           );
           let add_on_item = this.items[index];
           add_on_item.qty = item.qty;
@@ -382,8 +382,8 @@ export default {
 
     verify_input_qty(new_item) {
       return new Promise((resolve, reject) => {
-        // uom_int is a custom field added in Item doctype (which pulls uom_int from must_be_whole_number in UOM doctype) for verifying fractional inputs
-        if (new_item.uom_int == 1 && ((new_item.qty - parseInt(new_item.qty)) > 0.0000001)) {
+        // custom_uom_int is a custom field added in Item doctype (which pulls custom_uom_int from must_be_whole_number in UOM doctype) for verifying fractional inputs
+        if (new_item.custom_uom_int == 1 && ((new_item.qty - parseInt(new_item.qty)) > 0.0000001)) {
           evntBus.$emit('show_mesage', {
             text: __(`QTY Must be Whole Number`),
             color: 'error',
