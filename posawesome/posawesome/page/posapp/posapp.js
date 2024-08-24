@@ -15,25 +15,28 @@ frappe.pages['posapp'].on_page_load = function (wrapper) {
 	$("head").append("<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900' />");
 };
 
-/*
-if (frappe.boot.lang == "en") {
-	$.extend(
-		frappe._messages, {
-			"Customer": "Participant",
-			"There is no Customer !": "Enter a Participant",
-			"PAY": "CHECKOUT",
-			"Use Customer Credit": "Use Available Balance",
-			"Available Credit": "Available Balance",
-			"Redeem Credit": "Redeem Balance",
-			"You can redeem credit upto": "Total Available Balance",
-			"Redeemed Customer Credit": "Redeemed Available Balance",
-			"Paid Amount": "Checkout Amount",
-			"To Be Paid": "Pending Amount",
-			"Is Credit Sale": "Credit",
-			"Submit Payments": "SUBMIT",
-		});
-	};
-*/
+frappe
+	.call("posawesome.posawesome.api.posapp.pourtous_settings")
+	.then((r) => {
+		if (r.message.ptdc_pos_translations == 1) {
+			$.extend(
+				frappe._messages, {
+					"Customer": "Participant",
+					"There is no Customer !": "Enter a Participant",
+					"PAY": "CHECKOUT",
+					"Use Customer Credit": "Use Available Balance",
+					"Available Credit": "Available Balance",
+					"Redeem Credit": "Redeem Balance",
+					"You can redeem credit upto": "Total Available Balance",
+					"Redeemed Customer Credit": "Redeemed Available Balance",
+					"Paid Amount": "Checkout Amount",
+					"To Be Paid": "Pending Amount",
+					"Is Credit Sale": "Credit",
+					"Submit Payments": "SUBMIT",
+				}
+			);
+		};
+	});
 
 //Only if PT as we are not being able to load from pt.csv
 if (frappe.boot.lang == "pt") {

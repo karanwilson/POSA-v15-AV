@@ -256,7 +256,6 @@ fixtures = [
                     "POS Profile-pos_awesome_payments",
                     "POS Profile-posa_use_pos_awesome_payments",
                     "POS Profile-posa_enable_fs_payments", # to enable FS payments
-                    "POS Profile-custom_monthly_balance_reset" # to refresh monthly balance for PTDC
                     "POS Profile-posa_allow_make_new_payments",
                     "POS Profile-posa_allow_reconcile_payments",
                     "POS Profile-column_break_uolvm",

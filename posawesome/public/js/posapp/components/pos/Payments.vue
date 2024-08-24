@@ -1046,7 +1046,6 @@ export default {
           .call("posawesome.posawesome.api.posapp.get_available_credit", {
             customer: this.invoice_doc.customer,
             company: this.pos_profile.company,
-            monthly_balance_reset: this.pos_profile.custom_monthly_balance_reset
           })
           .then((r) => {
             const data = r.message;   // receives both 'outstanding invoices' (if any) and 'advance payments' (if any)

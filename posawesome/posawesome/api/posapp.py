@@ -34,6 +34,11 @@ from frappe.utils.caching import redis_cache
 
 
 @frappe.whitelist()
+def pourtous_settings():
+    return frappe.get_doc("Pour Tous Settings")
+
+
+@frappe.whitelist()
 def get_opening_dialog_data():
     data = {}
     data["companies"] = frappe.get_list("Company", limit_page_length=0, order_by="name")
@@ -827,7 +832,7 @@ def submit_in_background_job(kwargs):
 
 
 @frappe.whitelist()
-def get_available_credit(customer, company, monthly_balance_reset):
+def get_available_credit(customer, company):
     total_credit = []
 
     outstanding_invoices = frappe.get_all(
@@ -858,7 +863,9 @@ def get_available_credit(customer, company, monthly_balance_reset):
     first_day_of_Month = get_first_day(today)
     last_day_of_Month = get_last_day(today)
 
-    if monthly_balance_reset == '1' :
+    pt_settings = frappe.get_doc("Pour Tous Settings")
+
+    if pt_settings.monthly_balance_reset == 1 :
         advances = frappe.get_all(
             "Payment Entry",
             {
