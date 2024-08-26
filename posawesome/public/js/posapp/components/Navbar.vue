@@ -23,19 +23,6 @@
 
       <v-spacer></v-spacer>
 
-      <!--v-col
-        v-if="pos_profile.posa_enable_fs_payments"
-        cols="1"
-        align="center"
-      >
-        <v-switch
-          v-model="fs_online"
-          flat
-          :label="frappe._('FS Online')"
-          hide-details
-        ></v-switch>
-      </v-col-->
-
       <v-col
         v-if="pos_profile.posa_enable_fs_payments"
         cols="1"
