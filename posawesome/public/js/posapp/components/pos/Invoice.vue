@@ -995,7 +995,9 @@ export default {
         callback: function (r) {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
-              if ((parseInt(r.message['maxAmount']) > 0) || (parseInt(r.message['maxAmount']) == -1)) {
+              // need to check with FS or Luk what 'maxAmount == -1' means
+              //if ((parseInt(r.message['maxAmount']) > 0) || (parseInt(r.message['maxAmount']) == -1)) {
+              if (parseInt(r.message['maxAmount']) > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
               }
@@ -1273,6 +1275,7 @@ export default {
       this.delivery_charges_rate = 0;
       this.selcted_delivery_charges = {};
       evntBus.$emit("set_customer_readonly", false);
+      evntBus.$emit("reset_fs_balance_status");
       this.cancel_dialog = false;
     },
 

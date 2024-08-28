@@ -1082,6 +1082,7 @@ export default {
         this.customer_credit_dict = [];
       }
     },
+    /*
     set_last_day_of_Month() {
       const vm = this;
       frappe.call({
@@ -1091,6 +1092,7 @@ export default {
         },
       });
     },
+    */
     get_addresses() {
       const vm = this;
       if (!vm.invoice_doc) {
@@ -1497,7 +1499,8 @@ export default {
         if (!this.pos_profile.posa_enable_fs_payments)
           this.get_available_credit(1); // pre-loads customer credit in payments screen
         else this.redeem_customer_credit = false; // resets to false incase it was switched-on before pressing 'cancel payment'
-        this.set_last_day_of_Month(); // setting the due_date for is_credit_sale (if set) to last day of the month
+        //this.set_last_day_of_Month(); // setting the due_date for is_credit_sale (if set) to last day of the month
+        this.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
         this.get_addresses();
         this.get_sales_person_names();
       });

@@ -908,12 +908,11 @@ def get_available_credit(customer, company):
     return total_credit
 
 
-@frappe.whitelist()
-def get_last_day_of_Month():
-    today = nowdate()
-    last_day_of_Month = get_last_day(today)
-
-    return last_day_of_Month
+#@frappe.whitelist()
+#def get_last_day_of_Month():
+#    today = nowdate()
+#    last_day_of_Month = get_last_day(today)
+#    return last_day_of_Month
 
 
 @frappe.whitelist()
