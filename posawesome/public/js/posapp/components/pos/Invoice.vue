@@ -677,7 +677,227 @@
         </template>
       </div>
     </v-card>
-    <v-card class="cards mb-0 mt-3 py-0 grey lighten-5">
+    <v-card v-if="pos_profile.posa_enable_fs_payments"
+      class="cards mb-0 mt-3 py-0 grey lighten-5">
+      <v-row no-gutters>
+        <v-col cols="6">
+          <v-row no-gutters class="pa-1 pt-9 pr-1">
+            <v-col cols="6" class="pa-1">
+              <v-text-field
+                :value="formtFloat(total_qty)"
+                :label="frappe._('Total Qty')"
+                outlined
+                dense
+                readonly
+                hide-details
+                color="accent"
+              ></v-text-field>
+            </v-col>
+            <v-col
+              v-if="!pos_profile.posa_use_percentage_discount"
+              cols="6"
+              class="pa-1"
+            >
+              <v-text-field
+                :value="formtCurrency(discount_amount)"
+                @change="
+                  setFormatedCurrency(
+                    discount_amount,
+                    'discount_amount',
+                    null,
+                    false,
+                    $event
+                  )
+                "
+                :rules="[isNumber]"
+                :label="frappe._('Additional Discount')"
+                ref="discount"
+                outlined
+                dense
+                hide-details
+                color="warning"
+                :prefix="currencySymbol(pos_profile.currency)"
+                :disabled="
+                  !pos_profile.posa_allow_user_to_edit_additional_discount ||
+                  discount_percentage_offer_name
+                    ? true
+                    : false
+                "
+              ></v-text-field>
+            </v-col>
+            <v-col
+              v-if="pos_profile.posa_use_percentage_discount"
+              cols="6"
+              class="pa-1"
+            >
+              <v-text-field
+                :value="formtFloat(additional_discount_percentage)"
+                @change="
+                  [
+                    setFormatedFloat(
+                      additional_discount_percentage,
+                      'additional_discount_percentage',
+                      null,
+                      false,
+                      $event
+                    ),
+                    update_discount_umount(),
+                  ]
+                "
+                :rules="[isNumber]"
+                :label="frappe._('Additional Discount %')"
+                suffix="%"
+                ref="percentage_discount"
+                outlined
+                dense
+                color="warning"
+                hide-details
+                :disabled="
+                  !pos_profile.posa_allow_user_to_edit_additional_discount ||
+                  discount_percentage_offer_name
+                    ? true
+                    : false
+                "
+              ></v-text-field>
+            </v-col>
+            <v-col cols="6" class="pa-1 mt-2">
+              <v-text-field
+                :value="formtCurrency(total_items_discount_amount)"
+                :prefix="currencySymbol(pos_profile.currency)"
+                :label="frappe._('Items Discounts')"
+                outlined
+                dense
+                color="warning"
+                readonly
+                hide-details
+              ></v-text-field>
+            </v-col>
+
+            <v-col cols="6" class="pa-1 mt-2">
+              <v-text-field
+                :value="formtCurrency(subtotal)"
+                :prefix="currencySymbol(pos_profile.currency)"
+                :label="frappe._('Total')"
+                outlined
+                dense
+                readonly
+                hide-details
+                color="success"
+              ></v-text-field>
+              <!--v-text-field
+                :value="formtCurrency_amount(subtotal)"
+                :prefix="currencySymbol(pos_profile.currency)"
+                :label="frappe._('Total')"
+                outlined
+                dense
+                readonly
+                hide-details
+                color="success"
+              ></v-text-field-->
+            </v-col>
+          </v-row>
+        </v-col>
+        <v-col cols="6">
+          <v-row no-gutters class="pa-1 pt-2 pl-0">
+            <v-col cols="6" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="warning"
+                dark
+                @click="get_draft_invoices"
+                >{{ __("Held") }}</v-btn
+              >
+            </v-col>
+            <v-col
+              v-if="pos_profile.custom_allow_select_sales_order === 1"
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="info"
+                dark
+                @click="get_draft_orders"
+                >{{ __("Select S.O") }}</v-btn
+              >
+            </v-col>
+            <v-col cols="6" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                :class="{ 'disable-events': !pos_profile.posa_allow_return }"
+                color="secondary"
+                dark
+                @click="open_returns"
+                >{{ __("Return") }}</v-btn
+              >
+            </v-col>
+            <v-col cols="4" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="error"
+                dark
+                @click="cancel_dialog = true"
+                >{{ __("Cancel") }}</v-btn
+              >
+            </v-col>
+            <v-col cols="4" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="accent"
+                dark
+                @click="new_invoice"
+                >{{ __("Save/New") }}</v-btn
+              >
+            </v-col>
+            <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices"
+              cols="4"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="print_draft_invoice"
+                dark
+                >{{ __("Print Draft") }}</v-btn
+              >
+            </v-col>
+            <v-col class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="success"
+                @click="show_payment"
+                ref="checkout"
+                dark
+                >{{ __("PAY") }}</v-btn
+              >
+            </v-col>
+            <v-col
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="offline_fs_pay"
+                dark
+                >{{ __("Offline FS PAY") }}</v-btn
+              >
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
+    </v-card>
+    <v-card v-if="!pos_profile.posa_enable_fs_payments"
+      class="cards mb-0 mt-3 py-0 grey lighten-5">
       <v-row no-gutters>
         <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-9 pr-1">
@@ -921,6 +1141,7 @@ export default {
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
+      fs_transfer_pending: false, // for 'Offline FS Pay'
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -1279,6 +1500,12 @@ export default {
       this.cancel_dialog = false;
     },
 
+    // for 'Offline FS Pay'
+    offline_fs_pay() {
+      this.fs_transfer_pending = true;
+      this.new_invoice();
+    },
+
     new_invoice(data = {}) {
       let old_invoice = null;
       evntBus.$emit("set_customer_readonly", false);
@@ -1289,6 +1516,7 @@ export default {
       this.posa_coupons = [];
       this.return_doc = "";
       const doc = this.get_invoice_doc();
+      if (this.fs_transfer_pending) doc.custom_fs_transfer_status = "PENDING"; // for 'Offline FS Pay'
       if (doc.name) {
         old_invoice = this.update_invoice(doc);
       } else {
@@ -1300,6 +1528,7 @@ export default {
         this.items = [];
         this.customer = this.pos_profile.customer;
         this.invoice_doc = "";
+        this.fs_transfer_pending = false; // for 'Offline FS Pay'
         this.discount_amount = 0;
         this.additional_discount_percentage = 0;
         this.invoiceType = this.pos_profile.posa_default_sales_order

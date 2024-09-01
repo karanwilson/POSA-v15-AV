@@ -106,6 +106,7 @@ export default {
   },
   created: function () {
     evntBus.$on('open_drafts', (data) => {
+      this.selected = []; // to reset old selections
       this.draftsDialog = true;
       this.dialog_data = data;
     });
