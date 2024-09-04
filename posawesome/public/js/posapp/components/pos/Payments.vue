@@ -153,6 +153,34 @@
           </v-row>
         </div>
 
+        <v-row 
+          class="px-1 py-0"
+          v-show="aurocard"
+        >
+          <v-col cols="6">
+            <v-text-field
+              dense
+              outlined
+              color="primary"
+              :label="frappe._('Aurocard Number')"
+              background-color="white"
+              hide-details
+              v-model="aurocard_number"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              dense
+              outlined
+              color="primary"
+              :label="frappe._('Aurocard Transaction ID')"
+              background-color="white"
+              hide-details
+              v-model="aurocard_trans_id"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
         <v-row
           class="pyments px-1 py-0"
           v-if="
@@ -723,7 +751,11 @@ export default {
     is_return: false,
     is_cashback: true,
     redeem_customer_credit: false,
-    // customer_outstanding_amount: 0,    // commented this custom variable, because it is now redundant (check comments in the related function below)
+    // customer_outstanding_amount: 0, // commented this custom variable, because it is now redundant (check comments in the related function below)
+    float_precision: frappe.defaults.get_default('float_precision'),
+    aurocard: false, // toggles display of Aurocard details
+    aurocard_number: "",
+    aurocard_trans_id: "",
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -873,12 +905,15 @@ export default {
         // Checking for external modes of Payment
         if (payment.amount != 0) // if < 0 then it is a return transaction
           switch(payment.mode_of_payment) {
+            case "FS":
+              payment_handlers.push(this.make_fs_payment(payment.amount));
+              break;
+            case "Aurocard":
+              payment_handlers.push(this.make_aurocard_payment());
+              break;
             case "Razorpay":
               rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
               payment_handlers.push(this.make_rzp_payment(rzp_amount_paisa));
-              break;
-            case "FS":
-              payment_handlers.push(this.make_fs_payment(payment.amount));
               break;
           }
       });
@@ -948,6 +983,10 @@ export default {
           payment.idx == idx
             ? this.invoice_doc.rounded_total || this.invoice_doc.grand_total
             : 0;
+        if (payment.idx == idx && payment.mode_of_payment == 'Aurocard')
+          this.aurocard = true;
+        else
+          this.aurocard = false;
       });
       this.redeem_customer_credit = false;
     },
@@ -1062,7 +1101,7 @@ export default {
                     // then it will add on to the remainAmount in the below statement, because (-) * (-) = (+)
                     remainAmount = remainAmount - row.total_credit;
                   } else {
-                    row.credit_to_redeem = remainAmount;
+                    row.credit_to_redeem = flt(remainAmount, this.float_precision);
                     remainAmount = 0;
                   }
                 } else {
@@ -1224,6 +1263,18 @@ export default {
             }
           },
         });
+      })
+    },
+
+    make_aurocard_payment() {
+      return new Promise((resolve, reject) => {
+        if (this.aurocard_number && this.aurocard_trans_id) {
+          this.invoice_doc.custom_aurocard_number = this.aurocard_number;
+          this.invoice_doc.remarks = this.aurocard_trans_id;
+          resolve("OK");
+        }
+        else
+          frappe.throw("For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'");
       })
     },
 
