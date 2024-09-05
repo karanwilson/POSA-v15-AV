@@ -9,7 +9,18 @@
         </v-card-title>
         <v-container>
           <v-row class="mb-4">
-            <v-col cols="4">
+            <v-col cols="3">
+              <v-text-field
+                color="primary"
+                :label="frappe._('Invoice ID *')"
+                background-color="white"
+                hide-details
+                v-model="invoice_name"
+                dense
+                clearable
+            ></v-text-field>
+            </v-col>
+            <v-col cols="3">
               <v-text-field
                 color="primary"
                 :label="frappe._('Customer Name *')"
@@ -18,34 +29,31 @@
                 v-model="customer_name"
                 dense
                 clearable
-                class="mx-4"
               ></v-text-field>
             </v-col>
             <v-col cols="3">
               <v-text-field
                 color="primary"
-                :label="frappe._('FS Account *')"
+                :label="frappe._('Full FS Account No.*')"
                 background-color="white"
                 hide-details
                 v-model="custom_fs_account_number"
                 dense
                 clearable
-                class="mx-4"
               ></v-text-field>
             </v-col>
-            <v-col cols="3">
+            <v-col cols="2">
               <v-text-field
-                color="primary"
+                color="secondary"
                 :label="frappe._('Item Code')"
                 background-color="white"
                 hide-details
                 v-model="item_code"
                 dense
                 clearable
-                class="mx-4"
               ></v-text-field>
             </v-col>
-            <v-col cols="2">
+            <!--v-col cols="2">
               <v-btn
                 text
                 class="ml-2"
@@ -53,7 +61,7 @@
                 dark
                 @click="search_invoices"
               >{{ __('Search') }}</v-btn>
-            </v-col>
+            </v-col-->
           </v-row>
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
@@ -78,6 +86,14 @@
         </v-container>
         <v-card-actions class="mt-4">
           <v-spacer></v-spacer>
+          <v-btn
+            text
+            class="ml-2"
+            color="primary"
+            dark
+            @click="search_invoices"
+          >{{ __('Search') }}
+          </v-btn>
           <v-btn color="error mx-2" dark @click="close_dialog">Close</v-btn>
           <v-btn
             v-if="selected.length"
@@ -103,6 +119,7 @@ export default {
     selected: [],
     dialog_data: '',
     company: '',
+    invoice_name: '',
     customer_name: '', // for return search
     custom_fs_account_number: '', // for return search
     item_code: '', // for return search
@@ -148,6 +165,7 @@ export default {
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.search_invoices_for_return',
         args: {
+          invoice_name: vm.invoice_name,
           customer_name: vm.customer_name,
           custom_fs_account_number: vm.custom_fs_account_number,
           item_code: vm.item_code,
@@ -195,6 +213,7 @@ export default {
     evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
+      this.invoice_name = '';
       this.customer_name = '';
       this.custom_fs_account_number = '';
       this.item_code = '';

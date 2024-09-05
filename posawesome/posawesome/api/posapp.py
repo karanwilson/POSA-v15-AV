@@ -1269,35 +1269,26 @@ def set_customer_info(customer, fieldname, value=""):
 
 
 @frappe.whitelist()
-def search_invoices_for_return(customer_name, custom_fs_account_number, item_code, company):
+def search_invoices_for_return(invoice_name, customer_name, custom_fs_account_number, item_code, company):
 
-    if customer_name and custom_fs_account_number:
-        customer = frappe.get_all("Customer", 
-            filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
-            fields=["name"]
+    if invoice_name:
+        invoices_list = frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "name": ["like", f"%{invoice_name}%"],
+                "company": company,
+                "docstatus": 1,
+                "is_return": 0,
+            },
+            fields=["name"],
+            limit_page_length=0,
+            order_by="posting_date desc",    # sort by posting_date, latest first..
         )
-
-        if customer:
-            invoices_list = frappe.get_all(
-                "Sales Invoice",
-                filters={
-                    "customer": customer[0]["name"],
-                    "customer_name": ["like", f"%{customer_name}%"],
-                    "company": company,
-                    "docstatus": 1,
-                    "is_return": 0,
-                },
-                fields=["name"],
-                limit_page_length=0,
-                order_by="posting_date desc",    # sort by posting_date, latest first..
-            )
-        else:
-            msg = "FS Account not found"
-            return msg
 
     elif custom_fs_account_number:
         customer = frappe.get_all("Customer", 
-            filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
+            #filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
+            filters={"custom_fs_account_number": custom_fs_account_number},
             fields=["name"]
         )
 
@@ -1333,7 +1324,7 @@ def search_invoices_for_return(customer_name, custom_fs_account_number, item_cod
         )
 
     else:
-        msg = "At least one of 'Customer Name' or 'FS Account' is needed for this search"
+        msg = "At least one of 'Invoice ID, 'Customer Name' or 'FS Account' is needed for this search"
         return msg
 
     data = []
