@@ -22,6 +22,8 @@ frappe
 			$.extend(
 				frappe._messages, {
 					"Customer": "Participant",
+					"Customer Name *": "Participant Name *",
+					"Invoice ID *": "Checkout-Note ID *",
 					"There is no Customer !": "Enter a Participant",
 					"PAY": "CHECKOUT",
 					"Use Customer Credit": "Use Available Balance",
