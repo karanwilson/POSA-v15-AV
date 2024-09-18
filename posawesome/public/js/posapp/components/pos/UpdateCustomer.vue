@@ -21,7 +21,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="frappe._('Customer Name') + ' *'"
+                  :label="frappe._('Customer Name / Aurocard No.') + ' *'"
                   background-color="white"
                   hide-details
                   v-model="customer_name"

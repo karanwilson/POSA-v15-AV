@@ -6,7 +6,7 @@
       auto-select-first
       outlined
       color="primary"
-      :label="frappe._('Customer')"
+      :label="frappe._('Customer Name / FS Account Number / Aurocard Number')"
       v-model="customer"
       ref="input_customer"
       @keydown.enter="select_items"

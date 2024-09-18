@@ -157,7 +157,7 @@
           class="px-1 py-0"
           v-show="aurocard"
         >
-          <v-col cols="6">
+          <!--v-col cols="6">
             <v-text-field
               dense
               outlined
@@ -167,7 +167,7 @@
               hide-details
               v-model="aurocard_number"
             ></v-text-field>
-          </v-col>
+          </v-col-->
           <v-col cols="6">
             <v-text-field
               dense
@@ -754,7 +754,7 @@ export default {
     // customer_outstanding_amount: 0, // commented this custom variable, because it is now redundant (check comments in the related function below)
     float_precision: frappe.defaults.get_default('float_precision'),
     aurocard: false, // toggles display of Aurocard details
-    aurocard_number: "",
+    //aurocard_number: "",
     aurocard_trans_id: "",
     customer_credit_dict: [],
     phone_dialog: false,
@@ -768,7 +768,8 @@ export default {
     back_to_invoice() {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
-      this.aurocard_number = this.aurocard_trans_id = "";
+      //this.aurocard_number = this.aurocard_trans_id = "";
+      this.aurocard_trans_id = "";
     },
     submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
@@ -1269,8 +1270,8 @@ export default {
 
     make_aurocard_payment() {
       return new Promise((resolve, reject) => {
-        if (this.aurocard_number && this.aurocard_trans_id) {
-          this.invoice_doc.custom_aurocard_number = this.aurocard_number;
+        if (this.aurocard_trans_id) {
+          //this.invoice_doc.custom_aurocard_number = this.aurocard_number;
           this.invoice_doc.remarks = this.aurocard_trans_id;
           resolve("OK");
         }
