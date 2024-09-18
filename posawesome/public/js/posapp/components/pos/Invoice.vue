@@ -1221,10 +1221,16 @@ export default {
               if (parseInt(r.message['maxAmount']) > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
+                evntBus.$emit('balance_available', r.message['maxAmount']);
               }
               else {
                 vm.dynamic_fs_balance_color = 'error';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
+                evntBus.$emit('show_mesage', {
+                  text: 'Insufficient Balance',
+                  color: 'warning',
+                });
+                evntBus.$emit('balance_available', r.message['maxAmount']);
               }
             }
             else {
@@ -1504,6 +1510,10 @@ export default {
     offline_fs_pay() {
       this.fs_transfer_pending = true;
       this.new_invoice();
+      evntBus.$emit('show_mesage', {
+        text: 'Offline FS Invoice saved',
+        color: 'info',
+      });
     },
 
     new_invoice(data = {}) {

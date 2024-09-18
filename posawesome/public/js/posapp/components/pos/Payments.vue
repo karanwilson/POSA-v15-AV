@@ -756,6 +756,7 @@ export default {
     aurocard: false, // toggles display of Aurocard details
     //aurocard_number: "",
     aurocard_trans_id: "",
+    balance_available: null,
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1239,32 +1240,51 @@ export default {
 
     make_fs_payment(fs_amount) {
       return new Promise((resolve, reject) => {
-        const vm = this;
-        frappe.call({
-          method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
-          args: {
-            invoice_doc: vm.invoice_doc,
-            fAmount: fs_amount
-          },
-          async: false,
-          callback: function (r) {
-            if (r.message) {
-              vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"]
-              vm.invoice_doc.remarks = r.message["remarks"]
+        if (parseInt(this.balance_available) >= fs_amount) {
+          const vm = this;
+          frappe.call({
+            method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
+            args: {
+              invoice_doc: vm.invoice_doc,
+              fAmount: fs_amount
+            },
+            async: false,
+            callback: function (r) {
+              if (r.message) {
+                vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
+                vm.invoice_doc.remarks = r.message["remarks"];
 
-              if (r.message["custom_fs_transfer_status"] == "OK") {
-                resolve("OK")
+                if (r.message["custom_fs_transfer_status"] == "OK") {
+                  resolve("OK");
+                }
+                else {
+                  evntBus.$emit('show_mesage', {
+                    text: r.message['custom_fs_transfer_status'],
+                    color: 'warning',
+                  });
+                  reject(r.message["custom_fs_transfer_status"]);
+                }
               }
-              else {
-                evntBus.$emit('show_mesage', {
-                  text: r.message['custom_fs_transfer_status'],
-                  color: 'warning',
-                });
-                reject(r.message["custom_fs_transfer_status"])
-              }
-            }
-          },
-        });
+            },
+          });
+        }
+
+        else if (this.balance_available == null) {
+          evntBus.$emit('show_mesage', {
+            text: 'FS Account not set',
+            color: 'warning',
+          });
+          reject('FS Account not set');
+        }
+
+        else {
+          evntBus.$emit('show_mesage', {
+            text: 'Insufficient Balance',
+            color: 'error',
+          });
+          reject('Insufficient Balance');
+        }
+
       })
     },
 
@@ -1558,6 +1578,9 @@ export default {
         this.get_addresses();
         this.get_sales_person_names();
       });
+      evntBus.$on("balance_available", (data) => {
+        this.balance_available = data;
+      })
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();

@@ -116,6 +116,7 @@ export default {
     },
     reset_fs_balance_status() {
       evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
+      evntBus.$emit('balance_available', null); // pass event to Payments.vue
     },
     new_customer() {
       evntBus.$emit('open_update_customer', null);
