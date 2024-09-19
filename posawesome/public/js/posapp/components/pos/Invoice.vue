@@ -799,7 +799,7 @@
         </v-col>
         <v-col cols="6">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
-            <v-col cols="6" class="pa-1">
+            <v-col cols="4" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -823,7 +823,17 @@
                 >{{ __("Select S.O") }}</v-btn
               >
             </v-col>
-            <v-col cols="6" class="pa-1">
+            <v-col cols="4" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="warning"
+                dark
+                @click="get_fs_offline_invoices"
+                >{{ __("Offline FS Bills") }}</v-btn
+              >
+            </v-col>
+            <v-col cols="4" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -2082,6 +2092,19 @@ export default {
         args: {
           pos_opening_shift: this.pos_opening_shift.name,
         },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            evntBus.$emit("open_drafts", r.message);
+          }
+        },
+      });
+    },
+
+    get_fs_offline_invoices() {
+      const vm = this;
+      frappe.call({
+        method: "posawesome.posawesome.api.posapp.get_fs_offline_invoices",
         async: false,
         callback: function (r) {
           if (r.message) {
