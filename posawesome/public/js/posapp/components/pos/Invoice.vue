@@ -1227,8 +1227,8 @@ export default {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
               // need to check with FS or Luk what 'maxAmount == -1' means
-              //if ((parseInt(r.message['maxAmount']) > 0) || (parseInt(r.message['maxAmount']) == -1)) {
-              if (parseInt(r.message['maxAmount']) > 0) {
+              //if ((parseFloat(r.message['maxAmount']) > 0) || (parseFloat(r.message['maxAmount']) == -1)) {
+              if (parseFloat(r.message['maxAmount']) > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
                 evntBus.$emit('balance_available', r.message['maxAmount']);
