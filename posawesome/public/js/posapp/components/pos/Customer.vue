@@ -160,7 +160,7 @@ export default {
         this.pos_profile = pos_profile;
         this.get_customer_names();
       });
-      evntBus.$on('input_customer', () => {    // $emit from invoice.vue
+      evntBus.$on('input_customer', () => {
         this.$refs.input_customer.focus();
       })
       evntBus.$on('set_customer', (customer) => {

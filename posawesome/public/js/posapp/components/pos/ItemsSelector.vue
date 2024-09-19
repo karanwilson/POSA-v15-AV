@@ -715,7 +715,8 @@ export default {
         });
         frappe.utils.play_sound("error");
       } else {
-        this.enter_event();
+        //this.enter_event();
+        this.enter_qty;
         this.debounce_search = null;
         this.search = null;
       }

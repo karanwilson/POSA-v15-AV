@@ -273,8 +273,8 @@ export default {
         })
 
         // console.log(scale_port_promise);
-        evntBus.$emit('scale_port_promise', scale_port_promise);    // pass event to ItemsSelector.vue
-        evntBus.$emit('input_customer');    // pass event to Customer.vue
+        evntBus.$emit('scale_port_promise', scale_port_promise); // pass event to ItemsSelector.vue
+        evntBus.$emit('input_customer'); // pass event to Customer.vue
 
       } else {
         // browser not supported by web-serial-api
@@ -283,7 +283,7 @@ export default {
           text: `Weighing Scale Connects only with Chrome, Edge, Vivaldi, Opera, or any Chromium browser`,
           color: 'error',
         });
-        evntBus.$emit('input_customer');    // pass event to Customer.vue
+        evntBus.$emit('input_customer'); // pass event to Customer.vue
       }
     },
 

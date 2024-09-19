@@ -1259,6 +1259,10 @@ export default {
         }
       })
     },
+    reset_fs_balance_status() {
+      this.dynamic_fs_balance_color = 'grey';
+      this.dynamic_fs_balance_icon = 'mdi-bank-off';
+    },
     remove_item(item) {
       const index = this.items.findIndex(
         (el) => el.posa_row_id == item.posa_row_id
@@ -1512,7 +1516,8 @@ export default {
       this.delivery_charges_rate = 0;
       this.selcted_delivery_charges = {};
       evntBus.$emit("set_customer_readonly", false);
-      evntBus.$emit("reset_fs_balance_status");
+      this.reset_fs_balance_status();
+      evntBus.$emit('input_customer'); // pass event to Customer.vue
       this.cancel_dialog = false;
     },
 
@@ -1591,6 +1596,8 @@ export default {
           }
         });
       }
+      this.reset_fs_balance_status();
+      evntBus.$emit('input_customer'); // pass event to Customer.vue
       return old_invoice;
     },
 
@@ -2555,7 +2562,8 @@ export default {
     shortSelectDiscount(e) {
       if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        this.$refs.discount.focus();
+        //this.$refs.discount.focus();
+        this.$refs.percentage_discount.focus();
       }
     },
 
@@ -3389,8 +3397,7 @@ export default {
       // called if "Enable FS Payments" is set in POS Profile settings
     });
     evntBus.$on("reset_fs_balance_status", () => {
-      this.dynamic_fs_balance_color = 'grey';
-      this.dynamic_fs_balance_icon = 'mdi-bank-off';
+      this.reset_fs_balance_status();
     })
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
