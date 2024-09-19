@@ -39,7 +39,7 @@
         </v-col>
         <v-col
           v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
-          cols="7"
+          cols="6"
           class="pb-2 pr-0"
         >
           <Customer></Customer>
@@ -53,7 +53,7 @@
         </v-col>
         <v-col
           v-if="!pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
-          cols="10"
+          cols="9"
           class="pb-2"
         >
           <Customer></Customer>
@@ -75,6 +75,17 @@
             text icon :color="dynamic_fs_balance_color"
           >
             FS<v-icon>{{ dynamic_fs_balance_icon }}</v-icon>
+          </v-btn>
+        </v-col>
+        <v-col
+          v-if="pos_profile.posa_enable_fs_payments"
+          cols="1"
+          align="left"
+        >
+          <v-btn
+            text icon :color="dynamic_invoice_icon_color"
+          >
+          {{ pending_fs_bills }}<v-icon>mdi-account-clock-outline</v-icon>
           </v-btn>
         </v-col>
         <v-col v-if="pos_profile.posa_allow_sales_order" cols="3" class="pb-2">
@@ -1151,6 +1162,8 @@ export default {
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
+      dynamic_invoice_icon_color: 'grey', // highlights pending offline bills
+      pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
       new_line: false,
       delivery_charges: [],
@@ -1262,6 +1275,9 @@ export default {
     reset_fs_balance_status() {
       this.dynamic_fs_balance_color = 'grey';
       this.dynamic_fs_balance_icon = 'mdi-bank-off';
+    },
+    pending_fs_bills() {
+
     },
     remove_item(item) {
       const index = this.items.findIndex(
@@ -3400,8 +3416,10 @@ export default {
     });
     evntBus.$on("update_customer", (customer) => {
       this.customer = customer;
-      if (customer && this.pos_profile.posa_enable_fs_payments) this.fs_balance_check(customer);
-      // called if "Enable FS Payments" is set in POS Profile settings
+      if (customer && this.pos_profile.posa_enable_fs_payments) {
+        this.fs_balance_check(customer);
+        this.pending_fs_bills(customer);
+      }
     });
     evntBus.$on("reset_fs_balance_status", () => {
       this.reset_fs_balance_status();
