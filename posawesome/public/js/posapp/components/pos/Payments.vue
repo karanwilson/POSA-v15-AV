@@ -754,7 +754,6 @@ export default {
     // customer_outstanding_amount: 0, // commented this custom variable, because it is now redundant (check comments in the related function below)
     float_precision: frappe.defaults.get_default('float_precision'),
     aurocard: false, // toggles display of Aurocard details
-    //aurocard_number: "",
     aurocard_trans_id: "",
     balance_available: null,
     customer_credit_dict: [],
@@ -769,7 +768,6 @@ export default {
     back_to_invoice() {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
-      //this.aurocard_number = this.aurocard_trans_id = "";
       this.aurocard_trans_id = "";
     },
     submit(event, payment_received = false, print = false) {
@@ -1048,6 +1046,12 @@ export default {
       if (e.key === "x" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         this.submit();
+      }
+    },
+    submitPrint(e) {
+      if (e.key === "F3") {
+        e.preventDefault();
+        this.submit(undefined, false, true);
       }
     },
     set_paid_change() {
@@ -1617,6 +1621,7 @@ export default {
   },
   created() {
     document.addEventListener("keydown", this.shortPay.bind(this));
+    document.addEventListener("keydown", this.submitPrint.bind(this));
     // Integrating Razorpay
     frappe.require('/assets/payments/js/razorpay.js');
   },
@@ -1634,6 +1639,7 @@ export default {
 
   destroyed() {
     document.removeEventListener("keydown", this.shortPay);
+    document.removeEventListener("keydown", this.submitPrint);
   },
 
   watch: {

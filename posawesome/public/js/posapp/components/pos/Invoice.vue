@@ -2537,8 +2537,15 @@ export default {
     },
     */
 
-    shortOpenPayment(e) {
+    shortOfflinePay(e) {
       if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.offline_fs_pay();
+      }
+    },
+
+    shortOpenPayment(e) {
+      if (e.key === "F2") {
         e.preventDefault();
         this.show_payment();
       }
@@ -3465,12 +3472,14 @@ export default {
     document.addEventListener("keydown", this.shortDeleteFirstItem.bind(this));
     document.addEventListener("keydown", this.shortOpenFirstItem.bind(this));
     document.addEventListener("keydown", this.shortSelectDiscount.bind(this));
+    document.addEventListener("keydown", this.shortOfflinePay.bind(this));
   },
   destroyed() {
     document.removeEventListener("keydown", this.shortOpenPayment);
     document.removeEventListener("keydown", this.shortDeleteFirstItem);
     document.removeEventListener("keydown", this.shortOpenFirstItem);
     document.removeEventListener("keydown", this.shortSelectDiscount);
+    document.removeEventListener("keydown", this.shortOfflinePay);
   },
   watch: {
     customer() {
