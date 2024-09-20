@@ -10,7 +10,7 @@
       v-model="customer"
       ref="input_customer"
       @keydown.enter="select_items"
-      @click:clear="reset_fs_balance_status"
+      @click:clear="reset_indicators_status"
       :items="customers"
       item-text="customer_name"
       item-value="name"
@@ -114,9 +114,10 @@ export default {
     select_items() {
       evntBus.$emit('select_items'); // pass event to ItemsSelector.vue
     },
-    reset_fs_balance_status() {
+    reset_indicators_status() {
       evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
       evntBus.$emit('balance_available', null); // pass event to Payments.vue
+      evntBus.$emit('reset_pending_fs_bills_status'); // pass event to Invoice.vue
     },
     new_customer() {
       evntBus.$emit('open_update_customer', null);

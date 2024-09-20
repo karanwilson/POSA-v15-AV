@@ -1283,10 +1283,9 @@ export default {
         args: {customer: customer},
         callback: (r) => {
           if (r.message) {
-            //console.log("pending_bills: ", r.message[0]["pending_bills"]);
-            if (r.message[0]['pending_bills'] > 0) {
+            if (r.message[0]['pending_fs_bills'] > 0) {
               this.dynamic_pending_icon_color = 'warning';
-              this.pending_fs_bills = r.message[0]['pending_bills'];
+              this.pending_fs_bills = r.message[0]['pending_fs_bills'];
             }
           }
           else {
@@ -1294,6 +1293,10 @@ export default {
           }
         }
       })
+    },
+    reset_pending_fs_bills_status(){
+      this.dynamic_pending_icon_color = 'grey';
+      this.pending_fs_bills = 0;
     },
     remove_item(item) {
       const index = this.items.findIndex(
@@ -1549,6 +1552,7 @@ export default {
       this.selcted_delivery_charges = {};
       evntBus.$emit("set_customer_readonly", false);
       this.reset_fs_balance_status();
+      this.reset_pending_fs_bills_status();
       evntBus.$emit('input_customer'); // pass event to Customer.vue
       this.cancel_dialog = false;
     },
@@ -1629,6 +1633,7 @@ export default {
         });
       }
       this.reset_fs_balance_status();
+      this.reset_pending_fs_bills_status();
       evntBus.$emit('input_customer'); // pass event to Customer.vue
       return old_invoice;
     },
@@ -3439,7 +3444,10 @@ export default {
     });
     evntBus.$on("reset_fs_balance_status", () => {
       this.reset_fs_balance_status();
-    })
+    });
+    evntBus.$on("reset_pending_fs_bills_status", () => {
+      this.reset_pending_fs_bills_status();
+    });
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
     });
