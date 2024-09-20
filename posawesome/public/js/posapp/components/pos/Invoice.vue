@@ -83,7 +83,7 @@
           align="left"
         >
           <v-btn
-            text icon :color="dynamic_invoice_icon_color"
+            text icon :color="dynamic_pending_icon_color"
           >
           {{ pending_fs_bills }}<v-icon>mdi-account-clock-outline</v-icon>
           </v-btn>
@@ -1162,7 +1162,7 @@ export default {
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
-      dynamic_invoice_icon_color: 'grey', // highlights pending offline bills
+      dynamic_pending_icon_color: 'grey', // highlights pending offline bills
       pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
       new_line: false,
@@ -1276,8 +1276,24 @@ export default {
       this.dynamic_fs_balance_color = 'grey';
       this.dynamic_fs_balance_icon = 'mdi-bank-off';
     },
-    pending_fs_bills() {
-
+    pending_fs_bills_check(customer) {
+      const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.pending_fs_bills_query',
+        args: {customer: customer},
+        callback: (r) => {
+          if (r.message) {
+            //console.log("pending_bills: ", r.message[0]["pending_bills"]);
+            if (r.message[0]['pending_bills'] > 0) {
+              this.dynamic_pending_icon_color = 'warning';
+              this.pending_fs_bills = r.message[0]['pending_bills'];
+            }
+          }
+          else {
+            vm.dynamic_pending_icon_color = 'grey';
+          }
+        }
+      })
     },
     remove_item(item) {
       const index = this.items.findIndex(
@@ -3418,7 +3434,7 @@ export default {
       this.customer = customer;
       if (customer && this.pos_profile.posa_enable_fs_payments) {
         this.fs_balance_check(customer);
-        this.pending_fs_bills(customer);
+        this.pending_fs_bills_check(customer);
       }
     });
     evntBus.$on("reset_fs_balance_status", () => {
