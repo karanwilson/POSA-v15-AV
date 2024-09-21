@@ -7,7 +7,7 @@
       <v-card>
         <v-card-title>
           <span class="headline primary--text">{{
-            __('Select Hold Invoice')
+            __('Select Hold/Offline/Unpaid Invoice')
           }}</span>
         </v-card-title>
         <v-card-text class="pa-0">

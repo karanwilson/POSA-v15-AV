@@ -966,6 +966,25 @@ def get_fs_offline_invoices():
 
 
 @frappe.whitelist()
+def open_pending_fs_bills(customer):
+    invoices_list = frappe.db.sql(
+        """
+        SELECT name
+        FROM `tabSales Invoice`
+        WHERE customer = %s
+        AND NOT status = "Paid" AND NOT status = "Return" AND NOT status = "Credit Note Issued"
+        ORDER BY modified desc
+	    """,
+        customer,
+        as_dict=1,
+    )
+    data = []
+    for invoice in invoices_list:
+        data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
+    return data
+
+
+@frappe.whitelist()
 def delete_invoice(invoice):
     if frappe.get_value("Sales Invoice", invoice, "posa_is_printed"):
         frappe.throw(_("This invoice {0} cannot be deleted").format(invoice))

@@ -84,6 +84,7 @@
         >
           <v-btn
             text icon :color="dynamic_pending_icon_color"
+            @click="open_pending_fs_bills"
           >
           {{ pending_fs_bills }}<v-icon>mdi-account-clock-outline</v-icon>
           </v-btn>
@@ -235,15 +236,12 @@
                 )
               }}</template
             >
-            <!--template v-slot:item.amount="{ item }">{{
-              formtCurrency_amount(item.qty * item.rate)
-            }}</template-->
-            <!--template v-slot:item.posa_is_offer="{ item }">
+            <template v-slot:item.posa_is_offer="{ item }">
               <v-simple-checkbox
                 :value="!!item.posa_is_offer || !!item.posa_is_replace"
                 disabled
               ></v-simple-checkbox>
-            </template-->
+            </template>
 
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length" class="ma-0 pa-0">
@@ -603,6 +601,68 @@
                       </template>
                     </v-autocomplete>
                   </v-col>
+
+                  <v-col
+                    cols="3"
+                    v-show="display_pending_bill_details"
+                  >
+                    <v-text-field
+                      dense
+                      outlined
+                      color="primary"
+                      :label="frappe._('Invoice Name')"
+                      background-color="white"
+                      hide-details
+                      v-model="invoice_doc.name"
+                      disabled
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="3"
+                    v-show="display_pending_bill_details"
+                  >
+                    <v-text-field
+                      dense
+                      outlined
+                      color="primary"
+                      :label="frappe._('Invoice Status')"
+                      background-color="white"
+                      hide-details
+                      v-model="invoice_doc.status"
+                      disabled
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="3"
+                    v-show="display_pending_bill_details"
+                  >
+                    <v-text-field
+                      dense
+                      outlined
+                      color="primary"
+                      :label="frappe._('Doc Status')"
+                      background-color="white"
+                      hide-details
+                      v-model="invoice_doc.docstatus"
+                      disabled
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="3"
+                    v-show="display_pending_bill_details"
+                  >
+                    <v-text-field
+                      dense
+                      outlined
+                      color="primary"
+                      :label="frappe._('FS Transfer Status')"
+                      background-color="white"
+                      hide-details
+                      v-model="invoice_doc.custom_fs_transfer_status"
+                      disabled
+                    ></v-text-field>
+                  </v-col>
+
                   <v-col
                     cols="4"
                     v-if="
@@ -855,7 +915,8 @@
                 >{{ __("Return") }}</v-btn
               >
             </v-col>
-            <v-col cols="4" class="pa-1">
+            <!--putting the v-if statement below to avoid cancel of submitted invoices pulled via open_pending_fs_bills()-->
+            <v-col cols="4" class="pa-1" v-if="this.invoice_doc.docstatus != 1">
               <v-btn
                 block
                 class="pa-0"
@@ -1024,16 +1085,6 @@
                 hide-details
                 color="success"
               ></v-text-field>
-              <!--v-text-field
-                :value="formtCurrency_amount(subtotal)"
-                :prefix="currencySymbol(pos_profile.currency)"
-                :label="frappe._('Total')"
-                outlined
-                dense
-                readonly
-                hide-details
-                color="success"
-              ></v-text-field-->
             </v-col>
           </v-row>
         </v-col>
@@ -1165,6 +1216,7 @@ export default {
       dynamic_pending_icon_color: 'grey', // highlights pending offline bills
       pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
+      display_pending_bill_details: false, // toggles display of pending bill details
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -1294,7 +1346,7 @@ export default {
         }
       })
     },
-    reset_pending_fs_bills_status(){
+    reset_pending_fs_bills_status() {
       this.dynamic_pending_icon_color = 'grey';
       this.pending_fs_bills = 0;
     },
@@ -1632,8 +1684,11 @@ export default {
           }
         });
       }
-      this.reset_fs_balance_status();
-      this.reset_pending_fs_bills_status();
+      if (!this.display_pending_bill_details) {
+        // need to retain these variables in case pending bill details are pulled.
+        this.reset_fs_balance_status();
+        this.reset_pending_fs_bills_status();
+      }
       evntBus.$emit('input_customer'); // pass event to Customer.vue
       return old_invoice;
     },
@@ -1940,7 +1995,8 @@ export default {
         const invoice_doc = await this.process_invoice_from_order();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
       } else if (this.invoice_doc.doctype == "Sales Invoice") {
-        const sales_invoice_item = this.invoice_doc.items[0];
+        // adding await below as a fix for: "TypeError: get_sales_invoice_child_table() missing 1 required positional argument: 'sales_invoice_item'"
+        const sales_invoice_item = await this.invoice_doc.items[0];
         var sales_invoice_item_doc = {};
         frappe.call({
           method:
@@ -2156,6 +2212,25 @@ export default {
           }
         },
       });
+    },
+
+    open_pending_fs_bills() {
+      this.display_pending_bill_details = true;
+      const vm = this;
+      if (this.pending_fs_bills > 0) {
+        frappe.call({
+          method: "posawesome.posawesome.api.posapp.open_pending_fs_bills",
+          args: {
+            customer: this.customer,
+          },
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              evntBus.$emit("open_drafts", r.message);
+            }
+          },
+        });
+      }
     },
 
     get_draft_orders() {
