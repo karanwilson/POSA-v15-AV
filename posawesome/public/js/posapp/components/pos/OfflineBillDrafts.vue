@@ -1,9 +1,6 @@
 <template>
   <v-row justify="center">
-    <v-dialog v-model="draftsDialog" max-width="900px">
-      <!-- <template v-slot:activator="{ on, attrs }">
-        <v-btn color="primary" dark v-bind="attrs" v-on="on">Open Dialog</v-btn>
-      </template>-->
+    <v-dialog v-model="offlineBillsDialog" max-width="900px">
       <v-card>
         <v-card-title>
           <span class="headline primary--text">{{
@@ -22,6 +19,7 @@
                   v-model="invoice_name"
                   dense
                   clearable
+                  @keydown.enter="get_fs_offline_invoices"
               ></v-text-field>
               </v-col>
               <v-col cols="3">
@@ -33,6 +31,7 @@
                   v-model="customer_name"
                   dense
                   clearable
+                  @keydown.enter="get_fs_offline_invoices"
                 ></v-text-field>
               </v-col>
               <v-col cols="3">
@@ -44,11 +43,12 @@
                   v-model="custom_fs_account_number"
                   dense
                   clearable
+                  @keydown.enter="get_fs_offline_invoices"
                 ></v-text-field>
               </v-col>
              </v-row>
             <v-row no-gutters>
-              <v-col cols="12" class="pa-1">
+              <v-col cols="12" class="pa-1" v-if="dialog_data">
                 <template>
                   <v-data-table
                     :headers="headers"
@@ -82,8 +82,14 @@
               @click="get_fs_offline_invoices"
             >{{ __('Search') }}
             </v-btn>          
-          <v-btn color="error" dark @click="close_dialog">Close</v-btn>
-          <v-btn color="success" dark @click="submit_dialog">Select</v-btn>
+          <v-btn color="error mx-2" dark @click="close_dialog">Close</v-btn>
+          <v-btn
+            v-if="selected.length"
+            color="success"
+            dark
+            @click="submit_dialog"
+            >{{ __('Select') }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -94,13 +100,13 @@
 import { evntBus } from '../../bus';
 import format from '../../format';
 export default {
-  // props: ["draftsDialog"],
   mixins: [format],
   data: () => ({
-    draftsDialog: false,
+    offlineBillsDialog: false,
     singleSelect: true,
     selected: [],
-    dialog_data: {},
+    dialog_data: '',
+    company: '',
     invoice_name: '', // for return search
     customer_name: '', // for return search
     custom_fs_account_number: '', // for return search
@@ -140,17 +146,10 @@ export default {
   watch: {},
   methods: {
     close_dialog() {
-      this.draftsDialog = false;
-    },
-
-    search_invoices_by_enter(e) {
-      if (e.keyCode === 13) {
-        this.get_fs_offline_invoices();
-      }
+      this.offlineBillsDialog = false;
     },
 
     get_fs_offline_invoices() {
-      console.log(invoice_name, customer_name, custom_fs_account_number);
       const vm = this;
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.get_fs_offline_invoices',
@@ -158,6 +157,7 @@ export default {
           invoice_name: vm.invoice_name,
           customer_name: vm.customer_name,
           custom_fs_account_number: vm.custom_fs_account_number,
+          company: vm.company
         },
         async: false,
         callback: function (r) {
@@ -170,8 +170,8 @@ export default {
                 text: r.message,
                 color: 'warning',
               });
-            }
-          }
+            };
+          };
         },
       });
     },
@@ -179,20 +179,20 @@ export default {
     submit_dialog() {
       if (this.selected.length > 0) {
         evntBus.$emit('load_invoice', this.selected[0]);
-        this.draftsDialog = false;
+        this.offlineBillsDialog = false;
       }
     },
   },
   created: function () {
-    document.addEventListener("keydown", this.search_invoices_by_enter.bind(this));
-    evntBus.$on('open_offlineBill_drafts', () => {
+    evntBus.$on('open_offlineBill_drafts', (data) => {
       this.selected = []; // to reset old selections
-      this.draftsDialog = true;
-      //this.dialog_data = data;
+      this.offlineBillsDialog = true;
+      this.company = data;
+      this.invoice_name = '';
+      this.customer_name = '';
+      this.custom_fs_account_number = '';
+      this.dialog_data = '';
     });
   },
-  destroyed() {
-    document.removeEventListener("keydown", this.search_invoices_by_enter);
-  }
 };
 </script>

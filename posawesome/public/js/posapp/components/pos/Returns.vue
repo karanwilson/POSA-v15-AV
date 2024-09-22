@@ -18,6 +18,7 @@
                 v-model="invoice_name"
                 dense
                 clearable
+                @keydown.enter="search_invoices"
             ></v-text-field>
             </v-col>
             <v-col cols="3">
@@ -29,6 +30,7 @@
                 v-model="customer_name"
                 dense
                 clearable
+                @keydown.enter="search_invoices"
               ></v-text-field>
             </v-col>
             <v-col cols="3">
@@ -40,6 +42,7 @@
                 v-model="custom_fs_account_number"
                 dense
                 clearable
+                @keydown.enter="search_invoices"
               ></v-text-field>
             </v-col>
             <v-col cols="2">
@@ -51,6 +54,7 @@
                 v-model="item_code"
                 dense
                 clearable
+                @keydown.enter="search_invoices"
               ></v-text-field>
             </v-col>
             <!--v-col cols="2">
@@ -210,7 +214,6 @@ export default {
     },
   },
   created: function () {
-    document.addEventListener("keydown", this.search_invoices_by_enter.bind(this));
     evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
@@ -222,8 +225,5 @@ export default {
       this.selected = [];
     });
   },
-  destroyed() {
-    document.removeEventListener("keydown", this.search_invoices_by_enter);
-  }
 };
 </script>

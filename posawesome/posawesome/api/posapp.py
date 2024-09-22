@@ -1302,37 +1302,45 @@ def set_customer_info(customer, fieldname, value=""):
 
 
 @frappe.whitelist()
-def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_number):
+def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_number, company):
+    values = {
+        "invoice_name": invoice_name,
+        "customer_name": customer_name,
+        "custom_fs_account_number": custom_fs_account_number,
+        "company": company
+    }
+
     if invoice_name:
+        values["invoice_name"] = "%"+invoice_name+"%" # for matching with partial Invoice IDs
         invoices_list = frappe.db.sql(
             """
             SELECT name
             FROM `tabSales Invoice`
-            WHERE name LIKE %s
+            WHERE name LIKE %(invoice_name)s AND company = %(company)s
             AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
             ORDER BY modified desc
-	        """,
-            invoice_name,
+            """,
+            values=values,
             as_dict=1,
         )
 
     elif custom_fs_account_number:
         customer = frappe.get_all("Customer", 
-            #filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
             filters={"custom_fs_account_number": custom_fs_account_number},
             fields=["name"]
         )
 
         if customer:
+            values["customer"] = customer[0]["name"]
             invoices_list = frappe.db.sql(
                 """
                 SELECT name
                 FROM `tabSales Invoice`
-                WHERE customer = %s
+                WHERE customer = %(customer)s AND company = %(company)s
                 AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
                 ORDER BY modified desc
 	            """,
-                customer,
+                values=values,
                 as_dict=1,
             )
         else:
@@ -1340,15 +1348,16 @@ def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_numbe
             return msg
 
     elif customer_name:
+        values["customer_name"] = "%"+customer_name+"%" # for matching with partial Customer Names
         invoices_list = frappe.db.sql(
             """
             SELECT name
             FROM `tabSales Invoice`
-            WHERE customer LIKE %s
+            WHERE customer LIKE %(customer_name)s AND company = %(company)s
             AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
             ORDER BY modified desc
 	        """,
-            customer_name,
+            values=values,
             as_dict=1,
         )
 
@@ -1358,7 +1367,7 @@ def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_numbe
 
     data = []
     for invoice in invoices_list:
-        data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
+        data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
     return data
 
 

@@ -2242,7 +2242,7 @@ export default {
     },
 
     open_offlineBill_drafts() {
-      evntBus.$emit("open_offlineBill_drafts");
+      evntBus.$emit("open_offlineBill_drafts", this.pos_profile.company);
     },
 
     close_payments() {
