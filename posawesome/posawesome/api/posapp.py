@@ -949,23 +949,6 @@ def get_draft_invoices(pos_opening_shift):
 
 
 @frappe.whitelist()
-def get_fs_offline_invoices():
-    invoices_list = frappe.db.sql(
-        """
-        SELECT name
-        FROM `tabSales Invoice`
-        WHERE docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
-        ORDER BY modified desc
-	    """,
-        as_dict=1,
-    )
-    data = []
-    for invoice in invoices_list:
-        data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
-    return data
-
-
-@frappe.whitelist()
 def open_pending_fs_bills(customer):
     invoices_list = frappe.db.sql(
         """
@@ -1316,6 +1299,67 @@ def set_customer_info(customer, fieldname, value=""):
         frappe.set_value(
             "Customer", customer, "customer_primary_contact", contact_doc.name
         )
+
+
+@frappe.whitelist()
+def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_number):
+    if invoice_name:
+        invoices_list = frappe.db.sql(
+            """
+            SELECT name
+            FROM `tabSales Invoice`
+            WHERE name LIKE %s
+            AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
+            ORDER BY modified desc
+	        """,
+            invoice_name,
+            as_dict=1,
+        )
+
+    elif custom_fs_account_number:
+        customer = frappe.get_all("Customer", 
+            #filters={"custom_fs_account_number": ["like", f"%{custom_fs_account_number}%"]},
+            filters={"custom_fs_account_number": custom_fs_account_number},
+            fields=["name"]
+        )
+
+        if customer:
+            invoices_list = frappe.db.sql(
+                """
+                SELECT name
+                FROM `tabSales Invoice`
+                WHERE customer = %s
+                AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
+                ORDER BY modified desc
+	            """,
+                customer,
+                as_dict=1,
+            )
+        else:
+            msg = "FS Account not found"
+            return msg
+
+    elif customer_name:
+        invoices_list = frappe.db.sql(
+            """
+            SELECT name
+            FROM `tabSales Invoice`
+            WHERE customer LIKE %s
+            AND docstatus = 0 AND custom_fs_transfer_status IS NOT NULL
+            ORDER BY modified desc
+	        """,
+            customer_name,
+            as_dict=1,
+        )
+
+    else:
+        msg = "At least one of 'Invoice ID, 'Customer Name' or 'FS Account' is needed for this search"
+        return msg    
+
+    data = []
+    for invoice in invoices_list:
+        data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
+    return data
 
 
 @frappe.whitelist()

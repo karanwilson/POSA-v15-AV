@@ -210,6 +210,7 @@ export default {
     },
   },
   created: function () {
+    document.addEventListener("keydown", this.search_invoices_by_enter.bind(this));
     evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
@@ -221,5 +222,8 @@ export default {
       this.selected = [];
     });
   },
+  destroyed() {
+    document.removeEventListener("keydown", this.search_invoices_by_enter);
+  }
 };
 </script>

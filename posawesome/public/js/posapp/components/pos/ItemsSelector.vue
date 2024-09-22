@@ -96,7 +96,7 @@
                     height="100px"
                   >
                     <v-card-text
-                      v-text="item.item_name"
+                      v-text="item.item_code + ': ' + item.item_name"
                       class="text-caption px-1 pb-0"
                     ></v-card-text>
                   </v-img>

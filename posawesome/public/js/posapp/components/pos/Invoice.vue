@@ -900,7 +900,7 @@
                 class="pa-0"
                 color="warning"
                 dark
-                @click="get_fs_offline_invoices"
+                @click="open_offlineBill_drafts"
                 >{{ __("Offline FS Bills") }}</v-btn
               >
             </v-col>
@@ -2201,19 +2201,6 @@ export default {
       });
     },
 
-    get_fs_offline_invoices() {
-      const vm = this;
-      frappe.call({
-        method: "posawesome.posawesome.api.posapp.get_fs_offline_invoices",
-        async: false,
-        callback: function (r) {
-          if (r.message) {
-            evntBus.$emit("open_drafts", r.message);
-          }
-        },
-      });
-    },
-
     open_pending_fs_bills() {
       this.display_pending_bill_details = true;
       const vm = this;
@@ -2252,6 +2239,10 @@ export default {
 
     open_returns() {
       evntBus.$emit("open_returns", this.pos_profile.company);
+    },
+
+    open_offlineBill_drafts() {
+      evntBus.$emit("open_offlineBill_drafts");
     },
 
     close_payments() {

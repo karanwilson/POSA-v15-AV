@@ -7,11 +7,46 @@
       <v-card>
         <v-card-title>
           <span class="headline primary--text">{{
-            __('Select Hold/Unpaid Invoice')
+            __('Select Offline Bill')
           }}</span>
         </v-card-title>
         <v-card-text class="pa-0">
           <v-container>
+            <v-row class="mb-4">
+              <v-col cols="3">
+                <v-text-field
+                  color="primary"
+                  :label="frappe._('Invoice ID *')"
+                  background-color="white"
+                  hide-details
+                  v-model="invoice_name"
+                  dense
+                  clearable
+              ></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  color="primary"
+                  :label="frappe._('Customer Name *')"
+                  background-color="white"
+                  hide-details
+                  v-model="customer_name"
+                  dense
+                  clearable
+                ></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  color="primary"
+                  :label="frappe._('Full FS Account No.*')"
+                  background-color="white"
+                  hide-details
+                  v-model="custom_fs_account_number"
+                  dense
+                  clearable
+                ></v-text-field>
+              </v-col>
+             </v-row>
             <v-row no-gutters>
               <v-col cols="12" class="pa-1">
                 <template>
@@ -39,6 +74,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
+            <v-btn
+              text
+              class="ml-2"
+              color="primary"
+              dark
+              @click="get_fs_offline_invoices"
+            >{{ __('Search') }}
+            </v-btn>          
           <v-btn color="error" dark @click="close_dialog">Close</v-btn>
           <v-btn color="success" dark @click="submit_dialog">Select</v-btn>
         </v-card-actions>
@@ -58,6 +101,9 @@ export default {
     singleSelect: true,
     selected: [],
     dialog_data: {},
+    invoice_name: '', // for return search
+    customer_name: '', // for return search
+    custom_fs_account_number: '', // for return search
     headers: [
       {
         text: __('Customer'),
@@ -97,6 +143,39 @@ export default {
       this.draftsDialog = false;
     },
 
+    search_invoices_by_enter(e) {
+      if (e.keyCode === 13) {
+        this.get_fs_offline_invoices();
+      }
+    },
+
+    get_fs_offline_invoices() {
+      console.log(invoice_name, customer_name, custom_fs_account_number);
+      const vm = this;
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.get_fs_offline_invoices',
+        args: {
+          invoice_name: vm.invoice_name,
+          customer_name: vm.customer_name,
+          custom_fs_account_number: vm.custom_fs_account_number,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            if (r.message instanceof Array) { // check whether there is a result or an error message
+              vm.dialog_data = r.message;
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: r.message,
+                color: 'warning',
+              });
+            }
+          }
+        },
+      });
+    },
+
     submit_dialog() {
       if (this.selected.length > 0) {
         evntBus.$emit('load_invoice', this.selected[0]);
@@ -105,11 +184,15 @@ export default {
     },
   },
   created: function () {
-    evntBus.$on('open_drafts', (data) => {
+    document.addEventListener("keydown", this.search_invoices_by_enter.bind(this));
+    evntBus.$on('open_offlineBill_drafts', () => {
       this.selected = []; // to reset old selections
       this.draftsDialog = true;
-      this.dialog_data = data;
+      //this.dialog_data = data;
     });
   },
+  destroyed() {
+    document.removeEventListener("keydown", this.search_invoices_by_enter);
+  }
 };
 </script>
