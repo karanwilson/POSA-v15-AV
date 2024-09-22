@@ -1332,7 +1332,10 @@ export default {
       const vm = this;
       frappe.call({
         method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.pending_fs_bills_query',
-        args: {customer: customer},
+        args: {
+          customer: vm.customer,
+          company: vm.pos_profile.company
+        },
         callback: (r) => {
           if (r.message) {
             if (r.message[0]['pending_fs_bills'] > 0) {
@@ -2208,7 +2211,8 @@ export default {
         frappe.call({
           method: "posawesome.posawesome.api.posapp.open_pending_fs_bills",
           args: {
-            customer: this.customer,
+            customer: vm.customer,
+            company: vm.pos_profile.company
           },
           async: false,
           callback: function (r) {

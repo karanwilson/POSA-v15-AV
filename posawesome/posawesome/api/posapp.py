@@ -949,16 +949,20 @@ def get_draft_invoices(pos_opening_shift):
 
 
 @frappe.whitelist()
-def open_pending_fs_bills(customer):
+def open_pending_fs_bills(customer, company):
+    values = {
+        "customer": customer,
+        "company": company
+    }
     invoices_list = frappe.db.sql(
         """
         SELECT name
         FROM `tabSales Invoice`
-        WHERE customer = %s
+        WHERE customer = %(customer)s AND company = %(company)s
         AND NOT status = "Paid" AND NOT status = "Return" AND NOT status = "Credit Note Issued"
         ORDER BY modified desc
 	    """,
-        customer,
+        values=values,
         as_dict=1,
     )
     data = []
