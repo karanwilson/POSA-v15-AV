@@ -933,7 +933,7 @@
                 color="accent"
                 dark
                 @click="new_invoice"
-                >{{ __("Save/New") }}</v-btn
+                >{{ __("Hold Bill") }}</v-btn
               >
             </v-col>
             <v-col

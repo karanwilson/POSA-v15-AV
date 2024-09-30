@@ -45,7 +45,7 @@ def get_opening_dialog_data():
     data["pos_profiles_data"] = frappe.get_list(
         "POS Profile",
         filters={"disabled": 0},
-        fields=["name", "company", "currency"],
+        fields=["name", "company", "currency", "owner"], # adding "owner" to match POS profile with logged-in user
         limit_page_length=0,
         order_by="name",
     )

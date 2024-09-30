@@ -120,16 +120,30 @@ export default {
   watch: {
     company(val) {
       this.pos_profiles = [];
-      this.pos_profiles_data.forEach((element) => {
-        if (element.company === val) {
-          this.pos_profiles.push(element.name);
-        }
-        if (this.pos_profiles.length) {
-          this.pos_profile = this.pos_profiles[0];
-        } else {
-          this.pos_profile = '';
-        }
-      });
+      if (frappe.user.name == 'Administrator') {
+        this.pos_profiles_data.forEach((element) => {
+          if (element.company === val) {
+            this.pos_profiles.push(element.name);
+          }
+          if (this.pos_profiles.length) {
+            this.pos_profile = this.pos_profiles[0];
+          } else {
+            this.pos_profile = '';
+          }
+        });
+      }
+      else {
+        this.pos_profiles_data.forEach((element) => {
+          if (element.company === val && element.owner == frappe.user.name) {
+            this.pos_profiles.push(element.name);
+          }
+          if (this.pos_profiles.length) {
+            this.pos_profile = this.pos_profiles[0];
+          } else {
+            this.pos_profile = '';
+          }
+        });
+      }
     },
     pos_profile(val) {
       this.payments_methods = [];
