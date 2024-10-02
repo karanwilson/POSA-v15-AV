@@ -120,7 +120,9 @@ export default {
   watch: {
     company(val) {
       this.pos_profiles = [];
-      if (frappe.user.name == 'Administrator') {
+      //console.log("frappe.session.user: ", frappe.session.user);
+      //console.log("frappe.user.name: ", frappe.user.name);
+      if (frappe.session.user == 'Administrator') {
         this.pos_profiles_data.forEach((element) => {
           if (element.company === val) {
             this.pos_profiles.push(element.name);
@@ -134,7 +136,7 @@ export default {
       }
       else {
         this.pos_profiles_data.forEach((element) => {
-          if (element.company === val && element.owner == frappe.user.name) {
+          if (element.company === val && element.owner == frappe.session.user) {
             this.pos_profiles.push(element.name);
           }
           if (this.pos_profiles.length) {
