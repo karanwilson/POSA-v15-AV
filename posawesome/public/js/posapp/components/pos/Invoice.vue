@@ -1211,6 +1211,7 @@ export default {
       float_precision: 2,
       currency_precision: 2,
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
+      balance_available: null,
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
       dynamic_pending_icon_color: 'grey', // highlights pending offline bills
@@ -1291,12 +1292,13 @@ export default {
         callback: function (r) {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
+              vm.balance_available = parseFloat(r.message['maxAmount']);
               // need to check with FS or Luk what 'maxAmount == -1' means
               //if ((parseFloat(r.message['maxAmount']) > 0) || (parseFloat(r.message['maxAmount']) == -1)) {
-              if (parseFloat(r.message['maxAmount']) > 0) {
+              if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
-                evntBus.$emit('balance_available', r.message['maxAmount']);
+                evntBus.$emit('balance_available', vm.balance_available);
               }
               else {
                 vm.dynamic_fs_balance_color = 'error';
@@ -1305,7 +1307,7 @@ export default {
                   text: 'Insufficient Balance',
                   color: 'warning',
                 });
-                evntBus.$emit('balance_available', r.message['maxAmount']);
+                evntBus.$emit('balance_available', vm.balance_available);
               }
             }
             else {
@@ -3594,6 +3596,22 @@ export default {
     document.removeEventListener("keydown", this.shortOfflinePay);
   },
   watch: {
+    subtotal() {
+      if (this.subtotal >= 0) { // excluding returns
+        if (this.subtotal > this.balance_available) {
+          this.dynamic_fs_balance_color = 'error';
+          this.dynamic_fs_balance_icon = 'mdi-bank';
+          evntBus.$emit('show_mesage', {
+            text: 'Insufficient Balance',
+            color: 'warning',
+          });
+        }
+        else if (this.subtotal == 0 && this.balance_available > 0) {
+          this.dynamic_fs_balance_color = 'success';
+          this.dynamic_fs_balance_icon = 'mdi-bank';
+        }
+      }
+    },
     customer() {
       this.close_payments();
       evntBus.$emit("set_customer", this.customer);
