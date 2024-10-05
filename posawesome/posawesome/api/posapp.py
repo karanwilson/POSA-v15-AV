@@ -11,7 +11,8 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_a
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.accounts.doctype.pos_profile.pos_profile import get_item_groups
 from frappe.utils.background_jobs import enqueue
-from erpnext.accounts.party import get_party_bank_account
+from erpnext.accounts.party import get_party_bank_account, get_party_account # added for open_pending_fs_bills
+from erpnext.accounts.utils import get_outstanding_invoices # added for open_pending_fs_bills
 from erpnext.stock.doctype.batch.batch import (
     get_batch_no,
     get_batch_qty,
@@ -950,24 +951,31 @@ def get_draft_invoices(pos_opening_shift):
 
 @frappe.whitelist()
 def open_pending_fs_bills(customer, company):
-    values = {
-        "customer": customer,
-        "company": company
-    }
-    invoices_list = frappe.db.sql(
-        """
-        SELECT name
-        FROM `tabSales Invoice`
-        WHERE customer = %(customer)s AND company = %(company)s
-        AND NOT status = "Paid" AND NOT status = "Return" AND NOT status = "Credit Note Issued"
-        ORDER BY modified desc
-	    """,
-        values=values,
-        as_dict=1,
+    outstanding_invoices = get_outstanding_invoices(
+        party_type="Customer",
+        party=customer,
+        account=get_party_account("Customer", customer, company),
     )
+    #values = {
+    #    "customer": customer,
+    #    "company": company
+    #}
+    #invoices_list = frappe.db.sql(
+    #   """
+    #    SELECT name
+    #    FROM `tabSales Invoice`
+    #    WHERE customer = %(customer)s AND company = %(company)s
+    #    AND NOT status = "Paid" AND NOT status = "Return" AND NOT status = "Credit Note Issued"
+    #    ORDER BY modified desc
+	#    """,
+    #    values=values,
+    #    as_dict=1,
+    #)
     data = []
-    for invoice in invoices_list:
-        data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
+    #for invoice in invoices_list:
+    #    data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
+    for invoice in outstanding_invoices:
+        data.append(frappe.get_cached_doc(invoice.get("voucher_type"), invoice.get("voucher_no")))
     return data
 
 
