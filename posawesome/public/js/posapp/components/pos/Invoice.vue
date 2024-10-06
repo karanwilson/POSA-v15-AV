@@ -1333,16 +1333,16 @@ export default {
     pending_fs_bills_check(customer) {
       const vm = this;
       frappe.call({
-        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.pending_fs_bills_query',
+        method: 'posawesome.posawesome.api.posapp.pending_fs_bills_query',
         args: {
           customer: vm.customer,
           company: vm.pos_profile.company
         },
         callback: (r) => {
           if (r.message) {
-            if (r.message[0]['pending_fs_bills'] > 0) {
+              if (r.message > 0) {
               this.dynamic_pending_icon_color = 'warning';
-              this.pending_fs_bills = r.message[0]['pending_fs_bills'];
+              this.pending_fs_bills = r.message;
             }
           }
           else {
@@ -3606,7 +3606,7 @@ export default {
             color: 'warning',
           });
         }
-        else if (this.subtotal == 0 && this.balance_available > 0) {
+        else if (this.customer && this.subtotal == 0 && this.balance_available > 0) {
           this.dynamic_fs_balance_color = 'success';
           this.dynamic_fs_balance_icon = 'mdi-bank';
         }
