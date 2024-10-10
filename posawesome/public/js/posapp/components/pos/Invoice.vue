@@ -1616,6 +1616,20 @@ export default {
 
     // for 'Offline FS Pay'
     offline_fs_pay() {
+      if (!this.customer) {
+        evntBus.$emit("show_mesage", {
+          text: __(`There is no Customer !`),
+          color: "error",
+        });
+        return;
+      }
+      if (!this.items.length) {
+        evntBus.$emit("show_mesage", {
+          text: __(`There are no Items !`),
+          color: "error",
+        });
+        return;
+      }
       this.fs_transfer_pending = true;
       this.new_invoice();
       evntBus.$emit('show_mesage', {
@@ -1987,7 +2001,7 @@ export default {
       }
       if (!this.items.length) {
         evntBus.$emit("show_mesage", {
-          text: __(`There is no Items !`),
+          text: __(`There are no Items !`),
           color: "error",
         });
         return;
