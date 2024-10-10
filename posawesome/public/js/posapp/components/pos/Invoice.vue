@@ -751,7 +751,7 @@
     <v-card v-if="pos_profile.posa_enable_fs_payments"
       class="cards mb-0 mt-3 py-0 grey lighten-5">
       <v-row no-gutters>
-        <v-col cols="6">
+        <v-col cols="5">
           <v-row no-gutters class="pa-1 pt-9 pr-1">
             <v-col cols="6" class="pa-1">
               <v-text-field
@@ -868,7 +868,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="6">
+        <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
             <v-col cols="4" class="pa-1">
               <v-btn
@@ -3611,7 +3611,7 @@ export default {
   },
   watch: {
     subtotal() {
-      if (this.subtotal >= 0) { // excluding returns
+      if (this.balance_available && this.subtotal >= 0) { // excluding returns and cases where balance_available is not set
         if (this.subtotal > this.balance_available) {
           this.dynamic_fs_balance_color = 'error';
           this.dynamic_fs_balance_icon = 'mdi-bank';

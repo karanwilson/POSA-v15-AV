@@ -509,6 +509,46 @@
           </v-col>
           <v-col
             cols="6"
+          >
+            <v-switch
+              v-model="invoice_doc.set_posting_time"
+              flat
+              :label="frappe._('Edit Posting Date')"
+              class="my-0 py-0"
+            ></v-switch>
+          </v-col>
+          <v-col cols="6" v-if="invoice_doc.set_posting_time">
+            <v-menu
+              ref="invoice_date_menu"
+              v-model="invoice_date_menu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  v-model="invoice_doc.posting_date"
+                  :label="frappe._('Posting Date')"
+                  readonly
+                  outlined
+                  dense
+                  hide-details
+                  v-bind="attrs"
+                  v-on="on"
+                  color="primary"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="invoice_doc.posting_date"
+                no-title
+                scrollable
+                color="primary"
+                @input="invoice_date_menu = false"
+              >
+              </v-date-picker>
+            </v-menu>
+          </v-col>
+          <v-col
+            cols="6"
             v-if="pos_profile.posa_allow_credit_sale && !invoice_doc.is_return"
           >
             <v-switch
@@ -742,6 +782,7 @@ export default {
     is_write_off_change: 0,
     date_menu: false,
     po_date_menu: false,
+    invoice_date_menu: false, // for editing Sales Invoice Posting Date
     addresses: [],
     sales_persons: [],
     sales_person: "",
