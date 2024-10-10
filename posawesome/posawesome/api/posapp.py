@@ -954,8 +954,8 @@ def pending_fs_bills_query(customer, company):
     customer_name = frappe.get_value("Customer", customer, "customer_name")
     outstanding_invoices = get_outstanding_invoices(
         party_type="Customer",
-        party=customer_name,
-        account=get_party_account("Customer", customer_name, company),
+        party=customer,
+        account=get_party_account("Customer", customer, company),
     )
     return len(outstanding_invoices)
 
@@ -965,7 +965,7 @@ def open_pending_fs_bills(customer, company):
     customer_name = frappe.get_value("Customer", customer, "customer_name")
     outstanding_invoices = get_outstanding_invoices(
         party_type="Customer",
-        party=customer_name,
+        party=customer,
         account=get_party_account("Customer", customer, company),
     )
     #values = {
