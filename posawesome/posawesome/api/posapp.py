@@ -966,7 +966,7 @@ def open_pending_fs_bills(customer, company):
     outstanding_invoices = get_outstanding_invoices(
         party_type="Customer",
         party=customer_name,
-        account=get_party_account("Customer", customer_name, company),
+        account=get_party_account("Customer", customer, company),
     )
     #values = {
     #    "customer": customer,
