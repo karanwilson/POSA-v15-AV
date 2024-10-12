@@ -3611,7 +3611,7 @@ export default {
   },
   watch: {
     subtotal() {
-      if (this.balance_available && this.subtotal >= 0) { // excluding returns and cases where balance_available is not set
+      if (this.balance_available != null && this.subtotal >= 0) { // excluding returns and cases where balance_available is not set
         if (this.subtotal > this.balance_available) {
           this.dynamic_fs_balance_color = 'error';
           this.dynamic_fs_balance_icon = 'mdi-bank';
