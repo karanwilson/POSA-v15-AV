@@ -1293,9 +1293,10 @@ export default {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
               vm.balance_available = parseFloat(r.message['maxAmount']);
-              // need to check with FS or Luk what 'maxAmount == -1' means
+              // Accounts with 'maxAmount == -1' have a credit set by FS
               //if ((parseFloat(r.message['maxAmount']) > 0) || (parseFloat(r.message['maxAmount']) == -1)) {
-              if (vm.balance_available > 0) {
+              //if (vm.balance_available > 0) {
+              if (vm.balance_available > 0 || vm.balance_available == -1) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
                 evntBus.$emit('balance_available', vm.balance_available);
@@ -3611,7 +3612,8 @@ export default {
   },
   watch: {
     subtotal() {
-      if (this.balance_available != null && this.subtotal >= 0) { // excluding returns and cases where balance_available is not set
+      // watch only when customer is set; exclude returns; exclude cases where balance_available is 'not yet set (null)' or is '-1'
+      if (this.customer && this.balance_available != null && this.balance_available != -1 && this.subtotal >= 0) {
         if (this.subtotal > this.balance_available) {
           this.dynamic_fs_balance_color = 'error';
           this.dynamic_fs_balance_icon = 'mdi-bank';
@@ -3620,7 +3622,7 @@ export default {
             color: 'warning',
           });
         }
-        else if (this.customer && this.subtotal == 0 && this.balance_available > 0) {
+        else if (this.subtotal < this.balance_available || (this.subtotal == 0 && this.balance_available > 0)) {
           this.dynamic_fs_balance_color = 'success';
           this.dynamic_fs_balance_icon = 'mdi-bank';
         }
