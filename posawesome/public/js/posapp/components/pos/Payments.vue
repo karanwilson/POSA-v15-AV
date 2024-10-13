@@ -511,23 +511,23 @@
             cols="6"
           >
             <v-switch
-              v-model="invoice_doc.set_posting_time"
+              v-model="add_transaction_date"
               flat
-              :label="frappe._('Edit Posting Date')"
+              :label="frappe._('Add Transaction Date')"
               class="my-0 py-0"
             ></v-switch>
           </v-col>
-          <v-col cols="6" v-if="invoice_doc.set_posting_time">
+          <v-col cols="6" v-if="add_transaction_date">
             <v-menu
-              ref="invoice_date_menu"
-              v-model="invoice_date_menu"
+              ref="transaction_date_menu"
+              v-model="transaction_date_menu"
               :close-on-content-click="false"
               transition="scale-transition"
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="invoice_doc.posting_date"
-                  :label="frappe._('Posting Date')"
+                  v-model="invoice_doc.custom_transaction_date"
+                  :label="frappe._('Transaction Date')"
                   readonly
                   outlined
                   dense
@@ -538,11 +538,11 @@
                 ></v-text-field>
               </template>
               <v-date-picker
-                v-model="invoice_doc.posting_date"
+                v-model="invoice_doc.custom_transaction_date"
                 no-title
                 scrollable
                 color="primary"
-                @input="invoice_date_menu = false"
+                @input="transaction_date_menu = false"
               >
               </v-date-picker>
             </v-menu>
@@ -782,7 +782,8 @@ export default {
     is_write_off_change: 0,
     date_menu: false,
     po_date_menu: false,
-    invoice_date_menu: false, // for editing Sales Invoice Posting Date
+    transaction_date_menu: false, // for editing Sales Invoice Posting Date
+    add_transaction_date: false, // in case posting-date is later than the transaction-date (added in the remarks field of Invoice)
     addresses: [],
     sales_persons: [],
     sales_person: "",
@@ -1287,13 +1288,13 @@ export default {
       return new Promise((resolve, reject) => {
         //if (this.balance_available >= fs_amount) {
         // pass-through for returns, credit-balance (-1) and sufficient balance
-        if (fAmount < 0 || this.balance_available == -1 || fAmount <= this.balance_available) {
+        if (fs_amount < 0 || this.balance_available == -1 || fs_amount <= this.balance_available) {
           const vm = this;
           frappe.call({
             method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
             args: {
               invoice_doc: vm.invoice_doc,
-              fAmount: fs_amount
+              fAmount: fs_amount,
             },
             async: false,
             callback: function (r) {
@@ -1612,6 +1613,7 @@ export default {
         }
 
         this.aurocard = false; // toggle for display of Aurocard details
+        this.add_transaction_date = false;
         // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
         if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
           this.is_cashback = false;
