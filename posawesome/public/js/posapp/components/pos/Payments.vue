@@ -1613,7 +1613,9 @@ export default {
         }
 
         this.aurocard = false; // toggle for display of Aurocard details
-        this.add_transaction_date = false;
+        if (this.invoice_doc.custom_transaction_date)
+          this.add_transaction_date = true;
+        else this.add_transaction_date = false;
         // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
         if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
           this.is_cashback = false;
