@@ -1288,7 +1288,8 @@ export default {
       return new Promise((resolve, reject) => {
         //if (this.balance_available >= fs_amount) {
         // pass-through for returns, credit-balance (-1) and sufficient balance
-        if (fs_amount < 0 || this.balance_available == -1 || fs_amount <= this.balance_available) {
+        //if (fs_amount < 0 || this.balance_available == -1 || fs_amount <= this.balance_available) {
+        if (fs_amount < 0 || fs_amount <= this.balance_available) {
           const vm = this;
           frappe.call({
             method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',

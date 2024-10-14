@@ -1295,8 +1295,8 @@ export default {
               vm.balance_available = parseFloat(r.message['maxAmount']);
               // Accounts with 'maxAmount == -1' have a credit set by FS
               //if ((parseFloat(r.message['maxAmount']) > 0) || (parseFloat(r.message['maxAmount']) == -1)) {
-              //if (vm.balance_available > 0) {
-              if (vm.balance_available > 0 || vm.balance_available == -1) {
+              //if (vm.balance_available > 0 || vm.balance_available == -1) {
+              if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
                 evntBus.$emit('balance_available', vm.balance_available);
