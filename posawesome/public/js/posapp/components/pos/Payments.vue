@@ -654,7 +654,29 @@
           </v-row>
         </div>
         <v-divider></v-divider>
-        <!--v-row class="pb-0 mb-2" align="start">
+
+        <v-row class="px-1 py-0" align="start" no-gutters>
+          <v-col cols="6">
+            <v-switch
+              v-model="staff_member"
+              flat
+              :label="frappe._('Staff Member')"
+              class="my-0 py-0"
+            ></v-switch>
+          </v-col>
+          <v-col cols="6" v-if="staff_member">
+            <v-text-field
+              v-model="invoice_doc.custom_staff_member"
+              :label="frappe._('Staff Member')"
+              outlined
+              dense
+              hide-details
+              color="primary"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <!-- <v-row class="pb-0 mb-2" align="start">
           <v-col cols="12">
             <v-autocomplete
               dense
@@ -689,7 +711,7 @@
               </template>
             </v-autocomplete>
           </v-col>
-        </v-row-->
+        </v-row> -->
       </div>
     </v-card>
 
@@ -784,6 +806,7 @@ export default {
     po_date_menu: false,
     transaction_date_menu: false, // for editing Sales Invoice Posting Date
     add_transaction_date: false, // in case posting-date is later than the transaction-date (added in the remarks field of Invoice)
+    staff_member: false, // in case of accounts shared by a group
     addresses: [],
     sales_persons: [],
     sales_person: "",
@@ -1614,9 +1637,15 @@ export default {
         }
 
         this.aurocard = false; // toggle for display of Aurocard details
+
         if (this.invoice_doc.custom_transaction_date)
           this.add_transaction_date = true;
         else this.add_transaction_date = false;
+
+        if (this.invoice_doc.custom_staff_member)
+          this.staff_member = true;
+        else this.staff_member = false;
+
         // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
         if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
           this.is_cashback = false;
