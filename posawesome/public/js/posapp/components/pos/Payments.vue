@@ -1631,8 +1631,17 @@ export default {
         if (invoice_doc.is_return) {
           this.is_return = true;
           invoice_doc.payments.forEach((payment) => {
-            payment.amount = 0;
-            payment.base_amount = 0;
+            // In case of returnd to FS, setting the FS amount to 'return value'
+            if (payment.mode_of_payment == "FS") {
+              payment.amount = this.flt(
+                invoice_doc.rounded_total || invoice_doc.grand_total,
+                this.currency_precision
+              );
+            }
+            else {
+              payment.amount = 0;
+              payment.base_amount = 0;
+            }
           });
         }
 
