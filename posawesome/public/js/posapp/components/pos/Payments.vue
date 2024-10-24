@@ -1630,6 +1630,7 @@ export default {
         }
         if (invoice_doc.is_return) {
           this.is_return = true;
+          // commenting out the below statements to enable returns to the default mode of payment
           /* invoice_doc.payments.forEach((payment) => {
             payment.amount = 0;
             payment.base_amount = 0;
