@@ -464,6 +464,7 @@ def get_sales_person_names():
     return sales_persons
 
 
+# tax template added here
 def add_taxes_from_tax_template(item, parent_doc):
     accounts_settings = frappe.get_cached_doc("Accounts Settings")
     add_taxes_from_item_tax_template = (
@@ -549,6 +550,7 @@ def update_invoice(data):
                 )
         else:
             item.is_free_item = 0
+        # tax template added here
         add_taxes_from_tax_template(item, invoice_doc)
 
     if frappe.get_cached_value(
