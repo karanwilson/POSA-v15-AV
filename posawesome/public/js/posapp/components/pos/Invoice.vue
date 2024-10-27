@@ -1952,7 +1952,6 @@ export default {
           }
         },
       });
-      console.log("this.invoice_doc: ", this.invoice_doc);
       return this.invoice_doc;
     },
 

@@ -484,7 +484,7 @@ def add_taxes_from_tax_template(item, parent_doc):
         taxes_template_details = frappe.db.sql(
             """
             SELECT tax_type FROM `tabItem Tax Template Detail` WHERE parent = '{0}'
-            AND (tax_type LIKE 'Output Tax CGST%' or tax_type LIKE 'Output Tax SGST%')
+            AND (tax_type LIKE 'Output Tax CGST - %' or tax_type LIKE 'Output Tax SGST - %')
             """.format(item_tax_template),
             as_dict=1
         )
@@ -569,6 +569,7 @@ def update_invoice(data):
         if invoice_doc.get("taxes"):
             for tax in invoice_doc.taxes:
                 tax.included_in_print_rate = 1
+                #frappe.throw(str(tax.as_dict()))
 
     today_date = getdate()
     if (
@@ -577,6 +578,7 @@ def update_invoice(data):
     ):
         invoice_doc.set_posting_time = 1
 
+    #frappe.throw(str(invoice_doc.taxes[0].as_dict()))
     invoice_doc.save()
     return invoice_doc
 
