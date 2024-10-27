@@ -464,9 +464,9 @@ def get_sales_person_names():
     return sales_persons
 
 
-# tax template added here
 def add_taxes_from_tax_template(item, parent_doc):
-    accounts_settings = frappe.get_cached_doc("Accounts Settings")
+
+    """ accounts_settings = frappe.get_cached_doc("Accounts Settings")
     add_taxes_from_item_tax_template = (
         accounts_settings.add_taxes_from_item_tax_template
     )
@@ -475,6 +475,18 @@ def add_taxes_from_tax_template(item, parent_doc):
         taxes_template_details = frappe.get_all(
             "Item Tax Template Detail",
             filters={"parent": item_tax_template},
+            fields=["tax_type"],
+        ) """
+
+    # Adapting to the new 'India Compliance App'
+    if item.get("item_tax_template"):
+        item_tax_template = item.get("item_tax_template")
+        taxes_template_details = frappe.get_all(
+            "Item Tax Template Detail",
+            filters={
+                "parent": item_tax_template,
+                "tax_type": ["like", "Output%"]
+            },
             fields=["tax_type"],
         )
 
@@ -550,7 +562,6 @@ def update_invoice(data):
                 )
         else:
             item.is_free_item = 0
-        # tax template added here
         add_taxes_from_tax_template(item, invoice_doc)
 
     if frappe.get_cached_value(
