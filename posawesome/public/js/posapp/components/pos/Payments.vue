@@ -676,6 +676,27 @@
           </v-col>
         </v-row>
 
+        <v-row class="px-1 py-0" align="start" no-gutters>
+          <v-col cols="6" v-if="invoice_doc.is_return">
+            <v-switch
+              v-model="remarks"
+              flat
+              :label="frappe._('Remarks')"
+              class="my-0 py-0"
+            ></v-switch>
+          </v-col>
+          <v-col cols="6" v-if="remarks">
+            <v-text-field
+              v-model="invoice_doc.remarks"
+              :label="frappe._('Remarks')"
+              outlined
+              dense
+              hide-details
+              color="primary"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
         <!-- <v-row class="pb-0 mb-2" align="start">
           <v-col cols="12">
             <v-autocomplete
@@ -804,8 +825,8 @@ export default {
     is_write_off_change: 0,
     date_menu: false,
     po_date_menu: false,
-    transaction_date_menu: false, // for editing Sales Invoice Posting Date
-    add_transaction_date: false, // in case posting-date is later than the transaction-date (added in the remarks field of Invoice)
+    transaction_date_menu: false, // in case posting-date is later than the transaction-date
+    add_transaction_date: false, // in case posting-date is later than the transaction-date
     staff_member: false, // in case of accounts shared by a group
     addresses: [],
     sales_persons: [],
@@ -820,6 +841,7 @@ export default {
     float_precision: frappe.defaults.get_default('float_precision'),
     aurocard: false, // toggles display of Aurocard details
     aurocard_trans_id: "",
+    remarks: false, // shows on the returns screen
     balance_available: null,
     customer_credit_dict: [],
     phone_dialog: false,
@@ -1324,7 +1346,10 @@ export default {
             callback: function (r) {
               if (r.message) {
                 vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
-                vm.invoice_doc.remarks = r.message["remarks"];
+                if (invoice_doc.is_return && this.remarks)
+                  vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
+                else
+                  vm.invoice_doc.remarks = r.message["remarks"];
 
                 if (r.message["custom_fs_transfer_status"] == "OK") {
                   resolve("OK");
@@ -1364,7 +1389,10 @@ export default {
       return new Promise((resolve, reject) => {
         if (this.aurocard_trans_id) {
           //this.invoice_doc.custom_aurocard_number = this.aurocard_number;
-          this.invoice_doc.remarks = this.aurocard_trans_id;
+          if (invoice_doc.is_return && this.remarks)
+            this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
+          else
+            this.invoice_doc.remarks = "Aurocard Transaction ID: " + this.aurocard_trans_id;
           resolve("OK");
         }
         else
