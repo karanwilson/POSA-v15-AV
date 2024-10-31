@@ -508,7 +508,7 @@
             ></v-switch>
           </v-col>
           <v-col
-            cols="6"
+            cols="6" v-if="!invoice_doc.is_return"
           >
             <v-switch
               v-model="add_transaction_date"
@@ -656,7 +656,7 @@
         <v-divider></v-divider>
 
         <v-row class="px-1 py-0" align="start" no-gutters>
-          <v-col cols="6">
+          <v-col cols="6" v-if="!invoice_doc.is_return">
             <v-switch
               v-model="staff_member"
               flat
