@@ -497,7 +497,10 @@ def add_taxes_from_tax_template(item, parent_doc):
                 tax_row = parent_doc.append("taxes", {})
                 tax_row.update(
                     {
-                        "description": str(tax_type).split(" - ")[0],
+                        #"description": str(tax_type).split(" - ")[0],
+                        "description": str(tax_type).split(" - ")[0][-4:],
+                        # 'split' returns a list of 2 elements from either side of "-"; [0] extracts the 1st one;
+                        # [-4] extracts the last 4 characters of the 1st element of the set.
                         "charge_type": "On Net Total",
                         "account_head": tax_type,
                     }
