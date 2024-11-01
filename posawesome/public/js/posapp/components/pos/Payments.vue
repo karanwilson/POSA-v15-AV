@@ -1346,7 +1346,7 @@ export default {
             callback: function (r) {
               if (r.message) {
                 vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
-                if (invoice_doc.is_return && this.remarks)
+                if (vm.invoice_doc.is_return && vm.remarks)
                   vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
                 else
                   vm.invoice_doc.remarks = r.message["remarks"];
