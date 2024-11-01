@@ -1389,7 +1389,7 @@ export default {
       return new Promise((resolve, reject) => {
         if (this.aurocard_trans_id) {
           //this.invoice_doc.custom_aurocard_number = this.aurocard_number;
-          if (invoice_doc.is_return && this.remarks)
+          if (this.invoice_doc.is_return && this.remarks)
             this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
             this.invoice_doc.remarks = "Aurocard Transaction ID: " + this.aurocard_trans_id;
