@@ -582,10 +582,10 @@ export default {
                         }
                       );
                     } else if (weight_string_array.length > 7) {
-                      evntBus.$emit('show_mesage', {
+                      /* evntBus.$emit('show_mesage', {
                         text: `Data Loss in Serial Port: taking the Weight Reading again`,
                         color: 'error',
-                      });
+                      }); */
                       weight_string_array = [];
                     }
                   }
