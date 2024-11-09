@@ -153,34 +153,6 @@
           </v-row>
         </div>
 
-        <v-row 
-          class="px-1 py-0"
-          v-show="aurocard"
-        >
-          <!--v-col cols="6">
-            <v-text-field
-              dense
-              outlined
-              color="primary"
-              :label="frappe._('Aurocard Number')"
-              background-color="white"
-              hide-details
-              v-model="aurocard_number"
-            ></v-text-field>
-          </v-col-->
-          <v-col cols="6">
-            <v-text-field
-              dense
-              outlined
-              color="primary"
-              :label="frappe._('Aurocard Transaction ID')"
-              background-color="white"
-              hide-details
-              v-model="aurocard_trans_id"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-
         <v-row
           class="pyments px-1 py-0"
           v-if="
@@ -254,6 +226,35 @@
             ></v-text-field>
           </v-col>
         </v-row>
+        <v-divider></v-divider>
+
+        <v-row 
+          class="px-1 py-0"
+        >
+          <v-col cols="6" v-show="aurocard">
+            <v-text-field
+              dense
+              outlined
+              color="primary"
+              :label="frappe._('Aurocard Trans ID')"
+              background-color="white"
+              hide-details
+              v-model="aurocard_trans_id"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6" v-show="upi">
+            <v-text-field
+              dense
+              outlined
+              color="primary"
+              :label="frappe._('UPI Trans ID')"
+              background-color="white"
+              hide-details
+              v-model="upi_trans_id"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
         <v-divider></v-divider>
 
         <v-row class="px-1 py-0">
@@ -840,7 +841,9 @@ export default {
     // customer_outstanding_amount: 0, // commented this custom variable, because it is now redundant (check comments in the related function below)
     float_precision: frappe.defaults.get_default('float_precision'),
     aurocard: false, // toggles display of Aurocard details
+    upi: false, // toggles display of UPI details
     aurocard_trans_id: "",
+    upi_trans_id: "",
     remarks: false, // shows on the returns screen
     balance_available: null,
     customer_credit_dict: [],
@@ -856,6 +859,7 @@ export default {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
       this.aurocard_trans_id = "";
+      this.upi_trans_id = "";
     },
     submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
@@ -999,6 +1003,9 @@ export default {
             case "Aurocard":
               payment_handlers.push(this.make_aurocard_payment());
               break;
+            case "UPI":
+              payment_handlers.push(this.make_upi_payment());
+              break;
             case "Razorpay":
               rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
               payment_handlers.push(this.make_rzp_payment(rzp_amount_paisa));
@@ -1066,16 +1073,29 @@ export default {
       this.back_to_invoice();
     },
     set_full_amount(idx) {
+      let mop;
       this.invoice_doc.payments.forEach((payment) => {
-        payment.amount =
+        /* payment.amount =
           payment.idx == idx
             ? this.invoice_doc.rounded_total || this.invoice_doc.grand_total
-            : 0;
-        if (payment.idx == idx && payment.mode_of_payment == 'Aurocard')
-          this.aurocard = true;
-        else
-          this.aurocard = false;
+            : 0; */
+        if (payment.idx == idx ) {
+          payment.amount = this.invoice_doc.rounded_total || this.invoice_doc.grand_total;
+          mop = payment.mode_of_payment;
+        }
+        else payment.amount = 0;
       });
+      if (mop == 'Aurocard')
+        {
+          this.aurocard = true;
+          this.upi = false;
+        }
+      else if (mop == 'UPI')
+        {
+          this.upi = true;
+          this.aurocard = false;
+        }
+      else this.aurocard = this.upi = false;
       this.redeem_customer_credit = false;
     },
     set_rest_amount(idx) {
@@ -1388,7 +1408,6 @@ export default {
     make_aurocard_payment() {
       return new Promise((resolve, reject) => {
         if (this.aurocard_trans_id) {
-          //this.invoice_doc.custom_aurocard_number = this.aurocard_number;
           if (this.invoice_doc.is_return && this.remarks)
             this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
@@ -1397,6 +1416,18 @@ export default {
         }
         else
           frappe.throw("For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'");
+      })
+    },
+
+    make_upi_payment() {
+      return new Promise((resolve, reject) => {
+        if (this.upi_trans_id) {
+          if (this.invoice_doc.is_return && this.remarks)
+            this.invoice_doc.remarks += "\n" + "UPI Transaction ID: " + this.upi_trans_id;
+          else
+            this.invoice_doc.remarks = "UPI Transaction ID: " + this.upi_trans_id;
+          resolve("OK");
+        }
       })
     },
 
@@ -1666,6 +1697,7 @@ export default {
         }
 
         this.aurocard = false; // toggle for display of Aurocard details
+        this.upi = false; // toggle for display of UPI details
 
         if (this.invoice_doc.custom_transaction_date)
           this.add_transaction_date = true;
