@@ -231,23 +231,23 @@
         <v-row 
           class="px-1 py-0"
         >
-          <v-col cols="6" v-show="aurocard">
+          <v-col cols="7" v-show="aurocard">
             <v-text-field
               dense
               outlined
               color="primary"
-              :label="frappe._('Aurocard Trans ID')"
+              :label="frappe._('Aurocard Transaction ID')"
               background-color="white"
               hide-details
               v-model="aurocard_trans_id"
             ></v-text-field>
           </v-col>
-          <v-col cols="6" v-show="upi">
+          <v-col cols="7" v-show="upi">
             <v-text-field
               dense
               outlined
               color="primary"
-              :label="frappe._('UPI Trans ID')"
+              :label="frappe._('UPI Transaction ID')"
               background-color="white"
               hide-details
               v-model="upi_trans_id"
