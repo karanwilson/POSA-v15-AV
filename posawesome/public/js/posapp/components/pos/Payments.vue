@@ -1426,8 +1426,8 @@ export default {
             this.invoice_doc.remarks += "\n" + "UPI Transaction ID: " + this.upi_trans_id;
           else
             this.invoice_doc.remarks = "UPI Transaction ID: " + this.upi_trans_id;
-          resolve("OK");
         }
+        resolve("OK");
       })
     },
 
