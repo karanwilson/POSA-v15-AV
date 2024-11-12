@@ -1616,7 +1616,7 @@ export default {
     },
 
     // for 'Offline FS Pay'
-    offline_fs_pay() {
+    async offline_fs_pay() {
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
@@ -1632,7 +1632,7 @@ export default {
         return;
       }
       this.fs_transfer_pending = true;
-      this.new_invoice();
+      let await_new_invoice = await this.new_invoice();
       evntBus.$emit('show_mesage', {
         text: 'Offline FS Invoice saved',
         color: 'info',
@@ -1649,6 +1649,11 @@ export default {
       this.posa_coupons = [];
       this.return_doc = "";
       const doc = this.get_invoice_doc();
+      doc.items.forEach((item) => {
+        if ((!item.rate || item.rate == 0) && !this.pos_profile.posa_allow_zero_rated_items) {
+          frappe.throw("Rate cannot be zero for any item");
+        }
+      })
       if (this.fs_transfer_pending) doc.custom_fs_transfer_status = "PENDING"; // for 'Offline FS Pay'
       if (doc.name) {
         old_invoice = this.update_invoice(doc);
@@ -1668,6 +1673,12 @@ export default {
           ? "Order"
           : "Invoice";
         this.invoiceTypes = ["Invoice", "Order"];
+        if (!this.display_pending_bill_details) {
+          // need to retain these variables in case pending bill details are pulled.
+          this.reset_fs_balance_status();
+          this.reset_pending_fs_bills_status();
+        }
+        evntBus.$emit('input_customer'); // pass event to Customer.vue
       } else {
         if (data.is_return) {
           evntBus.$emit("set_customer_readonly", true);
@@ -1704,12 +1715,6 @@ export default {
           }
         });
       }
-      if (!this.display_pending_bill_details) {
-        // need to retain these variables in case pending bill details are pulled.
-        this.reset_fs_balance_status();
-        this.reset_pending_fs_bills_status();
-      }
-      evntBus.$emit('input_customer'); // pass event to Customer.vue
       return old_invoice;
     },
 
