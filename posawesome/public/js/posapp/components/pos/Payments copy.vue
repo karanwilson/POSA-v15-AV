@@ -861,7 +861,7 @@ export default {
       this.aurocard_trans_id = "";
       this.upi_trans_id = "";
     },
-    async submit(event, payment_received = false, print = false) {
+    submit(event, payment_received = false, print = false) {
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
         evntBus.$emit("show_mesage", {
           text: `Payments not correct`,
@@ -871,7 +871,7 @@ export default {
         return;
       }
       // validate phone payment
-      /* let phone_payment_is_valid = true;
+      let phone_payment_is_valid = true;
       if (!payment_received) {
         this.invoice_doc.payments.forEach((payment) => {
           if (
@@ -892,7 +892,7 @@ export default {
           console.error("phone payment not requested");
           return;
         }
-      } */
+      }
 
       if (
         !this.pos_profile.posa_allow_partial_payment &&
@@ -972,53 +972,63 @@ export default {
         return;
       }
 
-      for (payment of this.invoice_doc.payments) {
-        console.log("Mode of Payment: ", payment.mode_of_payment);
-        if (payment.amount != 0) { // if < 0 then it is a return transaction
-          payment.amount = flt(payment.amount, this.currency_precision);
-          console.log("payment.amount", payment.amount);
-          if (payment.mode_of_payment == "FS") {
-            const fs_payment_response = await this.make_fs_payment(payment.amount);
-            console.log("fs_payment_response: ", fs_payment_response);
-            //break;
-          }
-          else if (payment.mode_of_payment == "Aurocard") {
-            const aurocard_payment_response = await this.make_aurocard_payment();
-            console.log("aurocard_payment_response: ", aurocard_payment_response);
-            //break;
-          }
-          else if (payment.mode_of_payment == "UPI") {
-            const upi_payment_response = await this.make_upi_payment();
-            console.log("upi_payment_response: ", upi_payment_response);
-            //break;
-          }
-          else if (payment.mode_of_payment == "Razorpay") {
-            rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
-            const rzp_payment_response  = await this.make_rzp_payment(rzp_amount_paisa);
-            console.log("rzp_payment_response: ", rzp_payment_response);
-            //break;
-          }
-        }
-      }
-
       this.submit_invoice(print);
 
+      // shifted the below statements to the end of the submit_invoice method,
+      // in order to first process the external mode of payments (included in the forEach statment in submit_invoice method)
+      /*
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
       this.is_cashback = true;
       this.sales_person = "";
 
-      evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
       evntBus.$emit("new_invoice", "false");
       this.back_to_invoice();
+      */
     },
 
-    submit_invoice(print) {
+    async submit_invoice(print) {
+    //submit_invoice(print) {
       let totalPayedAmount = 0;
-      this.invoice_doc.payments.forEach((payment) => {
+
+      //let payment_handlers = [];
+      //this.invoice_doc.payments.forEach(async (payment) => {
+      for (payment in this.invoice_doc.payments) {
         payment.amount = flt(payment.amount, this.currency_precision);
         totalPayedAmount += payment.amount;
-      });
+        // Checking for external modes of Payment
+        if (payment.amount != 0) // if < 0 then it is a return transaction
+          switch(payment.mode_of_payment) {
+            case "FS":
+              //payment_handlers.push(this.make_fs_payment(payment.amount));
+              const fs_payment_response = await this.make_fs_payment(payment.amount);
+              console.log("fs_payment_response: ", fs_payment_response);
+              break;
+            case "Aurocard":
+              //payment_handlers.push(this.make_aurocard_payment());
+              const aurocard_payment_response = await this.make_aurocard_payment();
+              console.log("aurocard_payment_response: ", aurocard_payment_response);
+              break;
+            case "UPI":
+              //payment_handlers.push(this.make_upi_payment());
+              const upi_payment_response = await this.make_upi_payment();
+              console.log("upi_payment_response: ", upi_payment_response);
+              break;
+            case "Razorpay":
+              rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
+              //payment_handlers.push(this.make_rzp_payment(rzp_amount_paisa));
+              const rzp_payment_response  = await this.make_rzp_payment(rzp_amount_paisa);
+              console.log("rzp_payment_response: ", rzp_payment_response);
+              break;
+          }
+      }
+      //});
+
+      /* if (payment_handlers.length > 0) {
+        const payment_responses = await Promise.all(payment_handlers);
+        console.log("Payment Responses: ", payment_responses);
+      } */
+
       if (this.invoice_doc.is_return && totalPayedAmount == 0) {
         this.invoice_doc.is_pos = 0;
       }
@@ -1061,6 +1071,17 @@ export default {
           }
         },
       });
+
+      // The below statements were moved here from the Submit method above,
+      // in order to first process the external mode of payments (included in the forEach statment above)
+      this.customer_credit_dict = [];
+      this.redeem_customer_credit = false;
+      this.is_cashback = true;
+      this.sales_person = "";
+
+      evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
+      evntBus.$emit("new_invoice", "false");
+      this.back_to_invoice();
     },
     set_full_amount(idx) {
       let mop;
@@ -1345,7 +1366,6 @@ export default {
         // pass-through for returns, credit-balance (-1) and sufficient balance
         //if (fs_amount < 0 || this.balance_available == -1 || fs_amount <= this.balance_available) {
         if (fs_amount < 0 || fs_amount <= this.balance_available) {
-          console.log("this.balance_available: ", this.balance_available);
           const vm = this;
           frappe.call({
             method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
@@ -1398,8 +1418,7 @@ export default {
 
     make_aurocard_payment() {
       return new Promise((resolve, reject) => {
-        if (this.aurocard_trans_id) {
-          console.log("this.aurocard_trans_id", this.aurocard_trans_id);
+        if (this.aurocard_trans_id != "") {
           if (this.invoice_doc.is_return && this.remarks)
             this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
@@ -1407,10 +1426,9 @@ export default {
           resolve("OK");
         }
         else {
-          console.log("else");
           evntBus.$emit("show_mesage", {
             text: "For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'",
-            color: "warning",
+            color: "error",
           });
           reject("For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'");
         }
