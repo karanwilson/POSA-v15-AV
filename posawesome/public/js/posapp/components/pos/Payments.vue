@@ -1341,58 +1341,44 @@ export default {
 
     make_fs_payment(fs_amount) {
       return new Promise((resolve, reject) => {
-        //if (this.balance_available >= fs_amount) {
-        // pass-through for returns, credit-balance (-1) and sufficient balance
-        //if (fs_amount < 0 || this.balance_available == -1 || fs_amount <= this.balance_available) {
-        if (fs_amount < 0 || fs_amount <= this.balance_available) {
-          console.log("this.balance_available: ", this.balance_available);
-          const vm = this;
-          frappe.call({
-            method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
-            args: {
-              invoice_doc: vm.invoice_doc,
-              fAmount: fs_amount,
-            },
-            async: false,
-            callback: function (r) {
-              if (r.message) {
-                vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
-                if (vm.invoice_doc.is_return && vm.remarks)
-                  vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
-                else
-                  vm.invoice_doc.remarks = r.message["remarks"];
+        console.log("this.balance_available: ", this.balance_available);
+        const vm = this;
+        frappe.call({
+          method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
+          args: {
+            invoice_doc: vm.invoice_doc,
+            fAmount: fs_amount,
+            balance: vm.balance_available
+          },
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
+              if (vm.invoice_doc.is_return && vm.remarks)
+                vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
+              else if (r.message["remarks"] != "Null") // In case of "Insufficient Funds"
+                vm.invoice_doc.remarks = r.message["remarks"];
 
-                if (r.message["custom_fs_transfer_status"] == "OK") {
-                  resolve("OK");
-                }
-                else {
-                  evntBus.$emit('show_mesage', {
-                    text: r.message['custom_fs_transfer_status'],
-                    color: 'warning',
-                  });
-                  reject(r.message["custom_fs_transfer_status"]);
-                }
+              if (r.message["custom_fs_transfer_status"] == "OK") {
+                resolve("OK");
               }
-            },
-          });
-        }
-
-        else if (this.balance_available == null) {
-          evntBus.$emit('show_mesage', {
-            text: 'FS Account not set',
-            color: 'warning',
-          });
-          reject('FS Account not set');
-        }
-
-        else {
-          evntBus.$emit('show_mesage', {
-            text: 'Insufficient Balance',
-            color: 'error',
-          });
-          reject('Insufficient Balance');
-        }
-
+              else if (r.message["custom_fs_transfer_status"] == "Insufficient Funds") {
+                vm.is_credit_sale = 1;
+                vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
+                //vm.invoice_doc.outstanding_amount = fs_amount;
+                //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
+                resolve("OK");
+              }
+              else {
+                evntBus.$emit('show_mesage', {
+                  text: r.message['custom_fs_transfer_status'],
+                  color: 'warning',
+                });
+                reject(r.message["custom_fs_transfer_status"]);
+              }
+            }
+          },
+        });
       })
     },
 
@@ -1805,7 +1791,7 @@ export default {
         this.invoice_doc.payments.forEach((payment) => {
           payment.amount = 0;
           payment.base_amount = 0;
-          this.$refs.submit_payments.$el.focus();
+          //this.$refs.submit_payments.$el.focus();
         });
       }
     },
