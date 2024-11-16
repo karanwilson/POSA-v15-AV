@@ -977,26 +977,26 @@ export default {
         if (payment.amount != 0) { // if < 0 then it is a return transaction
           payment.amount = flt(payment.amount, this.currency_precision);
           console.log("payment.amount", payment.amount);
-          if (payment.mode_of_payment == "FS") {
+          if (payment.mode_of_payment === "FS") {
             const fs_payment_response = await this.make_fs_payment(payment.amount);
             console.log("fs_payment_response: ", fs_payment_response);
-            //break;
+            break;
           }
-          else if (payment.mode_of_payment == "Aurocard") {
+          else if (payment.mode_of_payment === "Aurocard") {
             const aurocard_payment_response = await this.make_aurocard_payment();
             console.log("aurocard_payment_response: ", aurocard_payment_response);
-            //break;
+            break;
           }
-          else if (payment.mode_of_payment == "UPI") {
+          else if (payment.mode_of_payment === "UPI") {
             const upi_payment_response = await this.make_upi_payment();
             console.log("upi_payment_response: ", upi_payment_response);
-            //break;
+            break;
           }
-          else if (payment.mode_of_payment == "Razorpay") {
+          else if (payment.mode_of_payment === "Razorpay") {
             rzp_amount_paisa = payment.amount * 100; // convert to paisa, as Razorpay only accept payment amounts in paisa.
             const rzp_payment_response  = await this.make_rzp_payment(rzp_amount_paisa);
             console.log("rzp_payment_response: ", rzp_payment_response);
-            //break;
+            break;
           }
         }
       }
