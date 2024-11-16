@@ -840,6 +840,7 @@ export default {
     redeem_customer_credit: false,
     // customer_outstanding_amount: 0, // commented this custom variable, because it is now redundant (check comments in the related function below)
     float_precision: frappe.defaults.get_default('float_precision'),
+    payment: false, // to ensure that the shortcut key "F3" is not allowed unless the evntBus ("show_payment", "true") has been triggered
     aurocard: false, // toggles display of Aurocard details
     upi: false, // toggles display of UPI details
     aurocard_trans_id: "",
@@ -1148,7 +1149,9 @@ export default {
     submitPrint(e) {
       if (e.key === "F3") {
         e.preventDefault();
-        this.submit(undefined, false, true);
+        console.log("this.payment", this.payment);
+        if (this.payment) // only allow this shortcut to run once the "Show Payments" screen is open (via EvntBus Event)
+          this.submit(undefined, false, true);
       }
     },
     set_paid_change() {
@@ -1385,7 +1388,6 @@ export default {
     make_aurocard_payment() {
       return new Promise((resolve, reject) => {
         if (this.aurocard_trans_id) {
-          console.log("this.aurocard_trans_id", this.aurocard_trans_id);
           if (this.invoice_doc.is_return && this.remarks)
             this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
@@ -1393,7 +1395,6 @@ export default {
           resolve("OK");
         }
         else {
-          console.log("else");
           evntBus.$emit("show_mesage", {
             text: "For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'",
             color: "warning",
@@ -1704,6 +1705,9 @@ export default {
         this.get_addresses();
         this.get_sales_person_names();
       });
+      evntBus.$on("show_payment", (data) => {
+        this.payment = true ? data === 'true' : false;
+      })
       evntBus.$on("balance_available", (data) => {
         this.balance_available = data;
       })
