@@ -1615,8 +1615,23 @@ export default {
       this.cancel_dialog = false;
     },
 
-    // for 'Offline FS Pay'
-    async offline_fs_pay() {
+    offline_fs_pay() {
+      const vm = this;
+      frappe.call({
+        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.login',
+        callback: function (r) {
+          if (r.message !== 'OK')
+            vm.offline_save(); // FS is Offline
+          else
+            evntBus.$emit('show_mesage', {
+              text: 'FS is Online, please press the Pay button instead',
+              color: 'warning',
+            });
+        },
+      });
+    },
+
+    async offline_save() {
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
