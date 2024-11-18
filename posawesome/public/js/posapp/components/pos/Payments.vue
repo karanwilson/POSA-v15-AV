@@ -975,7 +975,7 @@ export default {
 
       for (payment of this.invoice_doc.payments) {
         console.log("Mode of Payment: ", payment.mode_of_payment);
-        if (payment.amount != 0) { // if < 0 then it is a return transaction
+        if (payment.amount !== 0) { // if < 0 then it is a return transaction
           payment.amount = flt(payment.amount, this.currency_precision);
           console.log("payment.amount", payment.amount);
           if (payment.mode_of_payment === "FS") {
