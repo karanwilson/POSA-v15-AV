@@ -28,7 +28,7 @@
                 ></v-text-field>
               </v-col>
               <!--for search with FS Account Numbers-->
-              <v-col cols="6">
+              <!-- <v-col cols="6">
                 <v-text-field
                   dense
                   color="primary"
@@ -117,7 +117,7 @@
                   >
                   </v-date-picker>
                 </v-menu>
-              </v-col>
+              </v-col> -->
               <v-col cols="6">
                 <v-autocomplete
                   clearable

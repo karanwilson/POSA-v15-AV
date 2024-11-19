@@ -1314,9 +1314,9 @@ export default {
             else {
               evntBus.$emit('show_mesage', {
                 text: r.message['Result'],
-                color: 'warning',
+                color: 'error',
               });
-              vm.dynamic_fs_balance_color = 'warning';
+              vm.dynamic_fs_balance_color = 'error';
               vm.dynamic_fs_balance_icon = 'mdi-bank';
             }
           }
@@ -1625,7 +1625,7 @@ export default {
           else
             evntBus.$emit('show_mesage', {
               text: 'FS is Online, please press the Pay button instead',
-              color: 'warning',
+              color: 'error',
             });
         },
       });

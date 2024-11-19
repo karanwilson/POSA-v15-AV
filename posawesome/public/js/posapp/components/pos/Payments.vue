@@ -1351,7 +1351,7 @@ export default {
           args: {
             invoice_doc: vm.invoice_doc,
             fAmount: fs_amount,
-            balance: vm.balance_available
+            //balance: vm.balance_available
           },
           async: false,
           callback: function (r) {
@@ -1375,7 +1375,7 @@ export default {
               else {
                 evntBus.$emit('show_mesage', {
                   text: r.message['custom_fs_transfer_status'],
-                  color: 'warning',
+                  color: "error",
                 });
                 reject(r.message["custom_fs_transfer_status"]);
               }
