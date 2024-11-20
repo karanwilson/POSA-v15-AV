@@ -846,7 +846,8 @@ export default {
     aurocard_trans_id: "",
     upi_trans_id: "",
     remarks: false, // shows on the returns screen
-    balance_available: null,
+    balance_available: null, // Customer FS Account balance
+    cust_fs_acc_num: null, // Customer FS Account Number
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1347,9 +1348,9 @@ export default {
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         const vm = this;
-        console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
-        console.log("vm.balance_available: ", vm.balance_available);
-        if (!vm.cust_fs_acc_num) {
+        console.log("cust_fs_acc_num: ", vm.cust_fs_acc_num);
+        console.log("balance_available: ", vm.balance_available);
+        if (vm.cust_fs_acc_num == null) {
           evntBus.$emit('show_mesage', {
             text: "FS Account not set",
             color: "error",
@@ -1725,10 +1726,18 @@ export default {
       });
       evntBus.$on("show_payment", (data) => {
         this.payment = true ? data === 'true' : false;
-      })
-      evntBus.$on("balance_available", (data) => {
+      });
+      /* evntBus.$on("balance_available", (data) => {
         this.balance_available = data;
+      }) */
+      evntBus.$on("set_fs_variables", (data) => {
+        this.cust_fs_acc_num = data.cust_fs_acc_num;
+        this.balance_available = data.balance_available;
       })
+      evntBus.$on("reset_fs_variables", () => {
+        this.cust_fs_acc_num = null;
+        this.balance_available = null;
+      });
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();

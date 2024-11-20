@@ -1211,10 +1211,10 @@ export default {
       float_precision: 2,
       currency_precision: 2,
       rounding_method: "", // for pulling the 'rounding method' value from ERPNext
-      balance_available: null,
+      balance_available: null, // Customer FS Account balance
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
-      cust_fs_acc_num: "", // Customer FS Account Number
+      cust_fs_acc_num: null, // Customer FS Account Number
       dynamic_pending_icon_color: 'grey', // highlights pending offline bills
       pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
@@ -1300,9 +1300,14 @@ export default {
               if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
-                vm.cust_fs_acc_num = r.message["cust_fs_acc_num"];
-                console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
-                evntBus.$emit('balance_available', vm.balance_available);
+                vm.cust_fs_acc_num = r.message['cust_fs_acc_num'];
+                console.log('vm.cust_fs_acc_num: ', vm.cust_fs_acc_num);
+                evntBus.$emit('set_fs_variables', { // sent to Payments.Vue
+                  cust_fs_acc_num: vm.cust_fs_acc_num,
+                  balance_available: vm.balance_available
+                });
+                /* evntBus.$emit('balance_available', vm.balance_available);
+                evntBus.$emit('cust_fs_acc_num', vm.cust_fs_acc_num); */
               }
               else if (vm.balance_available === 0) {
                 vm.dynamic_fs_balance_color = 'error';
@@ -1313,7 +1318,12 @@ export default {
                 });
                 vm.cust_fs_acc_num = r.message["cust_fs_acc_num"];
                 console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
-                evntBus.$emit('balance_available', vm.balance_available);
+                evntBus.$emit('set_fs_variables', { // sent to Payments.Vue
+                  cust_fs_acc_num: vm.cust_fs_acc_num,
+                  balance_available: vm.balance_available
+                });
+                /* evntBus.$emit('balance_available', vm.balance_available);
+                evntBus.$emit('cust_fs_acc_num', vm.cust_fs_acc_num); */
               }
               else {
                 evntBus.$emit('show_mesage', {
@@ -3563,12 +3573,14 @@ export default {
         this.pending_fs_bills_check(customer);
       }
     });
-    evntBus.$on("reset_fs_balance_status", () => {
+    evntBus.$on("reset_fs_variables", () => {
+      this.cust_fs_acc_num = null;
       this.reset_fs_balance_status();
-    });
-    evntBus.$on("reset_pending_fs_bills_status", () => {
       this.reset_pending_fs_bills_status();
     });
+    /* evntBus.$on("reset_pending_fs_bills_status", () => {
+      this.reset_pending_fs_bills_status();
+    }); */
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
     });
@@ -3647,7 +3659,8 @@ export default {
   watch: {
     subtotal() {
       // watch only when customer is set; exclude returns; exclude cases where balance_available is 'not yet set (null)' or is '-1'
-      if (this.customer && this.balance_available != null && this.balance_available != -1 && this.subtotal >= 0) {
+      //if (this.customer && this.balance_available != null && this.balance_available != -1 && this.subtotal >= 0) {
+      if (this.customer && this.balance_available != null && this.balance_available >= 0 && this.subtotal >= 0) {
         if (this.subtotal > this.balance_available) {
           this.dynamic_fs_balance_color = 'error';
           this.dynamic_fs_balance_icon = 'mdi-bank';
