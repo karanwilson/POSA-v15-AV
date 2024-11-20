@@ -979,6 +979,8 @@ export default {
           payment.amount = flt(payment.amount, this.currency_precision);
           console.log("payment.amount", payment.amount);
           if (payment.mode_of_payment === "FS") {
+            const verify_fs_payment = await this.verify_fs_payment();
+            console.log("verify_fs_payment: ", verify_fs_payment);
             const fs_payment_response = await this.make_fs_payment(payment.amount);
             console.log("fs_payment_response: ", fs_payment_response);
             break;
@@ -1342,16 +1344,32 @@ export default {
       })
     },
 
+    verify_fs_payment() {
+      return new Promise((resolve, reject) => {
+        const vm = this;
+        console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
+        console.log("vm.balance_available: ", vm.balance_available);
+        if (!vm.cust_fs_acc_num) {
+          evntBus.$emit('show_mesage', {
+            text: "FS Account not set",
+            color: "error",
+          });
+          reject("FS Account not set");
+        }
+        else resolve("OK");
+      })
+    },
+
     make_fs_payment(fs_amount) {
       return new Promise((resolve, reject) => {
-        console.log("this.balance_available: ", this.balance_available);
         const vm = this;
         frappe.call({
           method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
           args: {
             invoice_doc: vm.invoice_doc,
             fAmount: fs_amount,
-            //balance: vm.balance_available
+            cust_fs_acc_num: vm.cust_fs_acc_num,
+            fs_acc_balance: vm.balance_available
           },
           async: false,
           callback: function (r) {

@@ -1214,6 +1214,7 @@ export default {
       balance_available: null,
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
+      cust_fs_acc_num: "", // Customer FS Account Number
       dynamic_pending_icon_color: 'grey', // highlights pending offline bills
       pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
@@ -1299,16 +1300,27 @@ export default {
               if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
+                vm.cust_fs_acc_num = r.message["cust_fs_acc_num"];
+                console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
                 evntBus.$emit('balance_available', vm.balance_available);
               }
-              else {
+              else if (vm.balance_available === 0) {
                 vm.dynamic_fs_balance_color = 'error';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
                 evntBus.$emit('show_mesage', {
                   text: 'Insufficient Balance',
                   color: 'warning',
                 });
+                vm.cust_fs_acc_num = r.message["cust_fs_acc_num"];
+                console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
                 evntBus.$emit('balance_available', vm.balance_available);
+              }
+              else {
+                evntBus.$emit('show_mesage', {
+                  text: 'Please verify the FS Account Number for this Customer',
+                  color: 'error',
+                });
+                vm.new_invoice(); // resets the flow
               }
             }
             else {
@@ -1318,6 +1330,7 @@ export default {
               });
               vm.dynamic_fs_balance_color = 'error';
               vm.dynamic_fs_balance_icon = 'mdi-bank';
+              vm.new_invoice(); // resets the flow
             }
           }
           else {
@@ -1802,6 +1815,7 @@ export default {
       doc.currency = doc.currency || this.pos_profile.currency;
       doc.naming_series = doc.naming_series || this.pos_profile.naming_series;
       doc.customer = this.customer;
+      doc.custom_fs_account_number = this.cust_fs_acc_num; // update customer FS Acc Number
       doc.items = this.get_invoice_items();
       doc.total = this.subtotal;
       doc.discount_amount = flt(this.discount_amount);
