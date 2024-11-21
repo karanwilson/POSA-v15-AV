@@ -847,7 +847,6 @@ export default {
     upi_trans_id: "",
     remarks: false, // shows on the returns screen
     balance_available: null, // Customer FS Account balance
-    cust_fs_acc_num: null, // Customer FS Account Number
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1012,8 +1011,9 @@ export default {
       this.is_cashback = true;
       this.sales_person = "";
 
-      evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
-      evntBus.$emit("new_invoice", "false");
+      this.balance_available = null;
+      //evntBus.$emit('reset_fs_variables'); // pass event to Invoice.vue
+      evntBus.$emit("new_invoice", "false"); // clubbed reset_fs_variables with new_invoice evnt.$on in Invoice.vue
       this.back_to_invoice();
     },
 
@@ -1348,15 +1348,19 @@ export default {
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         const vm = this;
-        console.log("cust_fs_acc_num: ", vm.cust_fs_acc_num);
+        console.log("Customer FS Account Number: ", vm.invoice_doc.custom_fs_account_number);
         console.log("balance_available: ", vm.balance_available);
-        if (vm.cust_fs_acc_num == null) {
+        //if (vm.invoice_doc.custom_fs_account_number == null) {
+        if (!vm.invoice_doc.custom_fs_account_number) {
           evntBus.$emit('show_mesage', {
             text: "FS Account not set",
             color: "error",
           });
           reject("FS Account not set");
         }
+ /*        else if (!vm.balance_available && vm.balance_available !== 0) {
+
+        } */
         else resolve("OK");
       })
     },
@@ -1369,7 +1373,6 @@ export default {
           args: {
             invoice_doc: vm.invoice_doc,
             fAmount: fs_amount,
-            cust_fs_acc_num: vm.cust_fs_acc_num,
             fs_acc_balance: vm.balance_available
           },
           async: false,
@@ -1727,17 +1730,9 @@ export default {
       evntBus.$on("show_payment", (data) => {
         this.payment = true ? data === 'true' : false;
       });
-      /* evntBus.$on("balance_available", (data) => {
+      evntBus.$on("balance_available", (data) => {
         this.balance_available = data;
-      }) */
-      evntBus.$on("set_fs_variables", (data) => {
-        this.cust_fs_acc_num = data.cust_fs_acc_num;
-        this.balance_available = data.balance_available;
       })
-      evntBus.$on("reset_fs_variables", () => {
-        this.cust_fs_acc_num = null;
-        this.balance_available = null;
-      });
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();
@@ -1788,6 +1783,8 @@ export default {
     evntBus.$off("set_customer_info_to_edit");
     evntBus.$off("update_invoice_coupons");
     evntBus.$off("set_mpesa_payment");
+    evntBus.$off("balance_available");
+    //evntBus.$off("reset_fs_variables");
   },
 
   destroyed() {

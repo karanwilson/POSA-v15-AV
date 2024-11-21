@@ -116,9 +116,9 @@ export default {
     },
     reset_indicators_status() {
       evntBus.$emit('reset_fs_variables'); // pass event to Invoice.vue
+      evntBus.$emit('balance_available', null); // pass event to Payments.vue
       /* evntBus.$emit('reset_fs_balance_status'); // pass event to Invoice.vue
       evntBus.$emit('reset_pending_fs_bills_status'); // pass event to Invoice.vue
-      evntBus.$emit('balance_available', null); // pass event to Payments.vue
       evntBus.$emit('cust_fs_acc_num', null); // pass event to Payments.vue */
     },
     new_customer() {

@@ -1285,6 +1285,13 @@ export default {
   },
 
   methods: {
+    reset_fs_variables() {
+      this.cust_fs_acc_num = null;
+      this.balance_available = null;
+      console.log("FS Acc: ", this.cust_fs_acc_num, "Balance: ", this.balance_available);
+      this.reset_fs_balance_status();
+      this.reset_pending_fs_bills_status();
+    },
     fs_balance_check(fs_acc_customer) {
       const vm = this;
       frappe.call({
@@ -1294,20 +1301,13 @@ export default {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
               vm.balance_available = parseFloat(r.message['maxAmount']);
-              // Accounts with 'maxAmount == -1' have a credit set by FS
-              //if ((parseFloat(r.message['maxAmount']) > 0) || (parseFloat(r.message['maxAmount']) == -1)) {
-              //if (vm.balance_available > 0 || vm.balance_available == -1) {
+              vm.cust_fs_acc_num = r.message['cust_fs_acc_num'];
+              console.log('vm.cust_fs_acc_num: ', vm.cust_fs_acc_num);
+              console.log('vm.balance_available: ', vm.balance_available);
               if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
                 vm.dynamic_fs_balance_icon = 'mdi-bank';
-                vm.cust_fs_acc_num = r.message['cust_fs_acc_num'];
-                console.log('vm.cust_fs_acc_num: ', vm.cust_fs_acc_num);
-                evntBus.$emit('set_fs_variables', { // sent to Payments.Vue
-                  cust_fs_acc_num: vm.cust_fs_acc_num,
-                  balance_available: vm.balance_available
-                });
-                /* evntBus.$emit('balance_available', vm.balance_available);
-                evntBus.$emit('cust_fs_acc_num', vm.cust_fs_acc_num); */
+                evntBus.$emit('balance_available', vm.balance_available); // sent to Payments.Vue
               }
               else if (vm.balance_available === 0) {
                 vm.dynamic_fs_balance_color = 'error';
@@ -1316,14 +1316,7 @@ export default {
                   text: 'Insufficient Balance',
                   color: 'warning',
                 });
-                vm.cust_fs_acc_num = r.message["cust_fs_acc_num"];
-                console.log("vm.cust_fs_acc_num: ", vm.cust_fs_acc_num);
-                evntBus.$emit('set_fs_variables', { // sent to Payments.Vue
-                  cust_fs_acc_num: vm.cust_fs_acc_num,
-                  balance_available: vm.balance_available
-                });
-                /* evntBus.$emit('balance_available', vm.balance_available);
-                evntBus.$emit('cust_fs_acc_num', vm.cust_fs_acc_num); */
+                evntBus.$emit('balance_available', vm.balance_available);
               }
               else {
                 evntBus.$emit('show_mesage', {
@@ -3574,17 +3567,13 @@ export default {
       }
     });
     evntBus.$on("reset_fs_variables", () => {
-      this.cust_fs_acc_num = null;
-      this.reset_fs_balance_status();
-      this.reset_pending_fs_bills_status();
+      this.reset_fs_variables();
     });
-    /* evntBus.$on("reset_pending_fs_bills_status", () => {
-      this.reset_pending_fs_bills_status();
-    }); */
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
     });
     evntBus.$on("new_invoice", () => {
+      this.reset_fs_variables();
       this.invoice_doc = "";
       this.cancel_invoice();
     });
@@ -3641,6 +3630,7 @@ export default {
     evntBus.$off("update_invoice_offers");
     evntBus.$off("update_invoice_coupons");
     evntBus.$off("set_all_items");
+    evntBus.$off("reset_fs_variables");
   },
   created() {
     document.addEventListener("keydown", this.shortOpenPayment.bind(this));
@@ -3659,7 +3649,6 @@ export default {
   watch: {
     subtotal() {
       // watch only when customer is set; exclude returns; exclude cases where balance_available is 'not yet set (null)' or is '-1'
-      //if (this.customer && this.balance_available != null && this.balance_available != -1 && this.subtotal >= 0) {
       if (this.customer && this.balance_available != null && this.balance_available >= 0 && this.subtotal >= 0) {
         if (this.subtotal > this.balance_available) {
           this.dynamic_fs_balance_color = 'error';
