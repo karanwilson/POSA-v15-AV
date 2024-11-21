@@ -1347,6 +1347,15 @@ export default {
 
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
+        console.log("balance_available: ", this.balance_available);
+        if (!this.balance_available) {
+          evntBus.$emit('show_mesage', {
+            text: "FS Account Balance not set, try billing Offline",
+            color: "error",
+          });
+          reject("FS Account Balance not set, try billing Offline");
+        }
+
         const vm = this;
         frappe.call({
           method: 'posawesome.posawesome.api.posapp.get_customer_fs_acc_number',
@@ -1367,7 +1376,6 @@ export default {
             }
           }
         })
-        console.log("balance_available: ", vm.balance_available);
       })
     },
 
