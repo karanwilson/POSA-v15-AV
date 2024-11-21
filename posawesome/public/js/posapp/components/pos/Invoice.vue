@@ -73,6 +73,7 @@
         >
           <v-btn
             text icon :color="dynamic_fs_balance_color"
+            @click="fs_offline_switch"
           >
             FS<v-icon>{{ dynamic_fs_balance_icon }}</v-icon>
           </v-btn>
@@ -1214,10 +1215,10 @@ export default {
       balance_available: null, // Customer FS Account balance
       dynamic_fs_balance_color: 'grey',  // grey,error,success (availability of FS balance)
       dynamic_fs_balance_icon: 'mdi-bank-off', // 'mdi-bank' (availability of FS balance)
-      cust_fs_acc_num: null, // Customer FS Account Number
       dynamic_pending_icon_color: 'grey', // highlights pending offline bills
       pending_fs_bills: 0,
       fs_transfer_pending: false, // for 'Offline FS Pay'
+      fs_offline: false, // to manually switch off FS Balance checks
       display_pending_bill_details: false, // toggles display of pending bill details
       new_line: false,
       delivery_charges: [],
@@ -1285,10 +1286,25 @@ export default {
   },
 
   methods: {
+    fs_offline_switch() {
+      this.fs_offline = !this.fs_offline;
+      if (this.fs_offline) {
+        evntBus.$emit('show_mesage', {
+          text: 'FS Offline',
+          color: 'warning',
+        });
+        this.reset_fs_variables();
+      }
+      else {
+        evntBus.$emit('show_mesage', {
+          text: 'FS Online',
+          color: 'success',
+        });
+      }
+    },
     reset_fs_variables() {
-      this.cust_fs_acc_num = null;
       this.balance_available = null;
-      console.log("FS Acc: ", this.cust_fs_acc_num, "Balance: ", this.balance_available);
+      console.log("Balance: ", this.balance_available);
       this.reset_fs_balance_status();
       this.reset_pending_fs_bills_status();
     },
@@ -1301,8 +1317,6 @@ export default {
           if (r.message) {
             if (r.message['Result'] == 'OK') {
               vm.balance_available = parseFloat(r.message['maxAmount']);
-              vm.cust_fs_acc_num = r.message['cust_fs_acc_num'];
-              console.log('vm.cust_fs_acc_num: ', vm.cust_fs_acc_num);
               console.log('vm.balance_available: ', vm.balance_available);
               if (vm.balance_available > 0) {
                 vm.dynamic_fs_balance_color = 'success';
@@ -1632,19 +1646,25 @@ export default {
     },
 
     offline_fs_pay() {
-      const vm = this;
-      frappe.call({
-        method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.login',
-        callback: function (r) {
-          if (r.message !== 'OK')
-            vm.offline_save(); // FS is Offline
-          else
-            evntBus.$emit('show_mesage', {
-              text: 'FS is Online, please press the Pay button instead',
-              color: 'error',
-            });
-        },
-      });
+      if (this.fs_offline) {
+        this.offline_save();
+      }
+      else {
+        const vm = this;
+        frappe.call({
+          method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.login',
+          callback: function (r) {
+            if (r.message !== 'OK')
+              vm.offline_save(); // FS is Offline
+            else {
+              evntBus.$emit('show_mesage', {
+                text: 'FS is Online, please press the Pay button instead',
+                color: 'error',
+              });
+            }
+          },
+        });
+      }
     },
 
     async offline_save() {
@@ -1818,7 +1838,6 @@ export default {
       doc.currency = doc.currency || this.pos_profile.currency;
       doc.naming_series = doc.naming_series || this.pos_profile.naming_series;
       doc.customer = this.customer;
-      doc.custom_fs_account_number = this.cust_fs_acc_num; // update customer FS Acc Number
       doc.items = this.get_invoice_items();
       doc.total = this.subtotal;
       doc.discount_amount = flt(this.discount_amount);
@@ -3562,8 +3581,10 @@ export default {
     evntBus.$on("update_customer", (customer) => {
       this.customer = customer;
       if (customer && this.pos_profile.posa_enable_fs_payments) {
-        this.fs_balance_check(customer);
-        this.pending_fs_bills_check(customer);
+        if (!this.fs_offline) {
+          this.fs_balance_check(customer);
+          this.pending_fs_bills_check(customer);
+        }
       }
     });
     evntBus.$on("reset_fs_variables", () => {

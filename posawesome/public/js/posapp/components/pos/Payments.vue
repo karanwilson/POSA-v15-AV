@@ -1348,20 +1348,26 @@ export default {
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         const vm = this;
-        console.log("Customer FS Account Number: ", vm.invoice_doc.custom_fs_account_number);
+        frappe.call({
+          method: 'posawesome.posawesome.api.posapp.get_customer_fs_acc_number',
+          args: {customer: vm.invoice_doc.customer},
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              vm.invoice_doc.custom_fs_account_number = r.message; // update customer FS Acc Number
+              console.log("Customer FS Account Number: ", r.message);
+              resolve("OK");
+            }
+            else {
+              evntBus.$emit('show_mesage', {
+                text: "FS Account not set",
+                color: "error",
+              });
+              reject("FS Account not set");
+            }
+          }
+        })
         console.log("balance_available: ", vm.balance_available);
-        //if (vm.invoice_doc.custom_fs_account_number == null) {
-        if (!vm.invoice_doc.custom_fs_account_number) {
-          evntBus.$emit('show_mesage', {
-            text: "FS Account not set",
-            color: "error",
-          });
-          reject("FS Account not set");
-        }
- /*        else if (!vm.balance_available && vm.balance_available !== 0) {
-
-        } */
-        else resolve("OK");
       })
     },
 

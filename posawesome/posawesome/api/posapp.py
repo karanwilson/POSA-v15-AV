@@ -967,8 +967,13 @@ def get_draft_invoices(pos_opening_shift):
 
 
 @frappe.whitelist()
+def get_customer_fs_acc_number(customer):
+    return frappe.get_value("Customer", customer, "custom_fs_account_number")
+
+
+@frappe.whitelist()
 def pending_fs_bills_query(customer, company):
-    customer_name = frappe.get_value("Customer", customer, "customer_name")
+    #customer_name = frappe.get_value("Customer", customer, "customer_name")
     outstanding_invoices = get_outstanding_invoices(
         party_type="Customer",
         party=customer,
@@ -979,7 +984,7 @@ def pending_fs_bills_query(customer, company):
 
 @frappe.whitelist()
 def open_pending_fs_bills(customer, company):
-    customer_name = frappe.get_value("Customer", customer, "customer_name")
+    #customer_name = frappe.get_value("Customer", customer, "customer_name")
     outstanding_invoices = get_outstanding_invoices(
         party_type="Customer",
         party=customer,
