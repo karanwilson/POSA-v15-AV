@@ -1348,7 +1348,7 @@ export default {
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         console.log("balance_available: ", this.balance_available);
-        if (!this.balance_available) {
+        if (!this.balance_available && this.balance_available !== 0) {
           evntBus.$emit('show_mesage', {
             text: "FS Account Balance not set, try billing Offline",
             color: "error",
