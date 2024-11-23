@@ -2372,6 +2372,7 @@ export default {
           price_list: this.pos_profile.selling_price_list, // the correct docfield in doctype pos_profile is selling_price_list
           item: {
             item_code: item.item_code,
+            warehouse: this.pos_profile.warehouse, // adding this parameter, as it is needed at the backend, to get batch_no_data
             customer: this.customer,
             doctype: "Sales Invoice",
             name: "New Sales Invoice 1",
@@ -2675,7 +2676,7 @@ export default {
           batch_to_use = batch_no_data.find((batch) => batch.batch_no == value);
         }
         if (!batch_to_use) {
-          batch_to_use = batch_no_data[0];
+          batch_to_use = batch_no_data[0]; // select the batch here
         }
         item.batch_no = batch_to_use.batch_no;
         item.actual_batch_qty = batch_to_use.batch_qty;
