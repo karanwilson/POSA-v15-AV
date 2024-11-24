@@ -2652,7 +2652,7 @@ export default {
       // 3. we should not use batch with remaining_qty = 0
       // 4. we should the highest remaining_qty
       const batch_no_data = Object.values(used_batches)
-        //.filter((batch) => batch.remaining_qty > 0)
+        .filter((batch) => batch.remaining_qty > 0)
         .sort((a, b) => {
           if (a.expiry_date && b.expiry_date) {
             return a.expiry_date - b.expiry_date;
@@ -2667,7 +2667,8 @@ export default {
           } else if (b.manufacturing_date) {
             return 1;
           } else {
-            return b.remaining_qty - a.remaining_qty;
+            return a.remaining_qty - b.remaining_qty;
+            //return b.remaining_qty - a.remaining_qty;
           }
         });
       if (batch_no_data.length > 0) {
@@ -2676,7 +2677,17 @@ export default {
           batch_to_use = batch_no_data.find((batch) => batch.batch_no == value);
         }
         if (!batch_to_use) {
-          batch_to_use = batch_no_data[0]; // select the batch here
+          //console.log("batch_no_data: ", batch_no_data);
+          //console.log("item.qty: ", item.qty, " batch.remaining_qty: ", batch_no_data[0].remaining_qty);
+          for (batch of batch_no_data) {
+            //console.log("batch: ", batch);
+            if (item.qty <= batch.remaining_qty) {
+              batch_to_use = batch;
+              //console.log("batch_to_use: ", batch_to_use);
+              break;
+            }
+          }
+          //batch_to_use = batch_no_data[0]; // select the batch here
         }
         item.batch_no = batch_to_use.batch_no;
         item.actual_batch_qty = batch_to_use.batch_qty;
