@@ -2228,7 +2228,7 @@ export default {
           }
           this.items.forEach((item) => {
             const return_item = this.return_doc.items.find(
-              (element) => element.item_code == item.item_code && Math.abs(element.qty) == Math.abs(item.qty)
+              (element) => element.item_code == item.item_code //&& Math.abs(element.qty) == Math.abs(item.qty)
             );
 
             if (!return_item) {
