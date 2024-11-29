@@ -2651,26 +2651,53 @@ export default {
       // 2. if batch has no expiry_date we should use the batch with the earliest manufacturing_date
       // 3. we should not use batch with remaining_qty = 0
       // 4. we should the highest remaining_qty
-      const batch_no_data = Object.values(used_batches)
-        .filter((batch) => batch.remaining_qty > 0)
-        .sort((a, b) => {
-          if (a.expiry_date && b.expiry_date) {
-            return a.expiry_date - b.expiry_date;
-          } else if (a.expiry_date) {
-            return -1;
-          } else if (b.expiry_date) {
-            return 1;
-          } else if (a.manufacturing_date && b.manufacturing_date) {
-            return a.manufacturing_date - b.manufacturing_date;
-          } else if (a.manufacturing_date) {
-            return -1;
-          } else if (b.manufacturing_date) {
-            return 1;
-          } else {
-            return a.remaining_qty - b.remaining_qty;
-            //return b.remaining_qty - a.remaining_qty;
-          }
-        });
+      let batch_no_data;
+      if (this.invoice_doc.is_return) { // in case of returns, also pass the batches with qty '0'
+        console.log("(if) this.invoice_doc.is_return: ", this.invoice_doc.is_return);
+        batch_no_data = Object.values(used_batches)
+          //.filter((batch) => batch.remaining_qty > 0)
+          .sort((a, b) => {
+            if (a.expiry_date && b.expiry_date) {
+              return a.expiry_date - b.expiry_date;
+            } else if (a.expiry_date) {
+              return -1;
+            } else if (b.expiry_date) {
+              return 1;
+            } else if (a.manufacturing_date && b.manufacturing_date) {
+              return a.manufacturing_date - b.manufacturing_date;
+            } else if (a.manufacturing_date) {
+              return -1;
+            } else if (b.manufacturing_date) {
+              return 1;
+            } else {
+              return a.remaining_qty - b.remaining_qty;
+              //return b.remaining_qty - a.remaining_qty;
+            }
+          });
+      }
+      else {
+        console.log("(Else) this.invoice_doc.is_return: ", this.invoice_doc.is_return);
+        batch_no_data = Object.values(used_batches)
+          .filter((batch) => batch.remaining_qty > 0)
+          .sort((a, b) => {
+            if (a.expiry_date && b.expiry_date) {
+              return a.expiry_date - b.expiry_date;
+            } else if (a.expiry_date) {
+              return -1;
+            } else if (b.expiry_date) {
+              return 1;
+            } else if (a.manufacturing_date && b.manufacturing_date) {
+              return a.manufacturing_date - b.manufacturing_date;
+            } else if (a.manufacturing_date) {
+              return -1;
+            } else if (b.manufacturing_date) {
+              return 1;
+            } else {
+              return a.remaining_qty - b.remaining_qty;
+              //return b.remaining_qty - a.remaining_qty;
+            }
+          });
+      }
       if (batch_no_data.length > 0) {
         let batch_to_use = null;
         if (value) {
