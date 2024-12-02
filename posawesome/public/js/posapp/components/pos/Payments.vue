@@ -847,6 +847,7 @@ export default {
     upi_trans_id: "",
     remarks: false, // shows on the returns screen
     balance_available: null, // Customer FS Account balance
+    fs_offline: false, // for offline credit billing
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1348,7 +1349,8 @@ export default {
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         console.log("balance_available: ", this.balance_available);
-        if (!this.balance_available && this.balance_available !== 0) {
+        console.log("fs_offline: ", this.fs_offline);
+        if (!this.fs_offline && !this.balance_available && this.balance_available !== 0) {
           evntBus.$emit('show_mesage', {
             text: "FS Account Balance not set, try billing Offline",
             color: "error",
@@ -1382,42 +1384,49 @@ export default {
     make_fs_payment(fs_amount) {
       return new Promise((resolve, reject) => {
         const vm = this;
-        frappe.call({
-          method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
-          args: {
-            invoice_doc: vm.invoice_doc,
-            fAmount: fs_amount,
-            fs_acc_balance: vm.balance_available
-          },
-          async: false,
-          callback: function (r) {
-            if (r.message) {
-              vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
-              if (vm.invoice_doc.is_return && vm.remarks)
-                vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
-              else if (r.message["remarks"] != "Null") // In case of "Insufficient Funds"
-                vm.invoice_doc.remarks = r.message["remarks"];
+        if (this.fs_offline) {
+          vm.is_credit_sale = 1;
+          vm.invoice_doc.custom_fs_transfer_status = "Pending";
+          resolve("OK");
+        }
+        else {
+          frappe.call({
+            method: 'payments.payment_gateways.doctype.fs_settings.fs_settings.add_transfer_billing',
+            args: {
+              invoice_doc: vm.invoice_doc,
+              fAmount: fs_amount,
+              fs_acc_balance: vm.balance_available
+            },
+            async: false,
+            callback: function (r) {
+              if (r.message) {
+                vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
+                if (vm.invoice_doc.is_return && vm.remarks)
+                  vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
+                else if (r.message["remarks"] != "Null") // In case of "Insufficient Funds"
+                  vm.invoice_doc.remarks = r.message["remarks"];
 
-              if (r.message["custom_fs_transfer_status"] == "OK") {
-                resolve("OK");
+                if (r.message["custom_fs_transfer_status"] == "OK") {
+                  resolve("OK");
+                }
+                else if (r.message["custom_fs_transfer_status"] == "Insufficient Funds") {
+                  vm.is_credit_sale = 1;
+                  vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
+                  //vm.invoice_doc.outstanding_amount = fs_amount;
+                  //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
+                  resolve("OK");
+                }
+                else {
+                  evntBus.$emit('show_mesage', {
+                    text: r.message['custom_fs_transfer_status'],
+                    color: "error",
+                  });
+                  reject(r.message["custom_fs_transfer_status"]);
+                }
               }
-              else if (r.message["custom_fs_transfer_status"] == "Insufficient Funds") {
-                vm.is_credit_sale = 1;
-                vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
-                //vm.invoice_doc.outstanding_amount = fs_amount;
-                //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
-                resolve("OK");
-              }
-              else {
-                evntBus.$emit('show_mesage', {
-                  text: r.message['custom_fs_transfer_status'],
-                  color: "error",
-                });
-                reject(r.message["custom_fs_transfer_status"]);
-              }
-            }
-          },
-        });
+            },
+          });
+        }
       })
     },
 
@@ -1746,7 +1755,10 @@ export default {
       });
       evntBus.$on("balance_available", (data) => {
         this.balance_available = data;
-      })
+      });
+      evntBus.$on('fs_offline', (data) => {
+        this.fs_offline = data;
+      }),
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();
@@ -1798,6 +1810,7 @@ export default {
     evntBus.$off("update_invoice_coupons");
     evntBus.$off("set_mpesa_payment");
     evntBus.$off("balance_available");
+    evntBus.$off('fs_offline');
     //evntBus.$off("reset_fs_variables");
   },
 

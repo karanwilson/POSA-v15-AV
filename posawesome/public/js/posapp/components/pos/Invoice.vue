@@ -1301,6 +1301,7 @@ export default {
           color: 'success',
         });
       }
+      evntBus.$emit('fs_offline', this.fs_offline);
     },
     reset_fs_variables() {
       this.balance_available = null;
