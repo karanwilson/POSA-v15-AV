@@ -871,7 +871,7 @@
         </v-col>
         <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
-            <v-col cols="4" class="pa-1">
+            <v-col cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -895,7 +895,7 @@
                 >{{ __("Select S.O") }}</v-btn
               >
             </v-col>
-            <v-col cols="4" class="pa-1">
+            <!-- <v-col cols="4" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -904,8 +904,8 @@
                 @click="open_offlineBill_drafts"
                 >{{ __("Offline FS Bills") }}</v-btn
               >
-            </v-col>
-            <v-col cols="4" class="pa-1">
+            </v-col> -->
+            <v-col cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -917,7 +917,7 @@
               >
             </v-col>
             <!--putting the v-if statement below to avoid cancel of submitted invoices pulled via open_pending_fs_bills()-->
-            <v-col cols="4" class="pa-1" v-if="this.invoice_doc.docstatus != 1">
+            <v-col cols="6" class="pa-1" v-if="this.invoice_doc.docstatus != 1">
               <v-btn
                 block
                 class="pa-0"
@@ -927,7 +927,7 @@
                 >{{ __("Cancel") }}</v-btn
               >
             </v-col>
-            <v-col cols="4" class="pa-1">
+            <v-col cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -937,20 +937,7 @@
                 >{{ __("Hold Bill") }}</v-btn
               >
             </v-col>
-            <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices"
-              cols="4"
-              class="pa-1"
-            >
-              <v-btn
-                block
-                class="pa-0"
-                color="primary"
-                @click="print_draft_invoice"
-                dark
-                >{{ __("Print Draft") }}</v-btn
-              >
-            </v-col>
+
             <v-col class="pa-1">
               <v-btn
                 block
@@ -963,6 +950,20 @@
               >
             </v-col>
             <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices"
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="print_draft_invoice"
+                dark
+                >{{ __("Print Draft") }}</v-btn
+              >
+            </v-col>
+            <!-- <v-col
               cols="6"
               class="pa-1"
             >
@@ -974,7 +975,7 @@
                 dark
                 >{{ __("Offline FS PAY") }}</v-btn
               >
-            </v-col>
+            </v-col> -->
           </v-row>
         </v-col>
       </v-row>
