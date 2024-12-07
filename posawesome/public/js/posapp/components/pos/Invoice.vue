@@ -1294,20 +1294,29 @@ export default {
           text: 'FS Offline',
           color: 'warning',
         });
-        this.reset_fs_variables();
+        this.reset_fs_variables(this.fs_offline);
       }
       else {
         evntBus.$emit('show_mesage', {
           text: 'FS Online',
           color: 'success',
         });
+        this.reset_fs_variables(this.fs_offline);
       }
       evntBus.$emit('fs_offline', this.fs_offline);
     },
-    reset_fs_variables() {
+    reset_fs_variables(fs_offline = false) {
       this.balance_available = null;
       console.log("Balance: ", this.balance_available);
-      this.reset_fs_balance_status();
+      if (fs_offline) {
+        console.log("fs_offline: ", fs_offline);
+        this.dynamic_fs_balance_color = 'warning';
+        this.dynamic_fs_balance_icon = 'mdi-bank-off';
+      }
+      else {
+        console.log("fs_offline: ", fs_offline);
+        this.reset_fs_balance_status();
+      }
       this.reset_pending_fs_bills_status();
     },
     fs_balance_check(fs_acc_customer) {
