@@ -1387,7 +1387,7 @@ export default {
         if (this.fs_offline) {
           vm.is_credit_sale = 1;
           vm.invoice_doc.custom_fs_transfer_status = "Pending";
-          resolve("OK");
+          resolve("OK - Offline");
         }
         else {
           frappe.call({
@@ -1414,7 +1414,20 @@ export default {
                   vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
                   //vm.invoice_doc.outstanding_amount = fs_amount;
                   //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
-                  resolve("OK");
+                  resolve("Insufficient Funds");
+                }
+                else if (r.message["return_against_invoice_transfer_status"] == "Insufficient Funds") {
+                  // in case of Returns against Invoices that have "FS Transfer Status": "Insufficient Funds"
+                  vm.invoice_doc.payments.forEach((payment) => {
+                    payment.amount = 0;
+                    payment.base_amount = 0;
+                  });
+                  //resolve("Return: Insufficient Funds");
+                  evntBus.$emit('show_mesage', {
+                    text: "Return: Insufficient Funds",
+                    color: "error",
+                  });
+                  reject("Return: Insufficient Funds");
                 }
                 else {
                   evntBus.$emit('show_mesage', {
@@ -1840,6 +1853,15 @@ export default {
     diff_payment(value) {
       if (value > 0) this.is_credit_sale = 1;
       if (value == 0) this.is_credit_sale = 0;
+    },
+    is_cashback(value){
+      if (value == 0) {
+        this.invoice_doc.payments.forEach((payment) => {
+          payment.amount = 0;
+          payment.base_amount = 0;
+          //this.$refs.submit_payments.$el.focus();
+        });
+      }
     },
     is_credit_sale(value) {
       if (value == 1) {
