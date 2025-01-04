@@ -1418,13 +1418,8 @@ export default {
                 }
                 else if (r.message["return_against_invoice_transfer_status"] == "Insufficient Funds") {
                   // in case of Returns against Invoices that have "FS Transfer Status": "Insufficient Funds"
-                  vm.invoice_doc.payments.forEach((payment) => {
-                    payment.amount = 0;
-                    payment.base_amount = 0;
-                  });
-                  //resolve("Return: Insufficient Funds");
                   evntBus.$emit('show_mesage', {
-                    text: "Return: Insufficient Funds",
+                    text: "For returns with Insufficient-Funds/Unpaid Invoices: please 'cancel-amend(edit)-save-submit' using the 'Sales Invoice' form",
                     color: "error",
                   });
                   reject("Return: Insufficient Funds");
