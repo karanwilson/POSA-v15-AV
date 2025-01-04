@@ -974,6 +974,11 @@ export default {
         return;
       }
 
+      if (this.invoice_doc.is_return) {
+        const verify_invoice_status = await this.verify_invoice_status();
+        console.log("verify_invoice_status: ", verify_invoice_status);
+      }
+
       for (payment of this.invoice_doc.payments) {
         console.log("Mode of Payment: ", payment.mode_of_payment);
         if (payment.amount !== 0) { // if < 0 then it is a return transaction
@@ -1346,6 +1351,23 @@ export default {
       })
     },
 
+    verify_invoice_status() {
+      return new Promise((resolve, reject) => {
+        frappe.db
+          .get_value("Sales Invoice", this.invoice_doc.return_against, "custom_fs_transfer_status")
+          .then(( { message } ) => {
+            if (message.custom_fs_transfer_status == "Insufficient Funds") {
+              evntBus.$emit("show_mesage", {
+                text: "For returns with Insufficient-Funds/Unpaid Invoices: please 'cancel-amend(edit)-save-submit' using the 'Sales Invoice' form",
+                color: "error",
+              });
+              reject("Return: Insufficient Funds");
+            }
+            else resolve("OK - Invoice Paid");
+          })
+      })
+    },
+
     verify_fs_payment() {
       return new Promise((resolve, reject) => {
         console.log("balance_available: ", this.balance_available);
@@ -1415,14 +1437,6 @@ export default {
                   //vm.invoice_doc.outstanding_amount = fs_amount;
                   //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
                   resolve("Insufficient Funds");
-                }
-                else if (r.message["return_against_invoice_transfer_status"] == "Insufficient Funds") {
-                  // in case of Returns against Invoices that have "FS Transfer Status": "Insufficient Funds"
-                  evntBus.$emit('show_mesage', {
-                    text: "For returns with Insufficient-Funds/Unpaid Invoices: please 'cancel-amend(edit)-save-submit' using the 'Sales Invoice' form",
-                    color: "error",
-                  });
-                  reject("Return: Insufficient Funds");
                 }
                 else {
                   evntBus.$emit('show_mesage', {
