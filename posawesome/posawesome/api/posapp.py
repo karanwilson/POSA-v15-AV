@@ -586,10 +586,70 @@ def update_invoice(data):
     return invoice_doc
 
 
+def add_sales_order_items(new_sales_order, invoice):
+	for item in invoice.get("items"):
+		new_sales_order.append(
+			"items",
+			{
+				"item_code": item.get("item_code"),
+				"item_name": item.get("item_name"),
+				"description": item.get("item_name"),
+				"delivery_date": new_sales_order.get("delivery_date"),
+				"uom": item.get("uom"),
+				"qty": item.get("qty"),
+				"rate": item.get("rate"),
+				"warehouse": item.get("warehouse"),
+			},
+		)
+
+def add_sales_order_taxes(new_sales_order, invoice):
+    for tax_row in invoice.get("taxes"):
+        new_sales_order.append(
+            "taxes",
+            {
+                "description": tax_row.get("description"),
+                "charge_type": tax_row.get("charge_type"),
+                "account_head": tax_row.get("account_head"),
+            },
+		)
+
+# method refererence: /home/ptps/frappe-bench/apps/erpnext/erpnext/erpnext_integrations/connectors/woocommerce_connection.py
+def create_sales_order(invoice):
+    new_sales_order = frappe.new_doc("Sales Order")
+    new_sales_order.customer = invoice.get("customer")
+
+    new_sales_order.transaction_date = nowdate()
+    new_sales_order.delivery_date = invoice.get("posa_delivery_date")
+    new_sales_order.company = invoice.get("company")
+
+    add_sales_order_items(new_sales_order, invoice)
+    add_sales_order_taxes(new_sales_order, invoice)
+
+    new_sales_order.flags.ignore_mandatory = True
+
+    new_sales_order.insert()
+    new_sales_order.submit()
+
+    frappe.db.commit()
+    return {
+        "name": new_sales_order.name,
+        "doctype": new_sales_order.doctype,
+        "status": new_sales_order.docstatus
+    }
+
+
 @frappe.whitelist()
 def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
+
+    with open('invoice_json.txt', 'w') as file:
+        file.write(str(invoice))
+
+    if data.get("invoiceType") == "Order":
+        # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
+        return create_sales_order(invoice)
+
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
     if invoice.get("posa_delivery_date"):
@@ -710,7 +770,11 @@ def submit_invoice(invoice, data):
             invoice_doc, data, is_payment_entry, total_cash, cash_account, payments
         )
 
-    return {"name": invoice_doc.name, "status": invoice_doc.docstatus}
+    return {
+        "name": invoice_doc.name,
+        "doctype": invoice_doc.doctype,
+        "status": invoice_doc.docstatus
+    }
 
 
 def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):

@@ -871,7 +871,7 @@
         </v-col>
         <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
-            <v-col cols="6" class="pa-1">
+            <v-col cols="4" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -883,7 +883,7 @@
             </v-col>
             <v-col
               v-if="pos_profile.custom_allow_select_sales_order === 1"
-              cols="6"
+              cols="4"
               class="pa-1"
             >
               <v-btn
@@ -895,29 +895,22 @@
                 >{{ __("Select S.O") }}</v-btn
               >
             </v-col>
-            <!-- <v-col cols="4" class="pa-1">
+            <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices"
+              cols="4"
+              class="pa-1"
+            >
               <v-btn
                 block
                 class="pa-0"
-                color="warning"
+                color="primary"
+                @click="print_draft_invoice"
                 dark
-                @click="open_offlineBill_drafts"
-                >{{ __("Offline FS Bills") }}</v-btn
-              >
-            </v-col> -->
-            <v-col cols="6" class="pa-1">
-              <v-btn
-                block
-                class="pa-0"
-                :class="{ 'disable-events': !pos_profile.posa_allow_return }"
-                color="secondary"
-                dark
-                @click="open_returns"
-                >{{ __("Return") }}</v-btn
+                >{{ __("Print Draft") }}</v-btn
               >
             </v-col>
             <!--putting the v-if statement below to avoid cancel of submitted invoices pulled via open_pending_fs_bills()-->
-            <v-col cols="6" class="pa-1" v-if="this.invoice_doc.docstatus != 1">
+            <v-col cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -931,13 +924,13 @@
               <v-btn
                 block
                 class="pa-0"
-                color="accent"
+                :class="{ 'disable-events': !pos_profile.posa_allow_return }"
+                color="secondary"
                 dark
-                @click="new_invoice"
-                >{{ __("Hold Bill") }}</v-btn
+                @click="open_returns"
+                >{{ __("Return") }}</v-btn
               >
             </v-col>
-
             <v-col class="pa-1">
               <v-btn
                 block
@@ -946,21 +939,17 @@
                 @click="show_payment"
                 ref="checkout"
                 dark
-                >{{ __("PAY") }}</v-btn
+                >{{ __("PAY / Create S.O") }}</v-btn
               >
             </v-col>
-            <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices"
-              cols="6"
-              class="pa-1"
-            >
+            <v-col cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
-                color="primary"
-                @click="print_draft_invoice"
+                color="accent"
                 dark
-                >{{ __("Print Draft") }}</v-btn
+                @click="new_invoice"
+                >{{ __("Hold Bill") }}</v-btn
               >
             </v-col>
             <!-- <v-col
@@ -1155,7 +1144,7 @@
                 @click="show_payment"
                 ref="checkout"
                 dark
-                >{{ __("PAY") }}</v-btn
+                >{{ __("PAY / Create S.O") }}</v-btn
               >
             </v-col>
             <v-col

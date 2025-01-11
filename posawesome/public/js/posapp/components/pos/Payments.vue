@@ -72,7 +72,7 @@
         </v-row>
         <v-divider></v-divider>
 
-        <div v-if="is_cashback">
+        <div v-if="is_cashback && invoiceType == 'Invoice'">
           <v-row
             class="pyments px-1 py-0"
             v-for="payment in invoice_doc.payments"
@@ -1047,6 +1047,7 @@ export default {
       data["redeemed_customer_credit"] = this.redeemed_customer_credit;
       data["customer_credit_dict"] = this.customer_credit_dict;
       data["is_cashback"] = this.is_cashback;
+      data["invoiceType"] = this.invoiceType;
 
       const vm = this;
       frappe.call({
@@ -1061,11 +1062,19 @@ export default {
             if (print) {
               vm.load_print_page();
             }
-            evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
-            evntBus.$emit("show_mesage", {
-              text: `Invoice ${r.message.name} is Submited`,
-              color: "success",
-            });
+            if (r.message.doctype == "Sales Invoice") {
+              evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
+              evntBus.$emit("show_mesage", {
+                text: `Invoice ${r.message.name} is Submited`,
+                color: "success",
+              });
+            }
+            else { // Sales Order
+              evntBus.$emit("show_mesage", {
+                text: `Sales Order ${r.message.name} is Submited`,
+                color: "info",
+              });
+            }
             frappe.utils.play_sound("submit");
             this.addresses = [];
           }
@@ -1728,36 +1737,51 @@ export default {
     this.$nextTick(function () {
       evntBus.$on("send_invoice_doc_payment", (invoice_doc) => {
         this.invoice_doc = invoice_doc;
-        const default_payment = this.invoice_doc.payments.find(
-          (payment) => payment.default == 1
-        );
-        this.is_credit_sale = 0;
-        this.is_write_off_change = 0;
-        if (default_payment && !invoice_doc.is_return) {
-          default_payment.amount = this.flt(
-            invoice_doc.rounded_total || invoice_doc.grand_total,
-            this.currency_precision
+
+        if (this.invoiceType == "Invoice") {
+          const default_payment = this.invoice_doc.payments.find(
+            (payment) => payment.default == 1
           );
+
+          if (default_payment && !invoice_doc.is_return) {
+            default_payment.amount = this.flt(
+              invoice_doc.rounded_total || invoice_doc.grand_total,
+              this.currency_precision
+            );
+          }
+
+          if (invoice_doc.is_return) {
+            this.is_return = true;
+            // commenting out the below statements to enable returns to the default mode of payment
+            /* invoice_doc.payments.forEach((payment) => {
+              payment.amount = 0;
+              payment.base_amount = 0;
+            }); */
+          }
+
+          if (this.invoice_doc.custom_transaction_date)
+            this.add_transaction_date = true;
+          else this.add_transaction_date = false;
+
+          if (this.invoice_doc.custom_staff_member)
+            this.staff_member = true;
+          else this.staff_member = false;
         }
-        if (invoice_doc.is_return) {
-          this.is_return = true;
-          // commenting out the below statements to enable returns to the default mode of payment
-          /* invoice_doc.payments.forEach((payment) => {
+
+        else {
+          // for "Sales Orders"
+          this.invoice_doc.payments.forEach((payment) => {
             payment.amount = 0;
             payment.base_amount = 0;
-          }); */
-        }
+            //this.$refs.submit_payments.$el.focus();
+          });
+``      }
+
+        this.is_credit_sale = 0;
+        this.is_write_off_change = 0;
 
         this.aurocard = false; // toggle for display of Aurocard details
         this.upi = false; // toggle for display of UPI details
-
-        if (this.invoice_doc.custom_transaction_date)
-          this.add_transaction_date = true;
-        else this.add_transaction_date = false;
-
-        if (this.invoice_doc.custom_staff_member)
-          this.staff_member = true;
-        else this.staff_member = false;
 
         // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
         if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
@@ -1860,7 +1884,7 @@ export default {
     },
     //configuring is_credit_sale in case there is a "Pending Amount" in Invoice.
     diff_payment(value) {
-      if (value > 0) this.is_credit_sale = 1;
+      if (value > 0 && this.invoiceType == "Invoice") this.is_credit_sale = 1;
       if (value == 0) this.is_credit_sale = 0;
     },
     is_cashback(value){
