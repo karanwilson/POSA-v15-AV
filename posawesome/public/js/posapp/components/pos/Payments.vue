@@ -1738,7 +1738,16 @@ export default {
       evntBus.$on("send_invoice_doc_payment", (invoice_doc) => {
         this.invoice_doc = invoice_doc;
 
-        if (this.invoiceType == "Invoice") {
+        if (this.invoiceType == "Order") {
+          // for "Sales Orders"
+          this.invoice_doc.payments.forEach((payment) => {
+            payment.amount = 0;
+            payment.base_amount = 0;
+            //this.$refs.submit_payments.$el.focus();
+          });
+        }
+
+        else {
           const default_payment = this.invoice_doc.payments.find(
             (payment) => payment.default == 1
           );
@@ -1767,15 +1776,6 @@ export default {
             this.staff_member = true;
           else this.staff_member = false;
         }
-
-        else {
-          // for "Sales Orders"
-          this.invoice_doc.payments.forEach((payment) => {
-            payment.amount = 0;
-            payment.base_amount = 0;
-            //this.$refs.submit_payments.$el.focus();
-          });
-``      }
 
         this.is_credit_sale = 0;
         this.is_write_off_change = 0;
