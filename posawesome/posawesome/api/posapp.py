@@ -618,6 +618,8 @@ def create_sales_order(invoice):
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
 
+    new_sales_order.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
+
     new_sales_order.transaction_date = nowdate()
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
