@@ -72,7 +72,7 @@
         </v-row>
         <v-divider></v-divider>
 
-        <div v-if="is_cashback && invoiceType == 'Invoice'">
+        <div v-if="is_cashback && invoiceType != 'Order'">
           <v-row
             class="pyments px-1 py-0"
             v-for="payment in invoice_doc.payments"
