@@ -871,7 +871,19 @@
         </v-col>
         <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
-            <v-col cols="4" class="pa-1">
+            <v-col v-if="pos_profile.custom_allow_select_sales_order === 1"
+              cols="4" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="warning"
+                dark
+                @click="get_draft_invoices"
+                >{{ __("Held") }}</v-btn
+              >
+            </v-col>
+            <v-col v-if="pos_profile.custom_allow_select_sales_order !== 1"
+              cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -896,7 +908,7 @@
               >
             </v-col>
             <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices"
+              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order === 1"
               cols="4"
               class="pa-1"
             >
@@ -909,7 +921,20 @@
                 >{{ __("Print Draft") }}</v-btn
               >
             </v-col>
-            <!--putting the v-if statement below to avoid cancel of submitted invoices pulled via open_pending_fs_bills()-->
+            <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order !== 1"
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="print_draft_invoice"
+                dark
+                >{{ __("Print Draft") }}</v-btn
+              >
+            </v-col>
             <v-col cols="6" class="pa-1">
               <v-btn
                 block

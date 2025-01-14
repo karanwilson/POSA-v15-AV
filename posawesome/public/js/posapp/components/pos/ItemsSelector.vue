@@ -483,10 +483,10 @@ export default {
 
         const qty_promise = this.scale_port_promise.then((port) => {
           return port.open({ baudRate: 9600 }).then(() => {   // Open connection to weighing scale
-            evntBus.$emit('show_mesage', {
+            /* evntBus.$emit('show_mesage', {
               text: `Weighing Scale Connected successfully`,
               color: 'success',
-            });
+            }); */
 
             const textDecoder = new TextDecoderStream();
             const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
@@ -598,10 +598,12 @@ export default {
 
           }).catch((error) => {
             // port not opened successfully
-            evntBus.$emit('show_mesage', {
-              text: `Port.open block : "${error}"`,
-              color: 'error',
-            });
+            return port.close().then(() => {
+              return evntBus.$emit('show_mesage', {
+                text: `Port.open block : "${error}"`,
+                color: 'error',
+              });
+            })
           })
 
         })
