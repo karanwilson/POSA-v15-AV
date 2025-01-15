@@ -70,7 +70,7 @@ class POSClosingShift(Document):
                 from
                     `tabSales Invoice`
                 where
-                    docstatus = 0 and posa_is_printed = 0 and posa_pos_opening_shift = %s and custom_fs_transfer_status IS NULL
+                    docstatus = 0 and posa_is_printed = 0 and posa_pos_opening_shift = %s
                 """,
                 (self.pos_opening_shift),
                 as_dict=1,
@@ -78,6 +78,15 @@ class POSClosingShift(Document):
 
             for invoice in data:
                 frappe.delete_doc("Sales Invoice", invoice.name, force=1)
+            
+                """
+                select
+                    name
+                from
+                    `tabSales Invoice`
+                where
+                    docstatus = 0 and posa_is_printed = 0 and posa_pos_opening_shift = %s and custom_fs_transfer_status IS NULL
+                """
 
     @frappe.whitelist()
     def get_payment_reconciliation_details(self):

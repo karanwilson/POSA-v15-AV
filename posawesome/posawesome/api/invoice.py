@@ -250,7 +250,8 @@ def validate_shift(doc):
         # check if shift is open
         shift = frappe.get_cached_doc("POS Opening Shift", doc.posa_pos_opening_shift)
         # factoring in Offline FS payments which are processed after the POS shift is closed
-        if shift.status != "Open" and not doc.custom_fs_transfer_status:
+        #if shift.status != "Open" and not doc.custom_fs_transfer_status:
+        if shift.status != "Open":
             frappe.throw(_("POS Shift {0} is not open").format(shift.name))
         # check if shift is for the same profile
         if shift.pos_profile != doc.pos_profile:
