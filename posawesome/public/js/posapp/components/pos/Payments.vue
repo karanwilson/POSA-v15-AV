@@ -231,7 +231,18 @@
         <v-row 
           class="px-1 py-0"
         >
-          <v-col cols="7" v-show="aurocard">
+          <v-col cols="6" v-show="aurocard">
+            <v-text-field
+              dense
+              outlined
+              color="primary"
+              :label="frappe._('Aurocard POS ID')"
+              background-color="white"
+              hide-details
+              v-model="aurocard_pos_id"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6" v-show="aurocard">
             <v-text-field
               dense
               outlined
@@ -242,7 +253,7 @@
               v-model="aurocard_trans_id"
             ></v-text-field>
           </v-col>
-          <v-col cols="7" v-show="upi">
+          <v-col cols="6" v-show="upi">
             <v-text-field
               dense
               outlined
@@ -843,6 +854,7 @@ export default {
     payment: false, // to ensure that the shortcut key "F3" is not allowed unless the evntBus ("show_payment", "true") has been triggered
     aurocard: false, // toggles display of Aurocard details
     upi: false, // toggles display of UPI details
+    aurocard_pos_id: "",
     aurocard_trans_id: "",
     upi_trans_id: "",
     remarks: false, // shows on the returns screen
@@ -860,6 +872,7 @@ export default {
     back_to_invoice() {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
+      this.aurocard_pos_id = "";
       this.aurocard_trans_id = "";
       this.upi_trans_id = "";
     },
@@ -1463,19 +1476,19 @@ export default {
 
     make_aurocard_payment() {
       return new Promise((resolve, reject) => {
-        if (this.aurocard_trans_id) {
+        if (this.aurocard_pos_id && this.aurocard_trans_id) {
           if (this.invoice_doc.is_return && this.remarks)
-            this.invoice_doc.remarks += "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
+            this.invoice_doc.remarks += "\n" + "Aurocard POS ID: " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
-            this.invoice_doc.remarks = "Aurocard Transaction ID: " + this.aurocard_trans_id;
+            this.invoice_doc.remarks = "Aurocard POS ID: " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           resolve("OK");
         }
         else {
           evntBus.$emit("show_mesage", {
-            text: "For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'",
+            text: "For Aurocard Payments, please enter both 'Aurocard POS ID' and 'Aurocard Transaction ID'",
             color: "warning",
           });
-          reject("For Aurocard Payments, please enter both 'Aurocard Number' and 'Aurocard Transaction ID'");
+          reject("For Aurocard Payments, please enter both 'Aurocard POS ID' and 'Aurocard Transaction ID'");
         }
       })
     },

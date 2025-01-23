@@ -650,6 +650,7 @@ def submit_invoice(invoice, data):
 
     if data.get("invoiceType") == "Order":
         # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
+        frappe.delete_doc("Sales Invoice", invoice.get("name"))
         return create_sales_order(invoice)
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
