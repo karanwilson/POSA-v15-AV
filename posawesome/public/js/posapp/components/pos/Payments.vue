@@ -1070,10 +1070,11 @@ export default {
           invoice: this.invoice_doc,
         },
         async: true,
-        callback: function (r) {
+        callback: async function (r) {
           if (r.message) {
             if (print) {
-              vm.load_print_page();
+              const print_open = await vm.load_print_page();
+              console.log("print_open: ", print_open);
             }
             if (r.message.doctype == "Sales Invoice") {
               evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
@@ -1082,10 +1083,14 @@ export default {
                 color: "success",
               });
             }
-            else { // Sales Order
+            else {
               evntBus.$emit("show_mesage", {
                 text: `Sales Order ${r.message.name} is Submited`,
                 color: "info",
+              });
+              // delete the invoice draft
+              frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
+                invoice_name: r.message.invoice
               });
             }
             frappe.utils.play_sound("submit");
@@ -1137,29 +1142,32 @@ export default {
       });
     },
     load_print_page() {
-      const print_format =
-        this.pos_profile.print_format_for_online ||
-        this.pos_profile.print_format;
-      const letter_head = this.pos_profile.letter_head || 0;
-      const url =
-        frappe.urllib.get_base_url() +
-        "/printview?doctype=Sales%20Invoice&name=" +
-        this.invoice_doc.name +
-        "&trigger_print=1" +
-        "&format=" +
-        print_format +
-        "&no_letterhead=" +
-        letter_head;
-      const printWindow = window.open(url, "Print");
-      printWindow.addEventListener(
-        "load",
-        function () {
-          printWindow.print();
-          // printWindow.close();
-          // NOTE : uncomoent this to auto closing printing window
-        },
-        true
-      );
+      return new Promise((resolve, reject) => {
+        const print_format =
+          this.pos_profile.print_format_for_online ||
+          this.pos_profile.print_format;
+        const letter_head = this.pos_profile.letter_head || 0;
+        const url =
+          frappe.urllib.get_base_url() +
+          "/printview?doctype=Sales%20Invoice&name=" +
+          this.invoice_doc.name +
+          "&trigger_print=1" +
+          "&format=" +
+          print_format +
+          "&no_letterhead=" +
+          letter_head;
+        const printWindow = window.open(url, "Print");
+        printWindow.addEventListener(
+          "load",
+          function () {
+            printWindow.print();
+            // printWindow.close();
+            // NOTE : uncomoent this to auto closing printing window
+          },
+          true
+        );
+        resolve("Print Done");
+      })
     },
     validate_due_date() {
       const today = frappe.datetime.now_date();
@@ -1478,9 +1486,9 @@ export default {
       return new Promise((resolve, reject) => {
         if (this.aurocard_pos_id && this.aurocard_trans_id) {
           if (this.invoice_doc.is_return && this.remarks)
-            this.invoice_doc.remarks += "\n" + "Aurocard POS ID: " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
+            this.invoice_doc.remarks += "\n" + "Aurocard POS ID: " + "PTPS POS " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           else
-            this.invoice_doc.remarks = "Aurocard POS ID: " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
+            this.invoice_doc.remarks = "Aurocard POS ID: " + "PTPS POS " + this.aurocard_pos_id + "\n" + "Aurocard Transaction ID: " + this.aurocard_trans_id;
           resolve("OK");
         }
         else {

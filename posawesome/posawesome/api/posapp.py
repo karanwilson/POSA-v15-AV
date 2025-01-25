@@ -636,9 +636,14 @@ def create_sales_order(invoice):
     return {
         "name": new_sales_order.name,
         "doctype": new_sales_order.doctype,
-        "status": new_sales_order.docstatus
+        "status": new_sales_order.docstatus,
+        "invoice": invoice.get("name") # invoice draft to be deleted after print
     }
 
+@frappe.whitelist()
+def delete_invoice_draft(invoice_name):
+    # deletes the draft invoice that gets created while making a Sales Order
+    frappe.delete_doc("Sales Invoice", invoice_name)
 
 @frappe.whitelist()
 def submit_invoice(invoice, data):
@@ -650,7 +655,6 @@ def submit_invoice(invoice, data):
 
     if data.get("invoiceType") == "Order":
         # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
-        frappe.delete_doc("Sales Invoice", invoice.get("name"))
         return create_sales_order(invoice)
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
