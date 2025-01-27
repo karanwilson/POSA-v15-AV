@@ -2253,8 +2253,10 @@ export default {
           }
           this.items.forEach((item) => {
             const return_item = this.return_doc.items.find(
-              (element) => element.item_code == item.item_code //&& Math.abs(element.qty) == Math.abs(item.qty)
+              //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
+              (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no)) //&& Math.abs(element.qty) == Math.abs(item.qty)
             );
+            console.log("return_item.batch_no: ", return_item.batch_no);
 
             if (!return_item) {
               evntBus.$emit("show_mesage", {
