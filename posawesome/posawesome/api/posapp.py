@@ -620,7 +620,10 @@ def create_sales_order(invoice):
 
     new_sales_order.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
 
-    new_sales_order.transaction_date = nowdate()
+    if "custom_transaction_date" in invoice:
+        new_sales_order.transaction_date = invoice.get("custom_transaction_date")
+    else:
+        new_sales_order.transaction_date = invoice.get("posting_date")
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 

@@ -1071,7 +1071,7 @@ export default {
         },
         async: true,
         callback: async function (r) {
-          if (r.message) {
+          if (r.message.status == 1) {
             if (print) {
               const print_open = await vm.load_print_page();
               console.log("print_open: ", print_open);
@@ -1095,6 +1095,22 @@ export default {
             }
             frappe.utils.play_sound("submit");
             this.addresses = [];
+          }
+          else {
+            // Document not Submitted
+            if (r.message.doctype == "Sales Invoice") {
+              evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
+              evntBus.$emit("show_mesage", {
+                text: `Invoice ${r.message.name} not Submited, please retry`,
+                color: "error",
+              });
+            }
+            else {
+              evntBus.$emit("show_mesage", {
+                text: `Sales Order ${r.message.name} not Submited, please retry`,
+                color: "error",
+              });
+            }
           }
         },
       });

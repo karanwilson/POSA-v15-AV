@@ -39,14 +39,14 @@
         </v-col>
         <v-col
           v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
-          cols="6"
+          cols="7"
           class="pb-2 pr-0"
         >
           <Customer></Customer>
         </v-col>
         <v-col
           v-if="pos_profile.posa_allow_sales_order && !pos_profile.posa_enable_fs_payments"
-          cols="8"
+          cols="9"
           class="pb-2 pr-0"
         >
           <Customer></Customer>
@@ -90,7 +90,7 @@
           {{ pending_fs_bills }}<v-icon>mdi-account-clock-outline</v-icon>
           </v-btn>
         </v-col>
-        <v-col v-if="pos_profile.posa_allow_sales_order" cols="3" class="pb-2">
+        <v-col v-if="pos_profile.posa_allow_sales_order" cols="2" class="pb-2">
           <v-select
             dense
             hide-details
