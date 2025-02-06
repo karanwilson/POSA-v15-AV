@@ -1391,7 +1391,7 @@ export default {
       frappe.call({
         method: 'posawesome.posawesome.api.posapp.pending_fs_bills_query',
         args: {
-          customer: vm.customer,
+          customer: customer,
           company: vm.pos_profile.company
         },
         callback: (r) => {
@@ -1410,6 +1410,22 @@ export default {
     reset_pending_fs_bills_status() {
       this.dynamic_pending_icon_color = 'grey';
       this.pending_fs_bills = 0;
+    },
+    get_customer_type(customer) {
+      const vm = this;
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.get_customer_type',
+        args: {
+          customer: customer
+        },
+        callback: (r) => {
+          if (r.message) {
+            if (r.message == "Company")
+              vm.invoiceType = "Order";
+            else vm.invoiceType = "Invoice";
+          }
+        }
+      })
     },
     remove_item(item) {
       const index = this.items.findIndex(
@@ -3652,6 +3668,8 @@ export default {
           this.pending_fs_bills_check(customer);
         }
       }
+      if (customer && this.pos_profile.posa_allow_sales_order)
+        this.get_customer_type(customer); // for setting "Sales Orders" for B2B customers, with customer_type as "company"
     });
     evntBus.$on("reset_fs_variables", () => {
       this.reset_fs_variables();

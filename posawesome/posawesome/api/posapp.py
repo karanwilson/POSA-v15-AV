@@ -787,6 +787,24 @@ def submit_invoice(invoice, data):
     }
 
 
+def record_draft_invoice_fs_payments(data_2):
+    data = json.loads(data_2)
+    draft_invoice_fs_payment = frappe.get_doc(
+        {
+            "doctype": "Draft Invoice FS Payment",
+            "sales_invoice": data.get("sales_invoice"),
+            "customer": data.get("customer"),
+            "amount_paid": data.get("amount_paid"),
+            "fs_account_number": data.get("fs_account_number"),
+            "fs_transfer_status": data.get("fs_transfer_status"),
+            "fs_payment_message": data.get("fs_payment_message")
+        }
+    )
+    draft_invoice_fs_payment.insert(ignore_permissions=True)
+    draft_invoice_fs_payment.submit()
+    frappe.db.commit()
+
+
 def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):
     """Automatically select `batch_no` for outgoing items in item table"""
     for d in doc.packed_items:
@@ -1043,6 +1061,11 @@ def get_draft_invoices(pos_opening_shift):
 @frappe.whitelist()
 def get_customer_fs_acc_number(customer):
     return frappe.get_value("Customer", customer, "custom_fs_account_number")
+
+
+@frappe.whitelist()
+def get_customer_type(customer):
+    return frappe.get_value("Customer", customer, "customer_type")
 
 
 @frappe.whitelist()
