@@ -1117,7 +1117,7 @@ export default {
                   data_2["customer"] = vm.invoice_doc.customer;
                   data_2["amount_paid"] = vm.invoice_doc.grand_total;
                   data_2["fs_account_number"] = vm.invoice_doc.custom_fs_account_number;
-                  data_2["FS Transfer Status"] = vm.invoice_doc.custom_fs_transfer_status;
+                  data_2["fs_transfer_status"] = vm.invoice_doc.custom_fs_transfer_status;
                   data_2["fs_payment_message"] = vm.invoice_doc.remarks;
 
                   frappe.call('posawesome.posawesome.api.posapp.record_draft_invoice_fs_payment', {
