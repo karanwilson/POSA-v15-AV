@@ -860,6 +860,7 @@ export default {
     remarks: false, // shows on the returns screen
     balance_available: null, // Customer FS Account balance
     fs_offline: false, // for offline credit billing
+    retry_submit: false, // is set to 'true' when a doc submit fails due to at-the-moment stock-outs
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1000,6 +1001,7 @@ export default {
           if (payment.mode_of_payment === "FS") {
             const verify_fs_payment = await this.verify_fs_payment();
             console.log("verify_fs_payment: ", verify_fs_payment);
+            console.log("this.retry_submit: ", this.retry_submit);
             const fs_payment_response = await this.make_fs_payment(payment.amount);
             console.log("fs_payment_response: ", fs_payment_response);
             break;
@@ -1023,7 +1025,8 @@ export default {
         }
       }
 
-      this.submit_invoice(print);
+      submit_status = await this.submit_invoice(print);
+      console.log(submit_status);
 
       this.customer_credit_dict = [];
       this.redeem_customer_credit = false;
@@ -1031,89 +1034,117 @@ export default {
       this.sales_person = "";
 
       this.balance_available = null;
+      this.retry_submit = false;
       //evntBus.$emit('reset_fs_variables'); // pass event to Invoice.vue
       evntBus.$emit("new_invoice", "false"); // clubbed reset_fs_variables with new_invoice evnt.$on in Invoice.vue
       this.back_to_invoice();
     },
 
     submit_invoice(print) {
-      let totalPayedAmount = 0;
-      this.invoice_doc.payments.forEach((payment) => {
-        payment.amount = flt(payment.amount, this.currency_precision);
-        totalPayedAmount += payment.amount;
-      });
-      if (this.invoice_doc.is_return && totalPayedAmount == 0) {
-        this.invoice_doc.is_pos = 0;
-      }
-      if (this.customer_credit_dict.length) {
-        this.customer_credit_dict.forEach((row) => {
-          row.credit_to_redeem = flt(row.credit_to_redeem);
+      return new Promise((resolve, reject) => {
+        let totalPayedAmount = 0;
+        this.invoice_doc.payments.forEach((payment) => {
+          payment.amount = flt(payment.amount, this.currency_precision);
+          totalPayedAmount += payment.amount;
         });
-      }
-      let data = {};
-      data["total_change"] = !this.invoice_doc.is_return
-        ? -this.diff_payment
-        : 0;
-      data["to_be_paid"] = this.diff_payment;  // factoring in 'part payments' with 'credit sale' instead of cash transactions
-      data["paid_change"] = !this.invoice_doc.is_return ? this.paid_change : 0;
-      data["credit_change"] = -this.credit_change;
-      data["redeemed_customer_credit"] = this.redeemed_customer_credit;
-      data["customer_credit_dict"] = this.customer_credit_dict;
-      data["is_cashback"] = this.is_cashback;
-      data["invoiceType"] = this.invoiceType;
+        if (this.invoice_doc.is_return && totalPayedAmount == 0) {
+          this.invoice_doc.is_pos = 0;
+        }
+        if (this.customer_credit_dict.length) {
+          this.customer_credit_dict.forEach((row) => {
+            row.credit_to_redeem = flt(row.credit_to_redeem);
+          });
+        }
+        let data = {};
+        data["total_change"] = !this.invoice_doc.is_return
+          ? -this.diff_payment
+          : 0;
+        data["to_be_paid"] = this.diff_payment;  // factoring in 'part payments' with 'credit sale' instead of cash transactions
+        data["paid_change"] = !this.invoice_doc.is_return ? this.paid_change : 0;
+        data["credit_change"] = -this.credit_change;
+        data["redeemed_customer_credit"] = this.redeemed_customer_credit;
+        data["customer_credit_dict"] = this.customer_credit_dict;
+        data["is_cashback"] = this.is_cashback;
+        data["invoiceType"] = this.invoiceType;
 
-      const vm = this;
-      frappe.call({
-        method: "posawesome.posawesome.api.posapp.submit_invoice",
-        args: {
-          data: data,
-          invoice: this.invoice_doc,
-        },
-        async: true,
-        callback: async function (r) {
-          if (r.message.status == 1) {
-            if (print) {
-              const print_open = await vm.load_print_page();
-              console.log("print_open: ", print_open);
-            }
-            if (r.message.doctype == "Sales Invoice") {
-              evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
-              evntBus.$emit("show_mesage", {
-                text: `Invoice ${r.message.name} is Submited`,
-                color: "success",
-              });
-            }
-            else {
-              evntBus.$emit("show_mesage", {
-                text: `Sales Order ${r.message.name} is Submited`,
-                color: "info",
-              });
-              // delete the invoice draft
-              frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
-                invoice_name: r.message.invoice
-              });
-            }
-            frappe.utils.play_sound("submit");
-            this.addresses = [];
-          }
-          else {
-            // Document not Submitted
-            if (r.message.doctype == "Sales Invoice") {
-              evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
-              evntBus.$emit("show_mesage", {
-                text: `Invoice ${r.message.name} not Submited, please retry`,
-                color: "error",
-              });
+        const vm = this;
+        frappe.call({
+          method: "posawesome.posawesome.api.posapp.submit_invoice",
+          args: {
+            data: data,
+            invoice: this.invoice_doc,
+          },
+          async: true,
+          callback: async function (r) {
+            if (r.message.status == 1) {
+              if (print) {
+                const print_open = await vm.load_print_page();
+                console.log("print_open: ", print_open);
+              }
+              if (r.message.doctype == "Sales Invoice") {
+                evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
+                evntBus.$emit("show_mesage", {
+                  text: `Invoice ${r.message.name} is Submited`,
+                  color: "success",
+                });
+              }
+              else {
+                evntBus.$emit("show_mesage", {
+                  text: `Sales Order ${r.message.name} is Submited`,
+                  color: "info",
+                });
+                // delete the invoice draft
+                frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
+                  invoice_name: r.message.invoice
+                });
+              }
+              frappe.utils.play_sound("submit");
+              this.addresses = [];
+              if (vm.retry_submit = true) {
+                // delete the invoice draft
+                frappe.call('posawesome.posawesome.api.posapp.delete_draft_invoice_fs_payment', {
+                  invoice_name: vm.invoice_doc.name
+                });
+              }
+              resolve("Submitted");
             }
             else {
-              evntBus.$emit("show_mesage", {
-                text: `Sales Order ${r.message.name} not Submited, please retry`,
-                color: "error",
-              });
+              // Document not Submitted
+              if (r.message.doctype == "Sales Invoice") {
+                if (vm.invoice_doc.custom_fs_transfer_status == "OK") {
+                  let data_2 = {};
+                  data_2["sales_invoice"] = vm.invoice_doc.name;
+                  data_2["customer"] = vm.invoice_doc.customer;
+                  data_2["amount_paid"] = vm.invoice_doc.grand_total;
+                  data_2["fs_account_number"] = vm.invoice_doc.custom_fs_account_number;
+                  data_2["FS Transfer Status"] = vm.invoice_doc.custom_fs_transfer_status;
+                  data_2["fs_payment_message"] = vm.invoice_doc.remarks;
+
+                  frappe.call('posawesome.posawesome.api.posapp.record_draft_invoice_fs_payment', {
+                    data_2: data_2
+                  });
+                  // set this to 'true' when there is a successful FS transfer,
+                  // in order to retrieve the payment detail during a retry of 'submit'
+                  vm.retry_submit = true;
+                }
+
+                evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
+                evntBus.$emit("show_mesage", {
+                  text: `Invoice ${r.message.name} not Submited, please check batch/stock and retry`,
+                  color: "error",
+                });
+              }
+              else {
+                evntBus.$emit("show_mesage", {
+                  text: `Sales Order ${r.message.name} not Submited, please retry`,
+                  color: "error",
+                });
+              }
+              reject("Not Submitted");
             }
-          }
-        },
-      });
+          },
+        });
+      })
     },
     set_full_amount(idx) {
       let mop;
@@ -1463,7 +1494,8 @@ export default {
             args: {
               invoice_doc: vm.invoice_doc,
               fAmount: fs_amount,
-              fs_acc_balance: vm.balance_available
+              fs_acc_balance: vm.balance_available,
+              retry_submit: vm.retry_submit
             },
             async: false,
             callback: function (r) {
@@ -1479,7 +1511,7 @@ export default {
                 }
                 else if (r.message["custom_fs_transfer_status"] == "Insufficient Funds") {
                   vm.is_credit_sale = 1;
-                  vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
+                  //vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
                   //vm.invoice_doc.outstanding_amount = fs_amount;
                   //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
                   resolve("Insufficient Funds");
@@ -1842,6 +1874,11 @@ export default {
       evntBus.$on('fs_offline', (data) => {
         this.fs_offline = data;
       }),
+      // the below evnt is emitted from Drafts.vue
+      // setting retry_submit to 'true' for POSA to check if a payment was already made against this invoice
+      evntBus.$on("load_invoice", () => {
+        this.retry_submit = true;
+      });
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();
