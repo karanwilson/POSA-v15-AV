@@ -860,7 +860,6 @@ export default {
     remarks: false, // shows on the returns screen
     balance_available: null, // Customer FS Account balance
     fs_offline: false, // for offline credit billing
-    retry_submit: false, // is set to 'true' when a doc submit fails due to at-the-moment stock-outs
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
@@ -1002,7 +1001,6 @@ export default {
           if (payment.mode_of_payment === "FS") {
             const verify_fs_payment = await this.verify_fs_payment();
             console.log("verify_fs_payment: ", verify_fs_payment);
-            console.log("this.retry_submit: ", this.retry_submit);
             const fs_payment_response = await this.make_fs_payment(payment.amount);
             console.log("fs_payment_response: ", fs_payment_response);
             break;
@@ -1035,7 +1033,6 @@ export default {
       this.sales_person = "";
 
       this.balance_available = null;
-      this.retry_submit = false;
       this.sales_order = "";
       //evntBus.$emit('reset_fs_variables'); // pass event to Invoice.vue
       evntBus.$emit("new_invoice", "false"); // clubbed reset_fs_variables with new_invoice evnt.$on in Invoice.vue
@@ -1104,34 +1101,11 @@ export default {
               }
               frappe.utils.play_sound("submit");
               this.addresses = [];
-              if (vm.retry_submit = true) {
-                // delete the invoice draft
-                frappe.call('posawesome.posawesome.api.posapp.delete_draft_invoice_fs_payment', {
-                  invoice_name: vm.invoice_doc.name
-                });
-              }
               resolve("Submitted");
             }
             else {
               // Document not Submitted
               if (r.message.doctype == "Sales Invoice") {
-                if (vm.invoice_doc.custom_fs_transfer_status == "OK") {
-                  let data_2 = {};
-                  data_2["sales_invoice"] = vm.invoice_doc.name;
-                  data_2["customer"] = vm.invoice_doc.customer;
-                  data_2["amount_paid"] = vm.invoice_doc.grand_total;
-                  data_2["fs_account_number"] = vm.invoice_doc.custom_fs_account_number;
-                  data_2["fs_transfer_status"] = vm.invoice_doc.custom_fs_transfer_status;
-                  data_2["fs_payment_message"] = vm.invoice_doc.remarks;
-
-                  frappe.call('posawesome.posawesome.api.posapp.record_draft_invoice_fs_payment', {
-                    data_2: data_2
-                  });
-                  // set this to 'true' when there is a successful FS transfer,
-                  // in order to retrieve the payment detail during a retry of 'submit'
-                  vm.retry_submit = true;
-                }
-
                 evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
                 evntBus.$emit("show_mesage", {
                   text: `Invoice ${r.message.name} not Submited, please check batch/stock and retry`,
@@ -1512,8 +1486,7 @@ export default {
             args: {
               invoice_doc: vm.invoice_doc,
               fAmount: fs_amount,
-              fs_acc_balance: vm.balance_available,
-              retry_submit: vm.retry_submit
+              fs_acc_balance: vm.balance_available
             },
             async: false,
             callback: function (r) {
@@ -1892,11 +1865,6 @@ export default {
       evntBus.$on('fs_offline', (data) => {
         this.fs_offline = data;
       }),
-      // the below evnt is emitted from Drafts.vue
-      // setting retry_submit to 'true' for POSA to check if a payment was already made against this invoice
-      evntBus.$on("load_invoice", () => {
-        this.retry_submit = true;
-      });
       evntBus.$on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
         this.get_mpesa_modes();

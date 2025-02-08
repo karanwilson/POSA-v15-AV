@@ -787,33 +787,6 @@ def submit_invoice(invoice, data):
     }
 
 
-def record_draft_invoice_fs_payment(data_2):
-    data = json.loads(data_2)
-    draft_invoice_fs_payment = frappe.get_doc(
-        {
-            "doctype": "Draft Invoice FS Payment",
-            "sales_invoice": data.get("sales_invoice"),
-            "customer": data.get("customer"),
-            "amount_paid": data.get("amount_paid"),
-            "fs_account_number": data.get("fs_account_number"),
-            "fs_transfer_status": data.get("fs_transfer_status"),
-            "fs_payment_message": data.get("fs_payment_message")
-        }
-    )
-    draft_invoice_fs_payment.insert(ignore_permissions=True)
-    draft_invoice_fs_payment.submit()
-    frappe.db.commit()
-
-
-@frappe.whitelist()
-def delete_draft_invoice_fs_payment(invoice_name):
-    # deletes the draft invoice that gets created while making a Sales Order
-    draft_invoice_fs_payment = frappe.get_value("Draft Invoice FS Payment", {"sales_invoice": invoice_name}, "name")
-
-    if draft_invoice_fs_payment:
-        frappe.delete_doc("Draft Invoice FS Payment", draft_invoice_fs_payment)
-
-
 def set_batch_nos_for_bundels(doc, warehouse_field, throw=False):
     """Automatically select `batch_no` for outgoing items in item table"""
     for d in doc.packed_items:
