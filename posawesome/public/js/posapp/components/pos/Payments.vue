@@ -864,6 +864,7 @@ export default {
     customer_credit_dict: [],
     phone_dialog: false,
     invoiceType: "Invoice",
+    sales_order: "",
     pos_settings: "",
     customer_info: "",
     mpesa_modes: [],
@@ -1035,6 +1036,7 @@ export default {
 
       this.balance_available = null;
       this.retry_submit = false;
+      this.sales_order = "";
       //evntBus.$emit('reset_fs_variables'); // pass event to Invoice.vue
       evntBus.$emit("new_invoice", "false"); // clubbed reset_fs_variables with new_invoice evnt.$on in Invoice.vue
       this.back_to_invoice();
@@ -1078,6 +1080,8 @@ export default {
           callback: async function (r) {
             if (r.message.status == 1) {
               if (print) {
+                if (r.message.doctype == "Sales Order")
+                  vm.sales_order = r.message.name;
                 const print_open = await vm.load_print_page();
                 console.log("print_open: ", print_open);
               }
@@ -1194,15 +1198,29 @@ export default {
           this.pos_profile.print_format_for_online ||
           this.pos_profile.print_format;
         const letter_head = this.pos_profile.letter_head || 0;
-        const url =
-          frappe.urllib.get_base_url() +
-          "/printview?doctype=Sales%20Invoice&name=" +
-          this.invoice_doc.name +
-          "&trigger_print=1" +
-          "&format=" +
-          print_format +
-          "&no_letterhead=" +
-          letter_head;
+        let url = "";
+        if (this.invoiceType == "Invoice") {
+          url =
+            frappe.urllib.get_base_url() +
+            "/printview?doctype=Sales%20Invoice&name=" +
+            this.invoice_doc.name +
+            "&trigger_print=1" +
+            "&format=" +
+            print_format +
+            "&no_letterhead=" +
+            letter_head;
+        }
+        else {
+          url =
+            frappe.urllib.get_base_url() +
+            "/printview?doctype=Sales%20Order&name=" +
+            this.sales_order +
+            "&trigger_print=1" +
+            "&format=" +
+            print_format +
+            "&no_letterhead=" +
+            letter_head;
+        }
         const printWindow = window.open(url, "Print");
         printWindow.addEventListener(
           "load",
