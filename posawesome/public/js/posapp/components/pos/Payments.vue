@@ -864,6 +864,7 @@ export default {
     phone_dialog: false,
     invoiceType: "Invoice",
     sales_order: "",
+    disable_submit: false,
     pos_settings: "",
     customer_info: "",
     mpesa_modes: [],
@@ -878,6 +879,13 @@ export default {
       this.upi_trans_id = "";
     },
     async submit(event, payment_received = false, print = false) {
+      if (this.invoiceType == "Invoice") {
+        this.disable_submit = true; // temporarily disabling submit button (via vaildatPayment function)
+        setTimeout(() => {
+          this.disable_submit = false;
+        }, 5000);
+      }
+
       if (!this.invoice_doc.is_return && this.total_payments < 0) {
         evntBus.$emit("show_mesage", {
           text: `Payments not correct`,
@@ -1507,6 +1515,13 @@ export default {
                   //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
                   resolve("Insufficient Funds");
                 }
+                else if (r.message["custom_fs_transfer_status"] == "Payment in Progress") {
+                  evntBus.$emit('show_mesage', {
+                    text: r.message['custom_fs_transfer_status'],
+                    color: "warning",
+                  });
+                  reject(r.message["custom_fs_transfer_status"]);
+                }
                 else {
                   evntBus.$emit('show_mesage', {
                     text: r.message['custom_fs_transfer_status'],
@@ -1764,15 +1779,18 @@ export default {
     vaildatPayment() {
       if (this.pos_profile.posa_allow_sales_order) {
         if (
-          this.invoiceType == "Order" &&
-          !this.invoice_doc.posa_delivery_date
+          // adding (|| this.disable_submit) below to factor in temporary disabling (as per timeout) of submit button
+          (this.invoiceType == "Order" &&
+          !this.invoice_doc.posa_delivery_date) || this.disable_submit
         ) {
           return true;
         } else {
           return false;
         }
       } else {
-        return false;
+        if (this.disable_submit)
+          return true;
+        else return false;
       }
     },
     request_payment_field() {
