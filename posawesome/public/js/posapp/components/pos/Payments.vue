@@ -1083,7 +1083,7 @@ export default {
           },
           async: true,
           callback: async function (r) {
-            if (r.message.status == 1) {
+            if ((r.message.status == 1) && !r.message.error) {
               if (print) {
                 if (r.message.doctype == "Sales Order")
                   vm.sales_order = r.message.name;
@@ -1113,6 +1113,12 @@ export default {
             }
             else {
               // Document not Submitted
+              if (r.message.error) {
+                evntBus.$emit("show_mesage", {
+                  text: r.message.error,
+                  color: "error",
+                });
+              }
               if (r.message.doctype == "Sales Invoice") {
                 evntBus.$emit("set_last_invoice", vm.invoice_doc.name);
                 evntBus.$emit("show_mesage", {

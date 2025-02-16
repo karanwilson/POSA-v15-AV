@@ -586,9 +586,9 @@ def update_invoice(data):
     return invoice_doc
 
 
-def add_sales_order_items(new_sales_order, invoice):
-	for item in invoice.get("items"):
-		new_sales_order.append(
+def add_sales_order_items(new_sales_order, stock_entry, t_warehouse, invoice):
+    for item in invoice.get("items"):
+        new_sales_order.append(
 			"items",
 			{
 				"item_code": item.get("item_code"),
@@ -599,6 +599,21 @@ def add_sales_order_items(new_sales_order, invoice):
 				"qty": item.get("qty"),
 				"rate": item.get("rate"),
 				"warehouse": item.get("warehouse"),
+			},
+		)
+
+        stock_entry.append(
+			"items",
+			{
+				"item_code": item.get("item_code"),
+				"s_warehouse": item.get("warehouse"),
+                "t_warehouse" : t_warehouse,
+				"qty": item.get("qty"),
+				"basic_rate": item.get("rate"),
+				"uom": item.get("uom"),
+                "stock_uom": item.get("stock_uom"),
+                "conversion_factor": item.get("conversion_factor") or 1.0,
+                "batch_no": item.get("batch_no"),
 			},
 		)
 
@@ -627,10 +642,26 @@ def create_sales_order(invoice):
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 
-    add_sales_order_items(new_sales_order, invoice)
+    # Creating a Stock Entry for Sales Order stock reservation
+    stock_entry = frappe.new_doc("Stock Entry")
+    stock_entry.company = invoice.get("company")
+    stock_entry.stock_entry_type = "Material Transfer"
+    # get company abbreviation
+    abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
+    t_warehouse = "Sales Order Reserve - " + abbr
+
+    add_sales_order_items(new_sales_order, stock_entry, t_warehouse, invoice)
     add_sales_order_taxes(new_sales_order, invoice)
 
     new_sales_order.flags.ignore_mandatory = True
+
+    try:
+        stock_entry.insert()
+        stock_entry.submit()
+    except Exception as err:
+        return {
+            "error": err
+        }
 
     new_sales_order.insert()
     new_sales_order.submit()
@@ -775,7 +806,13 @@ def submit_invoice(invoice, data):
                 },
             )
     else:
-        invoice_doc.submit()
+        try:
+            invoice_doc.submit()
+        except Exception as err:
+            return {
+                "error": err
+            }
+
         redeeming_customer_credit(
             invoice_doc, data, is_payment_entry, total_cash, cash_account, payments
         )
