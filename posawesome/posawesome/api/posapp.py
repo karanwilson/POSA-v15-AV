@@ -684,9 +684,6 @@ def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
 
-    with open('invoice_json.txt', 'w') as file:
-        file.write(str(invoice))
-
     if data.get("invoiceType") == "Order":
         # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
         return create_sales_order(invoice)
