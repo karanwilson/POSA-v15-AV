@@ -646,6 +646,7 @@ def create_sales_order(invoice):
     stock_entry = frappe.new_doc("Stock Entry")
     stock_entry.company = invoice.get("company")
     stock_entry.stock_entry_type = "Material Transfer"
+
     # get company abbreviation
     abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
     t_warehouse = "Sales Order Reserve - " + abbr
@@ -657,14 +658,15 @@ def create_sales_order(invoice):
 
     try:
         stock_entry.insert()
+        new_sales_order.insert()
+        stock_entry.remarks = new_sales_order.name
+        stock_entry.save()
         stock_entry.submit()
+        new_sales_order.submit()
     except Exception as err:
         return {
             "error": err
         }
-
-    new_sales_order.insert()
-    new_sales_order.submit()
 
     frappe.db.commit()
     return {
