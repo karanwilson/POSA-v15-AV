@@ -664,6 +664,8 @@ def create_sales_order(invoice):
         stock_entry.submit()
         new_sales_order.submit()
     except Exception as err:
+        if stock_entry.docstatus == 0:
+            frappe.delete_doc("Stock Entry", stock_entry.name)
         return {
             "error": err
         }
