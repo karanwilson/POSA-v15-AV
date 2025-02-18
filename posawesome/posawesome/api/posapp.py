@@ -586,22 +586,8 @@ def update_invoice(data):
     return invoice_doc
 
 
-def add_sales_order_items(new_sales_order, stock_entry, t_warehouse, invoice):
+def add_stock_entry_items(stock_entry, t_warehouse, invoice):
     for item in invoice.get("items"):
-        new_sales_order.append(
-			"items",
-			{
-				"item_code": item.get("item_code"),
-				"item_name": item.get("item_name"),
-				"description": item.get("item_name"),
-				"delivery_date": new_sales_order.get("delivery_date"),
-				"uom": item.get("uom"),
-				"qty": item.get("qty"),
-				"rate": item.get("rate"),
-				"warehouse": item.get("warehouse"),
-			},
-		)
-
         stock_entry.append(
 			"items",
 			{
@@ -614,6 +600,22 @@ def add_sales_order_items(new_sales_order, stock_entry, t_warehouse, invoice):
                 "stock_uom": item.get("stock_uom"),
                 "conversion_factor": item.get("conversion_factor") or 1.0,
                 "batch_no": item.get("batch_no"),
+			},
+		)
+
+def add_sales_order_items(new_sales_order, invoice):
+    for item in invoice.get("items"):
+        new_sales_order.append(
+			"items",
+			{
+				"item_code": item.get("item_code"),
+				"item_name": item.get("item_name"),
+				"description": item.get("item_name"),
+				"delivery_date": new_sales_order.get("delivery_date"),
+				"uom": item.get("uom"),
+				"qty": item.get("qty"),
+				"rate": item.get("rate"),
+				"warehouse": item.get("warehouse"),
 			},
 		)
 
@@ -630,6 +632,18 @@ def add_sales_order_taxes(new_sales_order, invoice):
 
 # method refererence: /home/ptps/frappe-bench/apps/erpnext/erpnext/erpnext_integrations/connectors/woocommerce_connection.py
 def create_sales_order(invoice):
+    # Creating a Stock Entry for Sales Order stock reservation
+    stock_entry = frappe.new_doc("Stock Entry")
+
+    stock_entry.company = invoice.get("company")
+    stock_entry.stock_entry_type = "Material Transfer"
+
+    # get company abbreviation
+    abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
+    t_warehouse = "Sales Order Reserve - " + abbr
+
+    add_stock_entry_items(stock_entry, t_warehouse, invoice)
+
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
 
@@ -642,41 +656,32 @@ def create_sales_order(invoice):
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 
-    # Creating a Stock Entry for Sales Order stock reservation
-    stock_entry = frappe.new_doc("Stock Entry")
-    stock_entry.company = invoice.get("company")
-    stock_entry.stock_entry_type = "Material Transfer"
-
-    # get company abbreviation
-    abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
-    t_warehouse = "Sales Order Reserve - " + abbr
-
-    add_sales_order_items(new_sales_order, stock_entry, t_warehouse, invoice)
+    add_sales_order_items(new_sales_order, invoice)
     add_sales_order_taxes(new_sales_order, invoice)
 
     new_sales_order.flags.ignore_mandatory = True
 
+    new_sales_order.insert()
+
+    stock_entry.remarks = new_sales_order.name
+
     try:
         stock_entry.insert()
-        new_sales_order.insert()
-        stock_entry.remarks = new_sales_order.name
-        stock_entry.save()
         stock_entry.submit()
-        new_sales_order.submit()
     except Exception as err:
-        if stock_entry.docstatus == 0:
-            frappe.delete_doc("Stock Entry", stock_entry.name)
+        new_sales_order.delete()
         return {
             "error": err
         }
 
-    frappe.db.commit()
-    return {
-        "name": new_sales_order.name,
-        "doctype": new_sales_order.doctype,
-        "status": new_sales_order.docstatus,
-        "invoice": invoice.get("name") # invoice draft to be deleted after print
-    }
+    else:
+        new_sales_order.submit()
+        return {
+            "name": new_sales_order.name,
+            "doctype": new_sales_order.doctype,
+            "status": new_sales_order.docstatus,
+            "invoice": invoice.get("name") # invoice draft to be deleted after print
+        }
 
 @frappe.whitelist()
 def delete_invoice_draft(invoice_name):
