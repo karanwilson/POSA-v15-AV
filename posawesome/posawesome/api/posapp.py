@@ -603,7 +603,7 @@ def add_stock_entry_items(stock_entry, t_warehouse, invoice):
 			},
 		)
 
-def add_sales_order_items(new_sales_order, invoice):
+def add_sales_order_items(new_sales_order, t_warehouse, invoice):
     for item in invoice.get("items"):
         new_sales_order.append(
 			"items",
@@ -615,7 +615,8 @@ def add_sales_order_items(new_sales_order, invoice):
 				"uom": item.get("uom"),
 				"qty": item.get("qty"),
 				"rate": item.get("rate"),
-				"warehouse": item.get("warehouse"),
+				"warehouse": t_warehouse,
+                "custom_batch_no": item.get("batch_no"),
 			},
 		)
 
@@ -656,7 +657,7 @@ def create_sales_order(invoice):
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 
-    add_sales_order_items(new_sales_order, invoice)
+    add_sales_order_items(new_sales_order, t_warehouse, invoice)
     add_sales_order_taxes(new_sales_order, invoice)
 
     new_sales_order.flags.ignore_mandatory = True
