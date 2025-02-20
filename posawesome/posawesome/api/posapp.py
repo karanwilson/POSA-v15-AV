@@ -671,9 +671,7 @@ def create_sales_order(invoice):
         stock_entry.submit()
     except Exception as err:
         new_sales_order.delete()
-        return {
-            "error": err
-        }
+        raise err
 
     else:
         new_sales_order.submit()
