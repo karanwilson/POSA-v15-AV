@@ -22,10 +22,12 @@ frappe
 			$.extend(
 				frappe._messages, {
 					"Customer": "Participant",
+					"Customer Name / FS Account Number / Aurocard Number": "Participant Name / FS Account Number",
 					"Customer Name *": "Participant Name *",
+					"Invoice": "Checkout-Note",
 					"Invoice ID *": "Checkout-Note ID *",
 					"There is no Customer !": "Enter a Participant",
-					"PAY": "CHECKOUT",
+					"PAY / Create S.O": "CHECKOUT",
 					"Use Customer Credit": "Use Available Balance",
 					"Available Credit": "Available Balance",
 					"Redeem Credit": "Redeem Balance",

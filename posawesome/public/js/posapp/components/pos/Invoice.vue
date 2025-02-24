@@ -997,7 +997,7 @@
     <v-card v-if="!pos_profile.posa_enable_fs_payments"
       class="cards mb-0 mt-3 py-0 grey lighten-5">
       <v-row no-gutters>
-        <v-col cols="7">
+        <v-col cols="6">
           <v-row no-gutters class="pa-1 pt-9 pr-1">
             <v-col cols="6" class="pa-1">
               <v-text-field
@@ -1104,7 +1104,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="5">
+        <v-col cols="6">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
             <v-col cols="6" class="pa-1">
               <v-btn
@@ -1158,7 +1158,7 @@
                 color="accent"
                 dark
                 @click="new_invoice"
-                >{{ __("Save/New") }}</v-btn
+                >{{ __("Hold") }}</v-btn
               >
             </v-col>
             <v-col class="pa-1">
