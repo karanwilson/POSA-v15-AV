@@ -21,10 +21,11 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="frappe._('Customer Name / Aurocard No.') + ' *'"
+                  :label="frappe._('Aurocard No.') + ' *'"
                   background-color="white"
                   hide-details
                   v-model="customer_name"
+                  required
                 ></v-text-field>
               </v-col>
               <!--for search with FS Account Numbers-->
@@ -117,7 +118,7 @@
                   >
                   </v-date-picker>
                 </v-menu>
-              </v-col> -->
+              </v-col>
               <v-col cols="6">
                 <v-autocomplete
                   clearable
@@ -167,7 +168,7 @@
                   readonly
                   hide-details
                 ></v-text-field>
-              </v-col>
+              </v-col> -->
             </v-row>
           </v-container>
         </v-card-text>
@@ -284,6 +285,12 @@ export default {
         });
     },
     submit_dialog() {
+      console.log("this.pos_profile.company: ", this.pos_profile.company);
+      if (this.pos_profile.company == "Pour Tous Purchasing Service") {
+        this.group = "Aurocard Payments";
+        this.territory = "India";
+      }
+
       // validate if all required fields are filled
       if (!this.customer_name) {
         evntBus.$emit('show_mesage', {

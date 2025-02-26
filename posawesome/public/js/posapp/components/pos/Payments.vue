@@ -857,6 +857,7 @@ export default {
     aurocard_pos_id: "",
     aurocard_trans_id: "",
     upi_trans_id: "",
+    customer_group: "",
     remarks: false, // shows on the returns screen
     balance_available: null, // Customer FS Account balance
     fs_offline: false, // for offline credit billing
@@ -877,6 +878,9 @@ export default {
       this.aurocard_pos_id = "";
       this.aurocard_trans_id = "";
       this.upi_trans_id = "";
+      this.customer_group = "";
+      this.aurocard = false; // toggle for display of Aurocard details
+      this.upi = false; // toggle for display of UPI details
     },
     async submit(event, payment_received = false, print = false) {
       if (this.invoiceType == "Invoice") {
@@ -1081,13 +1085,17 @@ export default {
             data: data,
             invoice: this.invoice_doc,
           },
-          async: true,
-          callback: async function (r) {
+          async: false, // making this call synchronous, to wait for the Invoice Submit status, before the flow resumes.
+          // removing async await from the callback below, as now the "Sales Order" name is being stored for the prints,
+          // hence we no longer need to wait for the print before the "Sales Order" draft Invoice is deleted
+          //callback: async function (r) {
+          callback: function (r) {
             if ((r.message.status == 1) && !r.message.error) {
               if (print) {
                 if (r.message.doctype == "Sales Order")
                   vm.sales_order = r.message.name;
-                const print_open = await vm.load_print_page();
+                //const print_open = await vm.load_print_page();
+                const print_open = vm.load_print_page();
                 console.log("print_open: ", print_open);
               }
               if (r.message.doctype == "Sales Invoice") {
@@ -1822,6 +1830,20 @@ export default {
       evntBus.$on("send_invoice_doc_payment", (invoice_doc) => {
         this.invoice_doc = invoice_doc;
 
+        const vm = this;
+        frappe.call({
+          method: 'posawesome.posawesome.api.posapp.get_customer_group',
+          args: {
+            customer: invoice_doc.customer
+          },
+          async: false,
+          callback: (r) => {
+            if (r.message) {
+              vm.customer_group = r.message;
+            }
+          }
+        })
+
         if (this.invoiceType == "Order") {
           // for "Sales Orders"
           this.invoice_doc.payments.forEach((payment) => {
@@ -1832,9 +1854,27 @@ export default {
         }
 
         else {
-          const default_payment = this.invoice_doc.payments.find(
-            (payment) => payment.default == 1
-          );
+          let default_payment = "";
+
+          if (this.customer_group == "Aurocard Payments") {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.mode_of_payment == "Aurocard"
+            );
+            this.aurocard = true;
+          }
+
+          else if (this.customer_group == "UPI Payments") {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.mode_of_payment == "UPI"
+            );
+            this.upi = true;
+          }
+
+          else {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.default == 1
+            );
+          }
 
           if (default_payment && !invoice_doc.is_return) {
             default_payment.amount = this.flt(
@@ -1863,9 +1903,6 @@ export default {
 
         this.is_credit_sale = 0;
         this.is_write_off_change = 0;
-
-        this.aurocard = false; // toggle for display of Aurocard details
-        this.upi = false; // toggle for display of UPI details
 
         // In case of PTDC (with FS payments disabled), is_cashback is disabled in order to create credit-notes
         if (!this.pos_profile.posa_enable_fs_payments && this.invoice_doc.is_return)
