@@ -2361,10 +2361,6 @@ export default {
       evntBus.$emit("open_returns", this.pos_profile.company);
     },
 
-    open_offlineBill_drafts() {
-      evntBus.$emit("open_offlineBill_drafts", this.pos_profile.company);
-    },
-
     close_payments() {
       evntBus.$emit("show_payment", "false");
     },

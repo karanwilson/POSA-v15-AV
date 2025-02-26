@@ -875,6 +875,9 @@ export default {
     back_to_invoice() {
       evntBus.$emit("show_payment", "false");
       evntBus.$emit("set_customer_readonly", false);
+      this.reset_variables();
+    },
+    reset_variables() {
       this.aurocard_pos_id = "";
       this.aurocard_trans_id = "";
       this.upi_trans_id = "";
@@ -1918,7 +1921,13 @@ export default {
         this.get_sales_person_names();
       });
       evntBus.$on("show_payment", (data) => {
-        this.payment = true ? data === 'true' : false;
+        //this.payment = true ? data === 'true' : false;
+        if (data === 'true')
+          this.payment = true;
+        else {
+          this.payment = false;
+          this.reset_variables();
+        }
       });
       evntBus.$on("balance_available", (data) => {
         this.balance_available = data;
