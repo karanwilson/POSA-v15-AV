@@ -628,6 +628,7 @@ def add_sales_order_taxes(new_sales_order, invoice):
                 "description": tax_row.get("description"),
                 "charge_type": tax_row.get("charge_type"),
                 "account_head": tax_row.get("account_head"),
+                "included_in_print_rate": tax_row.get("included_in_print_rate")
             },
 		)
 
