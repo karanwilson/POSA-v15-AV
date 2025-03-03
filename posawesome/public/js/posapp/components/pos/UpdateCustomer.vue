@@ -286,7 +286,7 @@ export default {
     },
     submit_dialog() {
       console.log("this.pos_profile.company: ", this.pos_profile.company);
-      if (this.pos_profile.company == "Pour Tous Purchasing Service") {
+      if (this.pos_profile.company == "Pour Tous Purchasing Service" || this.pos_profile.company == "Pour Tous Canteen") {
         this.group = "Aurocard Payments";
         this.territory = "India";
       }
