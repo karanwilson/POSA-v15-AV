@@ -888,6 +888,7 @@ export default {
     async submit(event, payment_received = false, print = false) {
       if (this.invoiceType == "Invoice") {
         this.disable_submit = true; // temporarily disabling submit button (via vaildatPayment function)
+        document.removeEventListener("keydown", this.submitPrint);
         setTimeout(() => {
           this.disable_submit = false;
         }, 5000);
