@@ -843,7 +843,7 @@ export default {
               filtred_list = filtred_group_list.filter((item) => {
                 let found = false;
                 for (let element of item.batch_no_data) {
-                  if (element.custom_barcode == this.search || element.batch_no == this.search) { // Matching with Batch Barcode
+                  if (element.batch_barcode == this.search || element.batch_no == this.search) { // Matching with Batch Barcode
                     found = true;
                     this.flags.batch_no = null;
                     this.flags.batch_no = this.search;
