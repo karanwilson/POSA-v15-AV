@@ -288,6 +288,7 @@ def get_items(
                                             "expiry_date": batch_doc.expiry_date,
                                             "batch_price": batch_doc.posa_batch_price,
                                             "manufacturing_date": batch_doc.manufacturing_date,
+                                            "batch_barcode": batch_doc.custom_barcode # adding-on the Batch Barcode
                                         }
                                     )
                 serial_no_data = []
