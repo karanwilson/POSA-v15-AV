@@ -777,6 +777,18 @@ export default {
         } else if (this.search) {
           filtred_list = filtred_group_list.filter((item) => {
             let found = false;
+            for (let element of item.batch_no_data) {
+              if (element.batch_barcode == this.search || element.batch_no == this.search) { // Matching with Batch Barcode
+                found = true;
+                this.flags.batch_no = null;
+                this.flags.batch_no = this.search;
+                break;
+              }
+            }
+            return found;
+          });
+          /* filtred_list = filtred_group_list.filter((item) => {
+            let found = false;
             for (let element of item.item_barcode) {
               if (element.barcode == this.search) {
                 found = true;
@@ -784,7 +796,7 @@ export default {
               }
             }
             return found;
-          });
+          }); */
           if (filtred_list.length == 0) {
             filtred_list = filtred_group_list.filter((item) => {
               //item.item_code.toLowerCase().includes(this.search.toLowerCase())
@@ -836,7 +848,7 @@ export default {
                 return found;
               });
             }
-            if (
+            /* if (
               filtred_list.length == 0 &&
               this.pos_profile.posa_search_batch_no
             ) {
@@ -852,7 +864,7 @@ export default {
                 }
                 return found;
               });
-            }
+            } */
           }
         }
         if (
