@@ -485,7 +485,7 @@ def add_taxes_from_tax_template(item, parent_doc):
         taxes_template_details = frappe.db.sql(
             """
             SELECT tax_type FROM `tabItem Tax Template Detail` WHERE parent = '{0}'
-            AND (tax_type LIKE 'Output Tax CGST - %' or tax_type LIKE 'Output Tax SGST - %')
+            AND (tax_type LIKE 'Output Tax CGST - %' or tax_type LIKE 'Output Tax SGST - %' or tax_type LIKE 'Output Tax CESS - %')
             """.format(item_tax_template),
             as_dict=1
         )
