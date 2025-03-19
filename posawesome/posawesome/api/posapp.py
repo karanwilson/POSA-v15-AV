@@ -1053,7 +1053,6 @@ def get_available_credit(customer, company):
 
 @frappe.whitelist()
 def get_draft_invoices(pos_opening_shift):
-    """
     invoices_list = frappe.get_list(
         "Sales Invoice",
         filters={
@@ -1065,19 +1064,18 @@ def get_draft_invoices(pos_opening_shift):
         limit_page_length=0,
         order_by="modified desc",
     )
-    """
     # using db.sql as get_list does not work for filter condition: custom_fs_transfer_status: "NULL" or None
     # exluding FS draft invoices with "custom_fs_transfer_status IS NULL"
-    invoices_list = frappe.db.sql(
-        """
-        SELECT name
-        FROM `tabSales Invoice`
-        WHERE posa_pos_opening_shift = %s AND docstatus = 0 AND posa_is_printed = 0 AND custom_fs_transfer_status IS NULL
-        ORDER BY modified desc
-	    """,
-	pos_opening_shift,
-    as_dict=1,
-    )
+    #invoices_list = frappe.db.sql(
+    #    """
+    #    SELECT name
+    #    FROM `tabSales Invoice`
+    #    WHERE posa_pos_opening_shift = %s AND docstatus = 0 AND posa_is_printed = 0 AND custom_fs_transfer_status IS NULL
+    #    ORDER BY modified desc
+	#    """,
+	#pos_opening_shift,
+    #as_dict=1,
+    #)
     data = []
     for invoice in invoices_list:
         data.append(frappe.get_cached_doc("Sales Invoice", invoice["name"]))
