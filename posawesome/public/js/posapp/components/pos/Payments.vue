@@ -1874,6 +1874,24 @@ export default {
             this.upi = true;
           }
 
+          else if (this.customer_group == "Credit Card Payments") {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.mode_of_payment == "Credit Card"
+            );
+          }
+
+          else if (this.customer_group == "Debit Card Payments") {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.mode_of_payment == "Debit Card"
+            );
+          }
+
+          else if (this.customer_group == "Cash") {
+            default_payment = this.invoice_doc.payments.find(
+              (payment) => payment.mode_of_payment == "Cash"
+            );
+          }
+
           else {
             default_payment = this.invoice_doc.payments.find(
               (payment) => payment.default == 1

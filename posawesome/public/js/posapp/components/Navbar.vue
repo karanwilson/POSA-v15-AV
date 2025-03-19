@@ -368,18 +368,20 @@ export default {
         ) {
           this.items.push(payments);
         }
-        this.$nextTick(function() {     // to wait for $el to be initialised
+        this.$nextTick(function() { // to wait for $el to be initialised
           //this.fs_online = true;
           if (this.pos_profile.posa_enable_fs_payments)
             this.fapi_login();
           if (this.pos_profile.posa_input_qty && this.pos_profile.posa_input_weighing_scale) {
-            this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+            this.$refs.allow_scale_button.$el.focus(); // request permission for accessing the scale port
             console.info('request_scale_port');
           }
+          else
+            evntBus.$emit('input_customer'); // pass event to Customer.vue
         });
       });
-      evntBus.$on('request_scale_port', () => {       // $emit from ItemsSelector.vue
-        this.$refs.allow_scale_button.$el.focus();   // request permission for accessing the scale port
+      evntBus.$on('request_scale_port', () => { // $emit from ItemsSelector.vue
+        this.$refs.allow_scale_button.$el.focus(); // request permission for accessing the scale port
       });
       evntBus.$on('set_last_invoice', (data) => {
         this.last_invoice = data;
