@@ -1517,35 +1517,36 @@ export default {
             async: false,
             callback: function (r) {
               if (r.message) {
-                vm.invoice_doc.custom_fs_transfer_status = r.message["custom_fs_transfer_status"];
+                const custom_fs_transfer_status = r.message["custom_fs_transfer_status"]
+                vm.invoice_doc.custom_fs_transfer_status = custom_fs_transfer_status;
                 if (vm.invoice_doc.is_return && vm.remarks)
                   vm.invoice_doc.remarks += "\n" + r.message["remarks"]; // in case of return-remarks
                 else if (r.message["remarks"] != "Null") // In case of "Insufficient Funds"
                   vm.invoice_doc.remarks = r.message["remarks"];
 
-                if (r.message["custom_fs_transfer_status"] == "OK") {
+                if (custom_fs_transfer_status == "OK") {
                   resolve("OK");
                 }
-                else if (r.message["custom_fs_transfer_status"] == "Insufficient Funds") {
+                else if (custom_fs_transfer_status == "Insufficient Funds" || custom_fs_transfer_status == "Failed" || custom_fs_transfer_status == "Queued") {
                   vm.is_credit_sale = 1;
                   //vm.invoice_doc.custom_fs_transfer_status = "Insufficient Funds";
                   //vm.invoice_doc.outstanding_amount = fs_amount;
                   //vm.invoice_doc.due_date = frappe.datetime.month_end(); // setting the due_date for is_credit_sale (if set) to last day of the month
-                  resolve("Insufficient Funds");
+                  resolve(custom_fs_transfer_status);
                 }
-                else if (r.message["custom_fs_transfer_status"] == "Payment in Progress") {
+                /* else if (custom_fs_transfer_status == "Failed" || custom_fs_transfer_status == "Queued") {
                   evntBus.$emit('show_mesage', {
-                    text: r.message['custom_fs_transfer_status'],
+                    text: custom_fs_transfer_status,
                     color: "warning",
                   });
-                  reject(r.message["custom_fs_transfer_status"]);
-                }
+                  reject(custom_fs_transfer_status);
+                } */
                 else {
                   evntBus.$emit('show_mesage', {
-                    text: r.message['custom_fs_transfer_status'],
+                    text: custom_fs_transfer_status,
                     color: "error",
                   });
-                  reject(r.message["custom_fs_transfer_status"]);
+                  reject(custom_fs_transfer_status);
                 }
               }
             },
