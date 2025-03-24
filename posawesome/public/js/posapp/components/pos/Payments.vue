@@ -1193,46 +1193,46 @@ export default {
       });
     },
     load_print_page() {
-      return new Promise((resolve, reject) => {
-        const print_format =
-          this.pos_profile.print_format_for_online ||
-          this.pos_profile.print_format;
-        const letter_head = this.pos_profile.letter_head || 0;
-        let url = "";
-        if (this.invoiceType == "Invoice") {
-          url =
-            frappe.urllib.get_base_url() +
-            "/printview?doctype=Sales%20Invoice&name=" +
-            this.invoice_doc.name +
-            "&trigger_print=1" +
-            "&format=" +
-            print_format +
-            "&no_letterhead=" +
-            letter_head;
-        }
-        else {
-          url =
-            frappe.urllib.get_base_url() +
-            "/printview?doctype=Sales%20Order&name=" +
-            this.sales_order +
-            "&trigger_print=1" +
-            "&format=" +
-            print_format +
-            "&no_letterhead=" +
-            letter_head;
-        }
-        const printWindow = window.open(url, "Print");
-        printWindow.addEventListener(
-          "load",
-          function () {
-            printWindow.print();
-            // printWindow.close();
-            // NOTE : uncomoent this to auto closing printing window
-          },
-          true
-        );
+      /* return new Promise((resolve, reject) => {
         resolve("Print Done");
-      })
+      }) */
+      const print_format =
+        this.pos_profile.print_format_for_online ||
+        this.pos_profile.print_format;
+      const letter_head = this.pos_profile.letter_head || 0;
+      let url = "";
+      if (this.invoiceType == "Invoice") {
+        url =
+          frappe.urllib.get_base_url() +
+          "/printview?doctype=Sales%20Invoice&name=" +
+          this.invoice_doc.name +
+          "&trigger_print=1" +
+          "&format=" +
+          print_format +
+          "&no_letterhead=" +
+          letter_head;
+      }
+      else {
+        url =
+          frappe.urllib.get_base_url() +
+          "/printview?doctype=Sales%20Order&name=" +
+          this.sales_order +
+          "&trigger_print=1" +
+          "&format=" +
+          print_format +
+          "&no_letterhead=" +
+          letter_head;
+      }
+      const printWindow = window.open(url, "Print");
+      printWindow.addEventListener(
+        "load",
+        function () {
+          printWindow.print();
+          // printWindow.close();
+          // NOTE : uncomoent this to auto closing printing window
+        },
+        true
+      );
     },
     validate_due_date() {
       const today = frappe.datetime.now_date();
