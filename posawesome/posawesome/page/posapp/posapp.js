@@ -22,7 +22,7 @@ frappe
 			$.extend(
 				frappe._messages, {
 					"Customer": "Participant",
-					"Customer Name / FS Account Number / Aurocard Number": "Participant Name / FS Account Number",
+					"Customer Name / FS Account Number / Aurocard Number": "Participant Name / PT Account Number",
 					"Customer Name *": "Participant Name *",
 					"Invoice": "Checkout-Note",
 					"Invoice ID *": "Checkout-Note ID *",
