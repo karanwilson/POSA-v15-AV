@@ -1749,9 +1749,11 @@ export default {
       if (this.fs_transfer_pending) doc.custom_fs_transfer_status = "PENDING"; // for 'Offline FS Pay'
       if (doc.name) {
         old_invoice = this.update_invoice(doc);
+        //console.log("A: old_invoice: ", old_invoice);
       } else {
         if (doc.items.length) {
           old_invoice = this.update_invoice(doc);
+          //console.log("B: old_invoice: ", old_invoice);
         }
       }
       if (!data.name && !data.is_return) {
@@ -1966,6 +1968,7 @@ export default {
       const items_list = [];
       this.items.forEach((item) => {
         const new_item = {
+          sales_invoice_item: item.sales_invoice_item, // needed during returns validation in the new update ERPNext v14.83.0, Frappe v14.94.1
           item_code: item.item_code,
           posa_row_id: item.posa_row_id,
           posa_offers: item.posa_offers,
@@ -2090,6 +2093,7 @@ export default {
     },
 
     async show_payment() {
+      //console.log("Label-A");
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
@@ -2112,8 +2116,10 @@ export default {
         const invoice_doc = await this.process_invoice_from_order();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
       } else if (this.invoice_doc.doctype == "Sales Invoice") {
+        //console.log("Label-B");
         // adding await below as a fix for: "TypeError: get_sales_invoice_child_table() missing 1 required positional argument: 'sales_invoice_item'"
-        const sales_invoice_item = await this.invoice_doc.items[0];
+        //const sales_invoice_item = await this.invoice_doc.items[0];
+        const sales_invoice_item = this.invoice_doc.items[0];
         var sales_invoice_item_doc = {};
         frappe.call({
           method:
@@ -2134,11 +2140,13 @@ export default {
           const invoice_doc = await this.process_invoice_from_order();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         } else {
+          //console.log("Label-C");
           evntBus.$emit("show_payment", "true");
           const invoice_doc = this.process_invoice();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         }
       } else {
+        //console.log("Label-D");
         evntBus.$emit("show_payment", "true");
         const invoice_doc = this.process_invoice();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
@@ -3679,13 +3687,29 @@ export default {
       this.cancel_invoice();
     });
     evntBus.$on("load_invoice", (data) => {
+      //console.log("data: ", data);
       this.new_invoice(data);
 
       if (this.invoice_doc.is_return) {
         this.discount_amount = -data.discount_amount;
         this.additional_discount_percentage =
           -data.additional_discount_percentage;
-        this.return_doc = data;
+        //this.return_doc = data;
+        const vm = this;
+        frappe.call({
+          method:
+            "posawesome.posawesome.api.posapp.get_return_doc",
+          args: {
+            return_doc: this.invoice_doc.return_against,
+          },
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              vm.return_doc = r.message;
+            }
+          },
+        });
+        //console.log("this.return_doc: ", this.return_doc);
       } else {
         evntBus.$emit("set_pos_coupons", data.posa_coupons);
       }

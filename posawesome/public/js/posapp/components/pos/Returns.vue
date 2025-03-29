@@ -201,6 +201,7 @@ export default {
           new_item.qty = item.qty * -1;
           new_item.stock_qty = item.stock_qty * -1;
           new_item.amount = item.amount * -1;
+          new_item.sales_invoice_item = item.name; // needed during returns validation in the new update ERPNext v14.83.0, Frappe v14.94.1
           items.push(new_item);
         });
         invoice_doc.items = items;

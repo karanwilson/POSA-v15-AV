@@ -40,6 +40,11 @@ def pourtous_settings():
 
 
 @frappe.whitelist()
+def get_return_doc(return_doc):
+    return frappe.get_doc("Sales Invoice", return_doc)
+
+
+@frappe.whitelist()
 def get_opening_dialog_data():
     data = {}
     data["companies"] = frappe.get_list("Company", limit_page_length=0, order_by="name")
@@ -976,7 +981,8 @@ def get_available_credit(customer, company):
         {
             "outstanding_amount": ["<", 0],
             "docstatus": 1,
-            "is_return": 1,
+            "is_return": 0,
+            #"is_return": 1,
             "customer": customer,
             "company": company,
         },
