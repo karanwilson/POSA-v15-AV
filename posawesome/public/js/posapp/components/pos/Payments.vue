@@ -1244,18 +1244,22 @@ export default {
         }, 0);
       }
     },
-    shortPay(e) {
+    /* shortPay(e) {
       if (e.key === "x" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         this.submit();
       }
-    },
+    }, */
     submitPrint(e) {
       if (e.key === "F3") {
         e.preventDefault();
         console.log("this.payment", this.payment);
-        if (this.payment) // only allow this shortcut to run once the "Show Payments" screen is open (via EvntBus Event)
-          this.submit(undefined, false, true);
+        if (this.payment) { // only allow this shortcut to run once the "Show Payments" screen is open (via EvntBus Event)
+          if (frappe.defaults.get_user_default("company") == 'Pour Tous Distribution Center')
+            this.submit(undefined, false, false); // at PTDC 'Print' is set'to false (3rd argument)
+          else        
+            this.submit(undefined, false, true);
+        }
       }
     },
     set_paid_change() {
@@ -1745,7 +1749,7 @@ export default {
         });
       }
 
-      total += this.flt(this.redeemed_customer_credit);
+      total += this.flt(this.redeemed_customer_credit, this.float_precision);
 
       if (!this.is_cashback) total = 0;
 
@@ -1990,7 +1994,7 @@ export default {
     });
   },
   created() {
-    document.addEventListener("keydown", this.shortPay.bind(this));
+    //document.addEventListener("keydown", this.shortPay.bind(this));
     document.addEventListener("keydown", this.submitPrint.bind(this));
     // Integrating Razorpay
     frappe.require('/assets/payments/js/razorpay.js');
@@ -2011,7 +2015,7 @@ export default {
   },
 
   destroyed() {
-    document.removeEventListener("keydown", this.shortPay);
+    //document.removeEventListener("keydown", this.shortPay);
     document.removeEventListener("keydown", this.submitPrint);
   },
 

@@ -1172,7 +1172,7 @@
                 >{{ __("PAY / Create S.O") }}</v-btn
               >
             </v-col>
-            <v-col
+            <!-- <v-col
               v-if="pos_profile.posa_allow_print_draft_invoices"
               cols="6"
               class="pa-1"
@@ -1184,6 +1184,19 @@
                 @click="print_draft_invoice"
                 dark
                 >{{ __("Print Draft") }}</v-btn
+              >
+            </v-col> -->
+            <v-col
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="save_as_order"
+                dark
+                >{{ __("Save as Order") }}</v-btn
               >
             </v-col>
           </v-row>
@@ -1970,6 +1983,7 @@ export default {
         const new_item = {
           sales_invoice_item: item.sales_invoice_item, // needed during returns validation in the new update ERPNext v14.83.0, Frappe v14.94.1
           item_code: item.item_code,
+          item_name: item.item_name,
           posa_row_id: item.posa_row_id,
           posa_offers: item.posa_offers,
           posa_offer_applied: item.posa_offer_applied,
@@ -2074,9 +2088,13 @@ export default {
 
     process_invoice() {
       const doc = this.get_invoice_doc();
+      console.log("this.get_invoice_doc(): ", doc);
       if (doc.name) {
         return this.update_invoice(doc);
-      } else {
+      }
+      else if (frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType == "Order")
+        return doc;
+      else {
         return this.update_invoice(doc);
       }
     },
@@ -2092,8 +2110,36 @@ export default {
       }
     },
 
+    process_order() {
+      const doc = this.get_invoice_doc();
+      console.log("this.get_invoice_doc(): ", doc);
+    },
+
+    update_order(doc) {
+      const vm = this;
+      frappe.call({
+        method: "posawesome.posawesome.api.posapp.create_advance_sales_order",
+        args: {
+          data: doc,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            vm.invoice_doc = r.message;
+          }
+        },
+      });
+      return this.invoice_doc;
+    },
+
+    save_as_order() {
+      this.invoiceType = "Order";
+      this.show_payment();
+    },
+
     async show_payment() {
       //console.log("Label-A");
+      console.log("invoice_doc: ", this.invoice_doc);
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
@@ -2111,7 +2157,7 @@ export default {
       if (!this.validate()) {
         return;
       }
-      if (this.invoice_doc.doctype == "Sales Order") {
+      else if (this.invoice_doc.doctype == "Sales Order") {
         evntBus.$emit("show_payment", "true");
         const invoice_doc = await this.process_invoice_from_order();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
@@ -2179,7 +2225,7 @@ export default {
             }
           }
         }
-        if (this.stock_settings.allow_negative_stock != 1) {
+        if (this.stock_settings.allow_negative_stock != 1 || this.invoiceType != "Order") {
           if (
             this.invoiceType == "Invoice" &&
             ((item.is_stock_item && item.stock_qty && !item.actual_qty) ||
@@ -2232,7 +2278,8 @@ export default {
             value = false;
           }
         }
-        if (item.has_batch_no) {
+        if (item.has_batch_no && frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType != "Order") {
+        //if (item.has_batch_no) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit("show_mesage", {
               text: __(
@@ -2803,12 +2850,12 @@ export default {
     },
     */
 
-    shortOfflinePay(e) {
+    /* shortOfflinePay(e) {
       if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         this.offline_fs_pay();
       }
-    },
+    }, */
 
     shortOpenPayment(e) {
       if (e.key === "F2") {
@@ -3672,7 +3719,7 @@ export default {
           this.pending_fs_bills_check(customer);
         }
       }
-      if (customer && this.pos_profile.posa_allow_sales_order)
+      if (customer && this.pos_profile.posa_allow_sales_order && frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center')
         this.get_customer_type(customer); // for setting "Sales Orders" for B2B customers, with customer_type as "company"
     });
     evntBus.$on("reset_fs_variables", () => {
@@ -3762,14 +3809,14 @@ export default {
     document.addEventListener("keydown", this.shortDeleteFirstItem.bind(this));
     document.addEventListener("keydown", this.shortOpenFirstItem.bind(this));
     document.addEventListener("keydown", this.shortSelectDiscount.bind(this));
-    document.addEventListener("keydown", this.shortOfflinePay.bind(this));
+    //document.addEventListener("keydown", this.shortOfflinePay.bind(this));
   },
   destroyed() {
     document.removeEventListener("keydown", this.shortOpenPayment);
     document.removeEventListener("keydown", this.shortDeleteFirstItem);
     document.removeEventListener("keydown", this.shortOpenFirstItem);
     document.removeEventListener("keydown", this.shortSelectDiscount);
-    document.removeEventListener("keydown", this.shortOfflinePay);
+    //document.removeEventListener("keydown", this.shortOfflinePay);
   },
   watch: {
     subtotal() {

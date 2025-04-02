@@ -592,6 +592,70 @@ def update_invoice(data):
     return invoice_doc
 
 
+@frappe.whitelist()
+def create_advance_sales_order(invoice):
+    # get company abbreviation
+    abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
+    t_warehouse = "Sales Order Reserve - " + abbr
+
+    new_sales_order = frappe.new_doc("Sales Order")
+    new_sales_order.customer = invoice.get("customer")
+
+    new_sales_order.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
+
+    if "custom_transaction_date" in invoice:
+        new_sales_order.transaction_date = invoice.get("custom_transaction_date")
+    else:
+        new_sales_order.transaction_date = invoice.get("posting_date")
+    new_sales_order.delivery_date = invoice.get("posa_delivery_date")
+    new_sales_order.company = invoice.get("company")
+
+    add_advance_sales_order_items(new_sales_order, t_warehouse, invoice)
+    add_advance_sales_order_taxes(new_sales_order, invoice)
+
+    new_sales_order.flags.ignore_mandatory = True
+
+    new_sales_order.insert()
+    new_sales_order.submit()
+
+    return {
+        "name": new_sales_order.name,
+        "doctype": new_sales_order.doctype,
+        "status": new_sales_order.docstatus,
+        #"invoice": invoice.get("name") # invoice draft to be deleted after print
+    }
+
+def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
+    for item in invoice.get("items"):
+        item_tax_template = frappe.get_value("Item", item, "item_tax_template")
+        new_sales_order.append(
+			"items",
+			{
+				"item_code": item.get("item_code"),
+				"item_name": item.get("item_name"),
+				"description": item.get("item_name"),
+				"delivery_date": new_sales_order.get("delivery_date"),
+				"uom": item.get("uom"),
+				"qty": item.get("qty"),
+				"rate": item.get("rate"),
+				"warehouse": t_warehouse,
+                "item_tax_template": item_tax_template,
+                #"custom_batch_no": item.get("batch_no"),
+			},
+		)
+
+def add_advance_sales_order_taxes(new_sales_order, invoice):
+    for tax_row in invoice.get("taxes"):
+        new_sales_order.append(
+            "taxes",
+            {
+                "description": tax_row.get("description"),
+                "charge_type": tax_row.get("charge_type"),
+                "account_head": tax_row.get("account_head"),
+                "included_in_print_rate": tax_row.get("included_in_print_rate")
+            },
+		)
+
 def add_stock_entry_items(stock_entry, t_warehouse, invoice):
     for item in invoice.get("items"):
         stock_entry.append(
