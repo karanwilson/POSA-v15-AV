@@ -1260,6 +1260,7 @@ export default {
               text: "Please set the Delivery Date",
               color: "warning",
             });
+            return;
           }
           else if (frappe.defaults.get_user_default("company") == 'Pour Tous Distribution Center')
             this.submit(undefined, false, false); // at PTDC 'Print' is set'to false (3rd argument)
