@@ -2092,7 +2092,7 @@ export default {
       if (doc.name) {
         return this.update_invoice(doc);
       }
-      else if (frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType == "Order")
+      else if (doc.company == 'Pour Tous Distribution Center' && this.invoiceType == "Order")
         return doc;
       else {
         return this.update_invoice(doc);
@@ -2110,12 +2110,7 @@ export default {
       }
     },
 
-    process_order() {
-      const doc = this.get_invoice_doc();
-      console.log("this.get_invoice_doc(): ", doc);
-    },
-
-    update_order(doc) {
+    /* update_order(doc) {
       const vm = this;
       frappe.call({
         method: "posawesome.posawesome.api.posapp.create_advance_sales_order",
@@ -2130,7 +2125,7 @@ export default {
         },
       });
       return this.invoice_doc;
-    },
+    }, */
 
     save_as_order() {
       this.invoiceType = "Order";
@@ -2138,7 +2133,7 @@ export default {
     },
 
     async show_payment() {
-      //console.log("Label-A");
+      console.log("Label-A");
       console.log("invoice_doc: ", this.invoice_doc);
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
@@ -2158,11 +2153,12 @@ export default {
         return;
       }
       else if (this.invoice_doc.doctype == "Sales Order") {
+        console.log("Label-B");
         evntBus.$emit("show_payment", "true");
         const invoice_doc = await this.process_invoice_from_order();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
       } else if (this.invoice_doc.doctype == "Sales Invoice") {
-        //console.log("Label-B");
+        console.log("Label-C");
         // adding await below as a fix for: "TypeError: get_sales_invoice_child_table() missing 1 required positional argument: 'sales_invoice_item'"
         //const sales_invoice_item = await this.invoice_doc.items[0];
         const sales_invoice_item = this.invoice_doc.items[0];
@@ -2182,17 +2178,18 @@ export default {
           },
         });
         if (sales_invoice_item_doc.sales_order) {
+          console.log("Label-D");
           evntBus.$emit("show_payment", "true");
           const invoice_doc = await this.process_invoice_from_order();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         } else {
-          //console.log("Label-C");
+          console.log("Label-E");
           evntBus.$emit("show_payment", "true");
           const invoice_doc = this.process_invoice();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         }
       } else {
-        //console.log("Label-D");
+        console.log("Label-F");
         evntBus.$emit("show_payment", "true");
         const invoice_doc = this.process_invoice();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
@@ -2861,6 +2858,13 @@ export default {
       if (e.key === "F2") {
         e.preventDefault();
         this.show_payment();
+      }
+    },
+
+    shortSaveAsOrder(e) {
+      if (e.key === "F4") {
+        e.preventDefault();
+        this.save_as_order();
       }
     },
 
@@ -3806,6 +3810,7 @@ export default {
   },
   created() {
     document.addEventListener("keydown", this.shortOpenPayment.bind(this));
+    document.addEventListener("keydown", this.shortSaveAsOrder.bind(this));
     document.addEventListener("keydown", this.shortDeleteFirstItem.bind(this));
     document.addEventListener("keydown", this.shortOpenFirstItem.bind(this));
     document.addEventListener("keydown", this.shortSelectDiscount.bind(this));
@@ -3813,6 +3818,7 @@ export default {
   },
   destroyed() {
     document.removeEventListener("keydown", this.shortOpenPayment);
+    document.removeEventListener("keydown", this.shortSaveAsOrder);
     document.removeEventListener("keydown", this.shortDeleteFirstItem);
     document.removeEventListener("keydown", this.shortOpenFirstItem);
     document.removeEventListener("keydown", this.shortSelectDiscount);

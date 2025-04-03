@@ -627,7 +627,8 @@ def create_advance_sales_order(invoice):
 
 def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
     for item in invoice.get("items"):
-        item_tax_template = frappe.get_value("Item", item, "item_tax_template")
+        #item_tax_template = frappe.get_value("Item", item, "item_tax_template")
+        add_taxes_from_tax_template(item, invoice)
         new_sales_order.append(
 			"items",
 			{
@@ -763,9 +764,11 @@ def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
 
-    if data.get("invoiceType") == "Order":
+    if data.get("invoiceType") == "Order" and invoice.get("company") != "Pour Tous Distribution Center":
         # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
         return create_sales_order(invoice)
+    elif data.get("invoiceType") == "Order":
+        return create_advance_sales_order(invoice)
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)

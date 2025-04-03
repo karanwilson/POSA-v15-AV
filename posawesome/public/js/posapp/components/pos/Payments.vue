@@ -967,7 +967,7 @@ export default {
         this.flt(this.paid_change) + this.flt(-this.credit_change)
       );
 
-      if (this.is_cashback && total_change != -this.diff_payment) {
+      if (this.is_cashback && total_change != -this.diff_payment && this.pos_profile.company != "Pour Tous Distribution Center") {
         evntBus.$emit("show_mesage", {
           text: `Error in change calculations!`,
           color: "error",
@@ -1255,9 +1255,15 @@ export default {
         e.preventDefault();
         console.log("this.payment", this.payment);
         if (this.payment) { // only allow this shortcut to run once the "Show Payments" screen is open (via EvntBus Event)
-          if (frappe.defaults.get_user_default("company") == 'Pour Tous Distribution Center')
+          if (this.invoiceType == "order" && !this.invoice_doc.posa_delivery_date) {
+            evntBus.$emit('show_mesage', {
+              text: "Please set the Delivery Date",
+              color: "warning",
+            });
+          }
+          else if (frappe.defaults.get_user_default("company") == 'Pour Tous Distribution Center')
             this.submit(undefined, false, false); // at PTDC 'Print' is set'to false (3rd argument)
-          else        
+          else
             this.submit(undefined, false, true);
         }
       }
@@ -1839,19 +1845,21 @@ export default {
       evntBus.$on("send_invoice_doc_payment", (invoice_doc) => {
         this.invoice_doc = invoice_doc;
 
-        const vm = this;
-        frappe.call({
-          method: 'posawesome.posawesome.api.posapp.get_customer_group',
-          args: {
-            customer: invoice_doc.customer
-          },
-          async: false,
-          callback: (r) => {
-            if (r.message) {
-              vm.customer_group = r.message;
+        if (frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center') {
+          const vm = this;
+          frappe.call({
+            method: 'posawesome.posawesome.api.posapp.get_customer_group',
+            args: {
+              customer: invoice_doc.customer
+            },
+            async: false,
+            callback: (r) => {
+              if (r.message) {
+                vm.customer_group = r.message;
+              }
             }
-          }
-        })
+          })
+        }
 
         if (this.invoiceType == "Order") {
           // for "Sales Orders"
