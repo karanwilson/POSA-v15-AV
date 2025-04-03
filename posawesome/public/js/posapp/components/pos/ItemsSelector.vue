@@ -437,7 +437,7 @@ export default {
         });
       }
       if (this.pos_profile.posa_regular_search)
-        match = true; // enables Item-Code/Name based search (else only batch/serial based search works); this option is enabled from POS Profile.
+        match = true; // enables Item-Code/Name based search (else only batch/serial based search words); this option is enabled from POS Profile.
       if (this.flags.batch_no) {
         new_item.to_set_batch_no = this.flags.batch_no;
       }
@@ -785,7 +785,17 @@ export default {
                 break;
               }
             }
+            if (found)
+              return found;
+            else {
+              for (let element of item.item_barcode) {
+                if (element.barcode == this.search) { // Matching with Batch Barcode
+                  found = true;
+                  break;
+                }
+              }
             return found;
+            }
           });
           /* filtred_list = filtred_group_list.filter((item) => {
             let found = false;

@@ -596,7 +596,7 @@ def update_invoice(data):
 def create_advance_sales_order(invoice):
     # get company abbreviation
     abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
-    t_warehouse = "Sales Order Reserve - " + abbr
+    t_warehouse = "Stores - " + abbr
 
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
@@ -610,14 +610,14 @@ def create_advance_sales_order(invoice):
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 
-    new_sales_order.taxes_and_charges = frappe.get_list(
+    """ new_sales_order.taxes_and_charges = frappe.get_list(
 		'Sales Taxes and Charges Template',
 		{
 			"company": frappe.defaults.get_user_default("company"),
 			"tax_category": "In-State"
 		},
 		"name"
-	)
+	) """
 
     add_advance_sales_order_items(new_sales_order, t_warehouse, invoice)
     add_advance_sales_order_taxes(new_sales_order, invoice)
@@ -636,9 +636,8 @@ def create_advance_sales_order(invoice):
 
 def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
     for item in invoice.get("items"):
-        item.taxes = frappe.get_value("Item Tax", {"parent": item}, "item_tax_template")
-        frappe.throw(str(item.taxes))
-        add_taxes_from_tax_template(item, new_sales_order)
+        item["item_tax_template"] = frappe.get_value("Item Tax", {"parent": item.get("item_code")}, "item_tax_template")
+        #frappe.throw(item.get("taxes"))
         new_sales_order.append(
 			"items",
 			{
@@ -650,10 +649,10 @@ def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
 				"qty": item.get("qty"),
 				"rate": item.get("rate"),
 				"warehouse": t_warehouse,
-                "item_tax_template": item.get("taxes"),
                 #"custom_batch_no": item.get("batch_no"),
 			},
 		)
+        add_taxes_from_tax_template(item, new_sales_order)
 
 def add_advance_sales_order_taxes(new_sales_order, invoice):
     for tax_row in invoice.get("taxes"):

@@ -1114,10 +1114,12 @@ export default {
                   text: `Sales Order ${r.message.name} is Submited`,
                   color: "info",
                 });
-                // delete the invoice draft
-                frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
-                  invoice_name: r.message.invoice
-                });
+                if (r.message.invoice) {
+                  // delete the invoice draft
+                  frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
+                    invoice_name: r.message.invoice
+                  });
+                }
               }
               frappe.utils.play_sound("submit");
               this.addresses = [];
@@ -1253,9 +1255,8 @@ export default {
     submitPrint(e) {
       if (e.key === "F3") {
         e.preventDefault();
-        console.log("this.payment", this.payment);
         if (this.payment) { // only allow this shortcut to run once the "Show Payments" screen is open (via EvntBus Event)
-          if (this.invoiceType == "order" && !this.invoice_doc.posa_delivery_date) {
+          if (this.invoiceType == "Order" && !this.invoice_doc.posa_delivery_date) {
             evntBus.$emit('show_mesage', {
               text: "Please set the Delivery Date",
               color: "warning",

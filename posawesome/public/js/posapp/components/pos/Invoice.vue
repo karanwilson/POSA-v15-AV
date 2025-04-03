@@ -2088,7 +2088,7 @@ export default {
 
     process_invoice() {
       const doc = this.get_invoice_doc();
-      console.log("this.get_invoice_doc(): ", doc);
+      //console.log("this.get_invoice_doc(): ", doc);
       if (doc.name) {
         return this.update_invoice(doc);
       }
@@ -2133,8 +2133,8 @@ export default {
     },
 
     async show_payment() {
-      console.log("Label-A");
-      console.log("invoice_doc: ", this.invoice_doc);
+      //console.log("Label-A");
+      //console.log("invoice_doc: ", this.invoice_doc);
       if (!this.customer) {
         evntBus.$emit("show_mesage", {
           text: __(`There is no Customer !`),
@@ -2153,12 +2153,12 @@ export default {
         return;
       }
       else if (this.invoice_doc.doctype == "Sales Order") {
-        console.log("Label-B");
+        //console.log("Label-B");
         evntBus.$emit("show_payment", "true");
         const invoice_doc = await this.process_invoice_from_order();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
       } else if (this.invoice_doc.doctype == "Sales Invoice") {
-        console.log("Label-C");
+        //console.log("Label-C");
         // adding await below as a fix for: "TypeError: get_sales_invoice_child_table() missing 1 required positional argument: 'sales_invoice_item'"
         //const sales_invoice_item = await this.invoice_doc.items[0];
         const sales_invoice_item = this.invoice_doc.items[0];
@@ -2178,18 +2178,18 @@ export default {
           },
         });
         if (sales_invoice_item_doc.sales_order) {
-          console.log("Label-D");
+          //console.log("Label-D");
           evntBus.$emit("show_payment", "true");
           const invoice_doc = await this.process_invoice_from_order();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         } else {
-          console.log("Label-E");
+          //console.log("Label-E");
           evntBus.$emit("show_payment", "true");
           const invoice_doc = this.process_invoice();
           evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         }
       } else {
-        console.log("Label-F");
+        //console.log("Label-F");
         evntBus.$emit("show_payment", "true");
         const invoice_doc = this.process_invoice();
         evntBus.$emit("send_invoice_doc_payment", invoice_doc);
