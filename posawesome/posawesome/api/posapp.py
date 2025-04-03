@@ -610,15 +610,6 @@ def create_advance_sales_order(invoice):
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
 
-    """ new_sales_order.taxes_and_charges = frappe.get_list(
-		'Sales Taxes and Charges Template',
-		{
-			"company": frappe.defaults.get_user_default("company"),
-			"tax_category": "In-State"
-		},
-		"name"
-	) """
-
     add_advance_sales_order_items(new_sales_order, t_warehouse, invoice)
     add_advance_sales_order_taxes(new_sales_order, invoice)
 
