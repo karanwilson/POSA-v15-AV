@@ -905,6 +905,7 @@ export default {
       this.upi_trans_id = "";
       this.customer_group = "";
       this.order_remarks_text = "";
+      this.invoiceType = "Invoice";
       this.aurocard = false; // toggle for display of Aurocard details
       this.upi = false; // toggle for display of UPI details
     },
