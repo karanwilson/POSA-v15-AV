@@ -689,7 +689,7 @@
         </v-row>
 
         <v-row class="px-1 py-0" align="start" no-gutters>
-          <v-col cols="6" v-if="invoice_doc.is_return">
+          <v-col cols="6" v-if="invoice_doc.is_return && !pos_profile.posa_allow_sales_order">
             <v-switch
               v-model="remarks"
               flat
@@ -700,6 +700,26 @@
           <v-col cols="6" v-if="remarks">
             <v-text-field
               v-model="invoice_doc.remarks"
+              :label="frappe._('Remarks')"
+              outlined
+              dense
+              hide-details
+              color="primary"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row class="px-1 py-0" align="start" no-gutters>
+          <v-col cols="6" v-if="invoice_doc.is_return || pos_profile.posa_allow_sales_order">
+            <v-switch
+              v-model="order_remarks"
+              flat
+              :label="frappe._('Order Remarks')"
+              class="my-0 py-0"
+            ></v-switch>
+          </v-col>
+          <v-col cols="6" v-if="order_remarks">
+            <v-text-field
+              v-model="order_remarks_text"
               :label="frappe._('Remarks')"
               outlined
               dense
@@ -859,6 +879,8 @@ export default {
     upi_trans_id: "",
     customer_group: "",
     remarks: false, // shows on the returns screen
+    order_remarks: false, // for Sales Order remarks
+    order_remarks_text: "", // for Sales Order remarks
     balance_available: null, // Customer FS Account balance
     fs_offline: false, // for offline credit billing
     customer_credit_dict: [],
@@ -882,6 +904,7 @@ export default {
       this.aurocard_trans_id = "";
       this.upi_trans_id = "";
       this.customer_group = "";
+      this.order_remarks_text = "";
       this.aurocard = false; // toggle for display of Aurocard details
       this.upi = false; // toggle for display of UPI details
     },
@@ -967,7 +990,8 @@ export default {
         this.flt(this.paid_change) + this.flt(-this.credit_change)
       );
 
-      if (this.is_cashback && total_change != -this.diff_payment && this.pos_profile.company != "Pour Tous Distribution Center") {
+      if (this.is_cashback && total_change != -this.diff_payment && this.invoiceType != "Order") {
+      //if (this.is_cashback && total_change != -this.diff_payment && this.pos_profile.company != "Pour Tous Distribution Center") {
         evntBus.$emit("show_mesage", {
           text: `Error in change calculations!`,
           color: "error",
@@ -1081,6 +1105,7 @@ export default {
         data["customer_credit_dict"] = this.customer_credit_dict;
         data["is_cashback"] = this.is_cashback;
         data["invoiceType"] = this.invoiceType;
+        data["remarks"] = this.order_remarks_text;
 
         const vm = this;
         frappe.call({

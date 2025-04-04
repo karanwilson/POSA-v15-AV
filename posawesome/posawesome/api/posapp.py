@@ -593,10 +593,13 @@ def update_invoice(data):
 
 
 @frappe.whitelist()
-def create_advance_sales_order(invoice):
+def create_advance_sales_order(invoice, remarks):
     # get company abbreviation
     abbr = frappe.get_value("Company", frappe.defaults.get_user_default("company"), 'abbr')
-    t_warehouse = "Stores - " + abbr
+    if abbr == "PTPS":
+        t_warehouse = "Stall - " + abbr
+    else:
+        t_warehouse = "Stores - " + abbr
 
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
@@ -609,6 +612,7 @@ def create_advance_sales_order(invoice):
         new_sales_order.transaction_date = invoice.get("posting_date")
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
     new_sales_order.company = invoice.get("company")
+    new_sales_order.custom_remarks = remarks
 
     add_advance_sales_order_items(new_sales_order, t_warehouse, invoice)
     add_advance_sales_order_taxes(new_sales_order, invoice)
@@ -764,11 +768,14 @@ def submit_invoice(invoice, data):
     data = json.loads(data)
     invoice = json.loads(invoice)
 
-    if data.get("invoiceType") == "Order" and invoice.get("company") != "Pour Tous Distribution Center":
+    """ if data.get("invoiceType") == "Order" and invoice.get("company") != "Pour Tous Distribution Center":
         # in our case, when we create Sales Orders, we do not create a "Sales Invoice" immediately
         return create_sales_order(invoice)
     elif data.get("invoiceType") == "Order":
-        return create_advance_sales_order(invoice)
+        return create_advance_sales_order(invoice, data.get("remarks")) """
+
+    if data.get("invoiceType") == "Order":
+        return create_advance_sales_order(invoice, data.get("remarks"))
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)

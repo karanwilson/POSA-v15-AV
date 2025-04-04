@@ -894,6 +894,30 @@
               >
             </v-col>
             <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order === 1"
+              cols="4"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="accent"
+                @click="print_draft_invoice"
+                dark
+                >{{ __("Hold Bill") }}</v-btn
+              >
+            </v-col>
+            <v-col cols="6" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="accent"
+                dark
+                @click="new_invoice"
+                >{{ __("Hold Bill") }}</v-btn
+              >
+            </v-col>
+            <v-col
               v-if="pos_profile.custom_allow_select_sales_order === 1"
               cols="4"
               class="pa-1"
@@ -905,34 +929,6 @@
                 dark
                 @click="get_draft_orders"
                 >{{ __("Select S.O") }}</v-btn
-              >
-            </v-col>
-            <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order === 1"
-              cols="4"
-              class="pa-1"
-            >
-              <v-btn
-                block
-                class="pa-0"
-                color="primary"
-                @click="print_draft_invoice"
-                dark
-                >{{ __("Print Draft") }}</v-btn
-              >
-            </v-col>
-            <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order !== 1"
-              cols="6"
-              class="pa-1"
-            >
-              <v-btn
-                block
-                class="pa-0"
-                color="primary"
-                @click="print_draft_invoice"
-                dark
-                >{{ __("Print Draft") }}</v-btn
               >
             </v-col>
             <v-col cols="6" class="pa-1">
@@ -967,14 +963,31 @@
                 >{{ __("PAY / Create S.O") }}</v-btn
               >
             </v-col>
-            <v-col cols="6" class="pa-1">
+            <!-- <v-col
+              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order !== 1"
+              cols="6"
+              class="pa-1"
+            >
               <v-btn
                 block
                 class="pa-0"
-                color="accent"
+                color="primary"
+                @click="print_draft_invoice"
                 dark
-                @click="new_invoice"
-                >{{ __("Hold Bill") }}</v-btn
+                >{{ __("Print Draft") }}</v-btn
+              >
+            </v-col> -->
+            <v-col
+              cols="6"
+              class="pa-1"
+            >
+              <v-btn
+                block
+                class="pa-0"
+                color="primary"
+                @click="save_as_order"
+                dark
+                >{{ __("Save as Order") }}</v-btn
               >
             </v-col>
             <!-- <v-col
@@ -2092,7 +2105,8 @@ export default {
       if (doc.name) {
         return this.update_invoice(doc);
       }
-      else if (doc.company == 'Pour Tous Distribution Center' && this.invoiceType == "Order")
+      //else if (doc.company == 'Pour Tous Distribution Center' && this.invoiceType == "Order")
+      else if (this.invoiceType == "Order")
         return doc;
       else {
         return this.update_invoice(doc);
@@ -2222,7 +2236,7 @@ export default {
             }
           }
         }
-        if (this.stock_settings.allow_negative_stock != 1 || this.invoiceType != "Order") {
+        if (this.stock_settings.allow_negative_stock != 1 && this.invoiceType != "Order") {
           if (
             this.invoiceType == "Invoice" &&
             ((item.is_stock_item && item.stock_qty && !item.actual_qty) ||
@@ -2275,7 +2289,8 @@ export default {
             value = false;
           }
         }
-        if (item.has_batch_no && frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType != "Order") {
+        if (item.has_batch_no && this.invoiceType != "Order") {
+        //if (item.has_batch_no && frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType != "Order") {
         //if (item.has_batch_no) {
           if (item.stock_qty > item.actual_batch_qty) {
             evntBus.$emit("show_mesage", {
