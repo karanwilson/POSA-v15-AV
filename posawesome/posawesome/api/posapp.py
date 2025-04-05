@@ -198,12 +198,14 @@ def get_items(
 
         # fetching custom field custom_uom_int for checking items with integer (whole number) UOMs
         # fetching custom field custom_item_add_on for adding on returnable containers, or other bundled items..
+        # fetching allow_negative_stock for return of packaging bottles.
 
         items_data = frappe.db.sql(
             """
             SELECT
                 name AS item_code,
                 custom_item_add_on,
+                allow_negative_stock,
                 item_name,
                 description,
                 stock_uom,
