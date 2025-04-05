@@ -2237,19 +2237,22 @@ export default {
           }
         }
         if (this.stock_settings.allow_negative_stock != 1 && this.invoiceType != "Order") {
-          if (
+            //console.log("item.allow_negative_stock: ", item.allow_negative_stock);
+          if (item.allow_negative_stock != 1) {
+            if (
             this.invoiceType == "Invoice" &&
             ((item.is_stock_item && item.stock_qty && !item.actual_qty) ||
               (item.is_stock_item && item.stock_qty > item.actual_qty))
-          ) {
-            evntBus.$emit("show_mesage", {
-              text: __(
-                `The existing quantity '{0}' for item '{1}' is not enough`,
-                [item.actual_qty, item.item_name]
-              ),
-              color: "error",
-            });
-            value = false;
+            ) {
+              evntBus.$emit("show_mesage", {
+                text: __(
+                  `The existing quantity '{0}' for item '{1}' is not enough`,
+                  [item.actual_qty, item.item_name]
+                ),
+                color: "error",
+              });
+              value = false;
+            }
           }
         }
         if (item.qty == 0) {
