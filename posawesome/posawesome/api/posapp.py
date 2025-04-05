@@ -779,6 +779,10 @@ def submit_invoice(invoice, data):
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
+
+    if invoice.get("company") == "Pour Tous Distribution Center":
+        invoice_doc.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
+
     if invoice.get("posa_delivery_date"):
         invoice_doc.update_stock = 0
     mop_cash_list = [
