@@ -198,12 +198,14 @@ def get_items(
 
         # fetching custom field custom_uom_int for checking items with integer (whole number) UOMs
         # fetching custom field custom_item_add_on for adding on returnable containers, or other bundled items..
+        # fetching allow_negative_stock for return of packaging bottles.
 
         items_data = frappe.db.sql(
             """
             SELECT
                 name AS item_code,
                 custom_item_add_on,
+                allow_negative_stock,
                 item_name,
                 description,
                 stock_uom,
@@ -785,6 +787,10 @@ def submit_invoice(invoice, data):
 
     invoice_doc = frappe.get_doc("Sales Invoice", invoice.get("name"))
     invoice_doc.update(invoice)
+
+    if invoice.get("company") == "Pour Tous Distribution Center":
+        invoice_doc.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
+
     if invoice.get("posa_delivery_date"):
         invoice_doc.update_stock = 0
     mop_cash_list = [
