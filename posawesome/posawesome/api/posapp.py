@@ -634,7 +634,7 @@ def create_advance_sales_order(invoice, remarks):
         "name": new_sales_order.name,
         "doctype": new_sales_order.doctype,
         "status": new_sales_order.docstatus,
-        #"invoice": invoice.get("name") # invoice draft to be deleted after print
+        "invoice": invoice.get("name") # invoice draft to be deleted after print
     }
 
 def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
