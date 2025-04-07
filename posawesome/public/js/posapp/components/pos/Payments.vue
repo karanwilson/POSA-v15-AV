@@ -1120,7 +1120,14 @@ export default {
           // hence we no longer need to wait for the print before the "Sales Order" draft Invoice is deleted
           //callback: async function (r) {
           callback: function (r) {
-            if ((r.message.status == 1) && !r.message.error) {
+            //if ((r.message.status == 1) && !r.message.error) {
+            if (r.message.status == 1) {
+              if (r.message.error) {
+                evntBus.$emit("show_mesage", {
+                  text: r.message.error,
+                  color: "warning",
+                });
+              }
               if (print) {
                 if (r.message.doctype == "Sales Order")
                   vm.sales_order = r.message.name;
