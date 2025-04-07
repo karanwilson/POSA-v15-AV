@@ -951,7 +951,7 @@
                 block
                 class="pa-0"
                 color="success"
-                @click="show_payment"
+                @click="pay_checkout"
                 ref="checkout"
                 dark
                 >{{ __("PAY / Create S.O") }}</v-btn
@@ -984,19 +984,6 @@
                 >{{ __("Save as Order") }}</v-btn
               >
             </v-col>
-            <!-- <v-col
-              cols="6"
-              class="pa-1"
-            >
-              <v-btn
-                block
-                class="pa-0"
-                color="primary"
-                @click="offline_fs_pay"
-                dark
-                >{{ __("Offline FS PAY") }}</v-btn
-              >
-            </v-col> -->
           </v-row>
         </v-col>
       </v-row>
@@ -1173,7 +1160,7 @@
                 block
                 class="pa-0"
                 color="success"
-                @click="show_payment"
+                @click="pay_checkout"
                 ref="checkout"
                 dark
                 >{{ __("PAY / Create S.O") }}</v-btn
@@ -2136,7 +2123,14 @@ export default {
     }, */
 
     save_as_order() {
+      //this.close_payments();
       this.invoiceType = "Order";
+      evntBus.$emit("update_invoice_type", this.invoiceType);
+      this.show_payment();
+    },
+
+    pay_checkout() {
+      this.invoiceType = "Invoice";
       evntBus.$emit("update_invoice_type", this.invoiceType);
       this.show_payment();
     },
@@ -2870,7 +2864,7 @@ export default {
     shortOpenPayment(e) {
       if (e.key === "F2") {
         e.preventDefault();
-        this.show_payment();
+        this.pay_checkout();
       }
     },
 
