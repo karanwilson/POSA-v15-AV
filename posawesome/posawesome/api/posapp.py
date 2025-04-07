@@ -908,7 +908,10 @@ def submit_invoice(invoice, data):
             invoice_doc.submit()
         except Exception as err:
             return {
-                "error": err
+                "error": err,
+                "name": invoice_doc.name,
+                "doctype": invoice_doc.doctype,
+                "status": invoice_doc.docstatus
             }
 
         redeeming_customer_credit(
