@@ -22,7 +22,7 @@
       style="max-height: 70vh; height: 70vh"
       class="cards my-0 py-0 mt-3 grey lighten-5"
     >
-      <v-row align="center" class="items px-2 py-1">
+    <v-row align="center" class="items px-2 py-1">
         <v-col
           cols="1"
           align="right"
@@ -38,174 +38,30 @@
           </v-btn>
         </v-col>
         <v-col
-          v-if="!pos_profile.posa_allow_change_posting_date && !pos_profile.posa_enable_fs_payments"
+          v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
+          cols="7"
+          class="pb-2 pr-0"
+        >
+          <Customer></Customer>
+        </v-col>
+
+        <v-col
+          v-if="!pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments"
+          cols="9"
+          class="pb-2"
+        >
+          <Customer></Customer>
+        </v-col>
+
+        <v-col
+          v-if="!pos_profile.posa_enable_fs_payments"
           cols="11"
           class="pb-2"
         >
           <Customer></Customer>
         </v-col>
         <v-col
-          v-if="pos_profile.posa_allow_change_posting_date && !pos_profile.posa_enable_fs_payments"
-          cols="9"
-          class="pb-2 pr-0"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          v-if="pos_profile.posa_allow_change_posting_date"
-          cols="2"
-          class="pb-2"
-        >
-          <v-menu
-            ref="invoice_posting_date"
-            v-model="invoice_posting_date"
-            :close-on-content-click="false"
-            transition="scale-transition"
-            dense
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="posting_date"
-                :label="frappe._('Posting Date')"
-                readonly
-                outlined
-                dense
-                background-color="white"
-                clearable
-                color="primary"
-                hide-details
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="posting_date"
-              no-title
-              scrollable
-              color="primary"
-              :min="
-                frappe.datetime.add_days(frappe.datetime.now_date(true), -30)
-              "
-              :max="frappe.datetime.add_days(frappe.datetime.now_date(true), 30)"
-              @input="invoice_posting_date = false"
-            >
-            </v-date-picker>
-          </v-menu>
-        </v-col>
-        <!-- <v-col v-if="pos_profile.posa_allow_sales_order" cols="2" class="pb-2">
-          <v-select
-            dense
-            hide-details
-            outlined
-            color="primary"
-            background-color="white"
-            :items="invoiceTypes"
-            :label="frappe._('Type')"
-            v-model="invoiceType"
-            :disabled="invoiceType == 'Return'"
-          ></v-select>
-        </v-col> -->
-      </v-row>
-
-      <v-row align="center" class="items px-2 py-1" v-if="pos_profile.posa_enable_fs_payments">
-        <v-col
-          cols="1"
-          align="right"
-        >
-          <v-btn
-            icon
-            text
-            color="error"
-            @click="remove_items"
-          >
-            <v-icon>mdi-delete</v-icon>
-            item
-          </v-btn>
-        </v-col>
-        <v-col
-          v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_allow_change_posting_date"
-          cols="5"
-          class="pb-2 pr-0"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          v-if="pos_profile.posa_allow_sales_order && !pos_profile.posa_allow_change_posting_date"
-          cols="7"
-          class="pb-2 pr-0"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          v-if="!pos_profile.posa_allow_sales_order && pos_profile.posa_allow_change_posting_date"
-          cols="7"
-          class="pb-2"
-        >
-          <Customer></Customer>
-        </v-col>
-
-        <v-col
-          v-if="!pos_profile.posa_allow_sales_order && !pos_profile.posa_allow_change_posting_date"
-          cols="9"
-          class="pb-2"
-        >
-          <Customer></Customer>
-        </v-col>
-        <v-col
-          v-if="pos_profile.posa_allow_change_posting_date"
-          cols="2"
-          class="pb-2"
-        >
-          <v-menu
-            ref="invoice_posting_date"
-            v-model="invoice_posting_date"
-            :close-on-content-click="false"
-            transition="scale-transition"
-            dense
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="posting_date"
-                :label="frappe._('Posting Date')"
-                readonly
-                outlined
-                dense
-                background-color="white"
-                clearable
-                color="primary"
-                hide-details
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="posting_date"
-              no-title
-              scrollable
-              color="primary"
-              :min="
-                frappe.datetime.add_days(frappe.datetime.now_date(true), -30)
-              "
-              :max="frappe.datetime.add_days(frappe.datetime.now_date(true), 30)"
-              @input="invoice_posting_date = false"
-            >
-            </v-date-picker>
-          </v-menu>
-        </v-col>
-        <v-col v-if="pos_profile.posa_allow_sales_order" cols="2" class="pb-2">
-          <v-select
-            dense
-            hide-details
-            outlined
-            color="primary"
-            background-color="white"
-            :items="invoiceTypes"
-            :label="frappe._('Type')"
-            v-model="invoiceType"
-            :disabled="invoiceType == 'Return'"
-          ></v-select>
-        </v-col>
-        <v-col
+          v-if="pos_profile.posa_enable_fs_payments"
           cols="1"
           align="left"
         >
@@ -217,6 +73,7 @@
           </v-btn>
         </v-col>
         <v-col
+          v-if="pos_profile.posa_enable_fs_payments"
           cols="1"
           align="left"
         >
@@ -226,6 +83,19 @@
           >
           {{ pending_fs_bills }}<v-icon>mdi-account-clock-outline</v-icon>
           </v-btn>
+        </v-col>
+        <v-col v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments" cols="2" class="pb-2">
+          <v-select
+            dense
+            hide-details
+            outlined
+            color="primary"
+            background-color="white"
+            :items="invoiceTypes"
+            :label="frappe._('Type')"
+            v-model="invoiceType"
+            :disabled="invoiceType == 'Return'"
+          ></v-select>
         </v-col>
       </v-row>
 
@@ -282,7 +152,7 @@
           ></v-text-field>
         </v-col>
       </v-row>
-      <!-- <v-row
+      <v-row
         align="center"
         class="items px-2 py-1 mt-0 pt-0"
         v-if="pos_profile.posa_allow_change_posting_date"
@@ -320,7 +190,7 @@
               scrollable
               color="primary"
               :min="
-                frappe.datetime.add_days(frappe.datetime.now_date(true), -7)
+                frappe.datetime.add_days(frappe.datetime.now_date(true), -30)
               "
               :max="frappe.datetime.add_days(frappe.datetime.now_date(true), 7)"
               @input="invoice_posting_date = false"
@@ -328,7 +198,7 @@
             </v-date-picker>
           </v-menu>
         </v-col>
-      </v-row> -->
+      </v-row>
 
       <div class="my-0 py-0 overflow-y-auto" style="max-height: 60vh">
         <template @mouseover="style = 'cursor: pointer'">
@@ -1081,7 +951,7 @@
                 block
                 class="pa-0"
                 color="success"
-                @click="pay_checkout"
+                @click="show_payment"
                 ref="checkout"
                 dark
                 >{{ __("PAY / Create S.O") }}</v-btn
@@ -1303,7 +1173,7 @@
                 block
                 class="pa-0"
                 color="success"
-                @click="pay_checkout"
+                @click="show_payment"
                 ref="checkout"
                 dark
                 >{{ __("PAY / Create S.O") }}</v-btn
@@ -2266,15 +2136,7 @@ export default {
     }, */
 
     save_as_order() {
-      //this.close_payments();
       this.invoiceType = "Order";
-      evntBus.$emit("update_invoice_type", this.invoiceType);
-      console.log("this.invoiceType): ", this.invoiceType);
-      this.show_payment();
-    },
-
-    pay_checkout() {
-      this.invoiceType = "Invoice";
       evntBus.$emit("update_invoice_type", this.invoiceType);
       this.show_payment();
     },
@@ -3008,7 +2870,7 @@ export default {
     shortOpenPayment(e) {
       if (e.key === "F2") {
         e.preventDefault();
-        this.pay_checkout();
+        this.show_payment();
       }
     },
 

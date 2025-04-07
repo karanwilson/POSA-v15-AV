@@ -12,7 +12,7 @@
       @keydown.enter="select_items"
       @click:clear="reset_indicators_status"
       :items="customers"
-      item-text="customer_name"
+      :item-text="getItemText"
       item-value="name"
       background-color="white"
       :no-data-text="__('Customer not found')"
@@ -110,6 +110,9 @@ export default {
           }
         },
       });
+    },
+    getItemText(item) {
+      return `${item.customer_name}   ${item.custom_fs_account_number}`;
     },
     select_items() {
       evntBus.$emit('select_items'); // pass event to ItemsSelector.vue
