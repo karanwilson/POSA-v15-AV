@@ -2143,6 +2143,7 @@ export default {
 
     save_as_order() {
       this.invoiceType = "Order";
+      evntBus.$emit("update_invoice_type", this.invoiceType);
       this.show_payment();
     },
 
