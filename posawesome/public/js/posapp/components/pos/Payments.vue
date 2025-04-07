@@ -2012,6 +2012,7 @@ export default {
       });
       evntBus.$on("update_invoice_type", (data) => {
         this.invoiceType = data;
+        console.log("this.invoiceType: ", this.invoiceType);
         if (this.invoice_doc && data != "Order") {
           this.invoice_doc.posa_delivery_date = null;
           this.invoice_doc.posa_notes = null;
