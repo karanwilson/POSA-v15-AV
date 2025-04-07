@@ -617,7 +617,13 @@ def create_advance_sales_order(invoice, remarks):
     new_sales_order.custom_remarks = remarks
 
     add_advance_sales_order_items(new_sales_order, t_warehouse, invoice)
-    add_advance_sales_order_taxes(new_sales_order, invoice)
+    #add_advance_sales_order_taxes(new_sales_order, invoice)
+    if frappe.get_value(
+        "POS Profile", invoice.get("pos_profile"), "posa_tax_inclusive"
+    ):
+        if new_sales_order.get("taxes"):
+            for tax in new_sales_order.taxes:
+                tax.included_in_print_rate = 1
 
     new_sales_order.flags.ignore_mandatory = True
 
@@ -651,7 +657,7 @@ def add_advance_sales_order_items(new_sales_order, t_warehouse, invoice):
 		)
         add_taxes_from_tax_template(item, new_sales_order)
 
-def add_advance_sales_order_taxes(new_sales_order, invoice):
+""" def add_advance_sales_order_taxes(new_sales_order, invoice):
     for tax_row in invoice.get("taxes"):
         new_sales_order.append(
             "taxes",
@@ -661,7 +667,7 @@ def add_advance_sales_order_taxes(new_sales_order, invoice):
                 "account_head": tax_row.get("account_head"),
                 "included_in_print_rate": tax_row.get("included_in_print_rate")
             },
-		)
+		) """
 
 def add_stock_entry_items(stock_entry, t_warehouse, invoice):
     for item in invoice.get("items"):
