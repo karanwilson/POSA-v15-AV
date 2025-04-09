@@ -67,6 +67,32 @@
               >{{ __('Search') }}</v-btn>
             </v-col-->
           </v-row>
+          <!-- <v-row class="mb-4" v-if="pos_profile.company == 'Pour Tous Distribution Center'">
+            <v-col v-if="pos_profile.posa_allow_sales_order && pos_profile.posa_enable_fs_payments" cols="3" class="pb-2">
+              <v-select
+                dense
+                hide-details
+                outlined
+                color="primary"
+                background-color="white"
+                :items="returnableContainers"
+                :label="frappe._('Credit For')"
+                v-model="returnContainer"
+              ></v-select>
+            </v-col>
+            <v-col cols="2">
+              <v-text-field
+                color="secondary"
+                :label="frappe._('Qty')"
+                background-color="white"
+                hide-details
+                v-model="returnQty"
+                dense
+                clearable
+                @keydown.enter="search_invoices"
+              ></v-text-field>
+            </v-col>
+          </v-row> -->
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
               <template>
