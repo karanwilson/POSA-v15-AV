@@ -625,6 +625,7 @@ def create_advance_sales_order(invoice, remarks):
             for tax in new_sales_order.taxes:
                 tax.included_in_print_rate = 1
 
+    new_sales_order.set_warehouse = t_warehouse
     new_sales_order.flags.ignore_mandatory = True
 
     new_sales_order.insert()
