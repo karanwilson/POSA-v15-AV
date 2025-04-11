@@ -1829,16 +1829,18 @@ export default {
         total += row.total_credit;
       });
 
-      return total;
+      //return total;
+      return flt(total, this.currency_precision);
     },
     redeemed_customer_credit() {
       let total = 0;
       this.customer_credit_dict.map((row) => {
-        if (flt(row.credit_to_redeem)) total += flt(row.credit_to_redeem);
+        if (flt(row.credit_to_redeem)) total += flt(row.credit_to_redeem, this.currency_precision);
         else row.credit_to_redeem = 0;
       });
 
-      return total;
+      //return total;
+      return flt(total, this.currency_precision);
     },
     vaildatPayment() {
       if (this.pos_profile.posa_allow_sales_order) {
