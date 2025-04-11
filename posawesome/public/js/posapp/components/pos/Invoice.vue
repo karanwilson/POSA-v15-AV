@@ -1501,14 +1501,14 @@ export default {
     },
 
     async add_item(item) {
-      let item_to_add;
-
+      //let item_to_add;
       // adding this variable/object as when we do update_item_detail directly on the item object (in order to set item.batch_no)
       // then the array value items[].actual_batch_qty gets reset to '', and some parts of the code logic below fails..
+
       if (item.has_batch_no && !item.batch_no) {
         //console.log("Label-A");
-        item_to_add = { ...item };
-        this.update_item_detail(item_to_add);
+        //item_to_add = { ...item };
+        this.update_item_detail(item);
       }
       if (!item.uom) {
         //console.log("Label-B");
@@ -1523,12 +1523,12 @@ export default {
             el.uom === item.uom &&
             !el.posa_is_offer &&
             !el.posa_is_replace &&
-            //el.batch_no === item.batch_no
-            el.batch_no === item_to_add.batch_no
+            el.batch_no === item.batch_no
+            //el.batch_no === item_to_add.batch_no
         );
-        //console.log(item.item_code, item.uom, item_to_add.batch_no);
+        //console.log(item.item_code, item.uom, item.batch_no);
         //console.log("index: ", index);
-      } else {
+      } else if (!this.new_line) {
         //console.log("Label-D");
         index = this.items.findIndex(
           (el) =>
@@ -1544,12 +1544,11 @@ export default {
       }
       if (index === -1 || this.new_line) {
         //console.log("Label-E");
-        //console.log("item_to_add: ", item_to_add);
-        if (item_to_add.stock_qty <= item_to_add.actual_qty) { // incremental batch allocation
-          let item_qty_balance = item_to_add.stock_qty;
+        if (item.has_batch_no && (item.stock_qty <= item.actual_qty)) { // incremental batch allocation
+          let item_qty_balance = item.stock_qty;
 
-          for (batch of item_to_add.batch_no_data) {
-            const new_item = await this.get_new_item(item_to_add);
+          for (batch of item.batch_no_data) {
+            const new_item = await this.get_new_item(item);
             //console.log("new_item: ", new_item);
             //console.log("Batch: ", batch);
 
@@ -1574,7 +1573,7 @@ export default {
         }
 
         else {
-          const new_item = await this.get_new_item(item_to_add);
+          const new_item = await this.get_new_item(item);
           if (item.has_serial_no && item.to_set_serial_no) {
             new_item.serial_no_selected = [];
             new_item.serial_no_selected.push(item.to_set_serial_no);
@@ -1621,9 +1620,9 @@ export default {
           //console.log("Label-I");
           //console.log("cur_item.stock_qty, item_to_add.actual_batch_qty:: ", cur_item.stock_qty, item_to_add.actual_batch_qty);
           if (
-            (cur_item.stock_qty <= item_to_add.actual_batch_qty &&
-              //cur_item.stock_qty < cur_item.actual_batch_qty &&
-              cur_item.batch_no == item_to_add.batch_no) ||
+            (cur_item.stock_qty <= item.actual_batch_qty &&
+              //cur_item.stock_qty <= cur_item.actual_batch_qty &&
+              cur_item.batch_no == item.batch_no) ||
             !cur_item.batch_no
           ) {
             //console.log("Label-J");
@@ -1641,11 +1640,17 @@ export default {
             //console.log("item: ", item_to_add);
             //console.log("item.actual_qty: ", item_to_add.actual_qty);
 
-            if (item_to_add.stock_qty <= item_to_add.actual_qty) { // incremental batch allocation
+            /* if (item_to_add.stock_qty <= item_to_add.actual_qty) { // incremental batch allocation
               let item_qty_balance = item_to_add.stock_qty;
 
               for (batch of item_to_add.batch_no_data) {
-                const new_item = await this.get_new_item(item_to_add);
+                const new_item = await this.get_new_item(item_to_add); */
+
+            if (item.stock_qty <= item.actual_qty) { // incremental batch allocation
+              let item_qty_balance = item.stock_qty;
+
+              for (batch of item.batch_no_data) {
+                const new_item = await this.get_new_item(item);
                 //console.log("new_item: ", new_item);
                 //console.log("Batch: ", batch);
 
