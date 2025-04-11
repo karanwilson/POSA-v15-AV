@@ -1500,19 +1500,23 @@ export default {
       this.$forceUpdate();
     },
 
-    add_item(item) {
+    async add_item(item) {
       let item_to_add;
+
       // adding this variable/object as when we do update_item_detail directly on the item object (in order to set item.batch_no)
       // then the array value items[].actual_batch_qty gets reset to '', and some parts of the code logic below fails..
       if (item.has_batch_no && !item.batch_no) {
+        //console.log("Label-A");
         item_to_add = { ...item };
         this.update_item_detail(item_to_add);
       }
       if (!item.uom) {
+        //console.log("Label-B");
         item.uom = item.stock_uom;
       }
       let index = -1;
       if (!this.new_line && item.has_batch_no) { // matching items with same item_code and batch, to be put in the same line with increased qty.
+        //console.log("Label-C");
         index = this.items.findIndex(
           (el) =>
             el.item_code === item.item_code &&
@@ -1525,6 +1529,7 @@ export default {
         //console.log(item.item_code, item.uom, item_to_add.batch_no);
         //console.log("index: ", index);
       } else {
+        //console.log("Label-D");
         index = this.items.findIndex(
           (el) =>
             el.item_code === item.item_code &&
@@ -1538,24 +1543,56 @@ export default {
         //console.log("index: ", index);
       }
       if (index === -1 || this.new_line) {
-        //console.log("Label-A");
-        const new_item = this.get_new_item(item);
-        if (item.has_serial_no && item.to_set_serial_no) {
-          new_item.serial_no_selected = [];
-          new_item.serial_no_selected.push(item.to_set_serial_no);
-          item.to_set_serial_no = null;
+        //console.log("Label-E");
+        //console.log("item_to_add: ", item_to_add);
+        if (item_to_add.stock_qty <= item_to_add.actual_qty) { // incremental batch allocation
+          let item_qty_balance = item_to_add.stock_qty;
+
+          for (batch of item_to_add.batch_no_data) {
+            const new_item = await this.get_new_item(item_to_add);
+            //console.log("new_item: ", new_item);
+            //console.log("Batch: ", batch);
+
+            if (item_qty_balance > batch.batch_qty) {
+              new_item.qty = batch.batch_qty;
+              //console.log("new_item.qty: ", new_item.qty);
+            }
+            else {
+              new_item.qty = item_qty_balance;
+              //console.log("new_item.qty: ", new_item.qty);
+            }
+
+            new_item.batch_no = batch.batch_no;
+            //console.log("new_item: ", new_item);
+            this.items.unshift(new_item);
+            this.update_item_detail(new_item);
+            item_qty_balance -= new_item.qty;
+            if (item_qty_balance == 0) {
+              break;
+            }
+          }
         }
-        if (item.has_batch_no && item.to_set_batch_no) {
-          //console.log("Label-B");
-          new_item.batch_no = item.to_set_batch_no;
-          item.to_set_batch_no = null;
-          item.batch_no = null;
-          this.set_batch_qty(new_item, new_item.batch_no, false);
+
+        else {
+          const new_item = await this.get_new_item(item_to_add);
+          if (item.has_serial_no && item.to_set_serial_no) {
+            new_item.serial_no_selected = [];
+            new_item.serial_no_selected.push(item.to_set_serial_no);
+            item.to_set_serial_no = null;
+          }
+          if (item.has_batch_no && item.to_set_batch_no) {
+            //console.log("Label-F");
+            new_item.batch_no = item.to_set_batch_no;
+            item.to_set_batch_no = null;
+            item.batch_no = null;
+            this.set_batch_qty(new_item, new_item.batch_no, false);
+          }
+          this.items.unshift(new_item);
+          this.update_item_detail(new_item);
         }
-        this.items.unshift(new_item);
-        this.update_item_detail(new_item);
+
       } else {
-        //console.log("Label-C");
+        //console.log("Label-G");
         const cur_item = this.items[index];
         this.update_items_details([cur_item]);
         if (item.has_serial_no && item.to_set_serial_no) {
@@ -1573,7 +1610,7 @@ export default {
           item.to_set_serial_no = null;
         }
         if (!cur_item.has_batch_no) {
-          //console.log("Label-D");
+          //console.log("Label-H");
           //cur_item.qty += item.qty || 1;
           // type-casting all fields to Float because when the item qty is edited from the invoice (using QTY_textbox_update), -
           // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
@@ -1581,33 +1618,72 @@ export default {
           cur_item.qty += parseFloat(item.qty) || parseFloat(1);
           this.calc_stock_qty(cur_item, cur_item.qty);
         } else {
-          //console.log("Label-E");
+          //console.log("Label-I");
+          //console.log("cur_item.stock_qty, item_to_add.actual_batch_qty:: ", cur_item.stock_qty, item_to_add.actual_batch_qty);
           if (
-            (cur_item.stock_qty < cur_item.actual_batch_qty &&
+            (cur_item.stock_qty <= item_to_add.actual_batch_qty &&
+              //cur_item.stock_qty < cur_item.actual_batch_qty &&
               cur_item.batch_no == item_to_add.batch_no) ||
             !cur_item.batch_no
           ) {
-            //console.log("Label-F");
+            //console.log("Label-J");
             //cur_item.qty += item.qty || 1;
             // type-casting all fields to Float because when the item qty is edited from the invoice (using QTY_textbox_update), -
             // the item qty fields are converted to Float, while the cur_item qty remains an integer - due to this the addition was happenning as text concatenation.
             cur_item.qty = parseFloat(cur_item.qty);
             cur_item.qty += parseFloat(item.qty) || parseFloat(1);
             this.calc_stock_qty(cur_item, cur_item.qty);
-          } else {
-            //console.log("Label-G");
-            const new_item = this.get_new_item(cur_item);
-            new_item.batch_no = item.batch_no || item.to_set_batch_no;
-            new_item.batch_no_expiry_date = "";
-            new_item.actual_batch_qty = "";
-            new_item.qty = item.qty || 1;
-            if (new_item.batch_no) {
-              //console.log("Label-H");
-              this.set_batch_qty(new_item, new_item.batch_no, false);
-              item.to_set_batch_no = null;
-              item.batch_no = null;
+          }
+          else {
+            // add the incremental_batch_alloc here
+            //console.log("Label-K");
+
+            //console.log("item: ", item_to_add);
+            //console.log("item.actual_qty: ", item_to_add.actual_qty);
+
+            if (item_to_add.stock_qty <= item_to_add.actual_qty) { // incremental batch allocation
+              let item_qty_balance = item_to_add.stock_qty;
+
+              for (batch of item_to_add.batch_no_data) {
+                const new_item = await this.get_new_item(item_to_add);
+                //console.log("new_item: ", new_item);
+                //console.log("Batch: ", batch);
+
+                if (item_qty_balance > batch.batch_qty) {
+                  new_item.qty = batch.batch_qty;
+                  //console.log("new_item.qty: ", new_item.qty);
+                }
+                else {
+                  new_item.qty = item_qty_balance;
+                  //console.log("new_item.qty: ", new_item.qty);
+                }
+
+                new_item.batch_no = batch.batch_no;
+                //console.log("new_item: ", new_item);
+                this.items.unshift(new_item);
+                this.update_item_detail(new_item);
+                item_qty_balance -= new_item.qty;
+                if (item_qty_balance == 0) {
+                  break;
+                }
+              }
             }
-            this.items.unshift(new_item);
+
+            else {
+              const new_item = await this.get_new_item(cur_item);
+              new_item.batch_no = item.batch_no || item.to_set_batch_no;
+              new_item.batch_no_expiry_date = "";
+              new_item.actual_batch_qty = "";
+              new_item.qty = item.qty || 1;
+
+              if (new_item.batch_no) {
+                //console.log("Label-L");
+                this.set_batch_qty(new_item, new_item.batch_no, false);
+                item.to_set_batch_no = null;
+                item.batch_no = null;
+              }
+              this.items.unshift(new_item);
+            }
           }
         }
         this.set_serial_no(cur_item);
@@ -1616,40 +1692,43 @@ export default {
     },
 
     get_new_item(item) {
-      const new_item = { ...item };
-      if (!item.qty) {
-        item.qty = 1;
-      }
-      if (!item.posa_is_offer) {
-        item.posa_is_offer = 0;
-      }
-      if (!item.posa_is_replace) {
-        item.posa_is_replace = "";
-      }
-      new_item.stock_qty = item.qty;
-      new_item.discount_amount = 0;
-      new_item.discount_percentage = 0;
-      new_item.discount_amount_per_item = 0;
-      new_item.price_list_rate = item.rate;
-      new_item.qty = item.qty;
-      new_item.uom = item.uom ? item.uom : item.stock_uom;
-      new_item.actual_batch_qty = "";
-      new_item.conversion_factor = 1;
-      new_item.posa_offers = JSON.stringify([]);
-      new_item.posa_offer_applied = 0;
-      new_item.posa_is_offer = item.posa_is_offer;
-      new_item.posa_is_replace = item.posa_is_replace || null;
-      new_item.is_free_item = 0;
-      new_item.posa_notes = "";
-      new_item.posa_delivery_date = "";
-      new_item.posa_row_id = this.makeid(20);
-      if (
-        (!this.pos_profile.posa_auto_set_batch && new_item.has_batch_no) ||
-        new_item.has_serial_no
-      ) {
-        this.expanded.push(new_item);
-      }
-      return new_item;
+      return new Promise((resolve, reject) => {
+        const new_item = { ...item };
+        if (!item.qty) {
+          item.qty = 1;
+        }
+        if (!item.posa_is_offer) {
+          item.posa_is_offer = 0;
+        }
+        if (!item.posa_is_replace) {
+          item.posa_is_replace = "";
+        }
+        new_item.stock_qty = item.qty;
+        new_item.discount_amount = 0;
+        new_item.discount_percentage = 0;
+        new_item.discount_amount_per_item = 0;
+        new_item.price_list_rate = item.rate;
+        new_item.qty = item.qty;
+        new_item.uom = item.uom ? item.uom : item.stock_uom;
+        new_item.actual_batch_qty = "";
+        new_item.conversion_factor = 1;
+        new_item.posa_offers = JSON.stringify([]);
+        new_item.posa_offer_applied = 0;
+        new_item.posa_is_offer = item.posa_is_offer;
+        new_item.posa_is_replace = item.posa_is_replace || null;
+        new_item.is_free_item = 0;
+        new_item.posa_notes = "";
+        new_item.posa_delivery_date = "";
+        new_item.posa_row_id = this.makeid(20);
+        if (
+          (!this.pos_profile.posa_auto_set_batch && new_item.has_batch_no) ||
+          new_item.has_serial_no
+        ) {
+          this.expanded.push(new_item);
+        }
+        //return new_item;
+        resolve(new_item);
+      })
     },
 
     cancel_invoice() {
@@ -2281,10 +2360,11 @@ export default {
             value = false;
           }
         }
-        if (item.has_batch_no && this.invoiceType != "Order") {
         //if (item.has_batch_no && frappe.defaults.get_user_default("company") != 'Pour Tous Distribution Center' && this.invoiceType != "Order") {
         //if (item.has_batch_no) {
-          if (item.stock_qty > item.actual_batch_qty) {
+        if (item.has_batch_no && this.invoiceType != "Order") {
+          //if (item.stock_qty > item.actual_batch_qty) {
+          if (item.stock_qty > item.actual_qty) {
             evntBus.$emit("show_mesage", {
               text: __(
                 `The existing batch quantity of item {0} is not enough`,
@@ -2812,7 +2892,10 @@ export default {
               break;
             }
           }
-          //batch_to_use = batch_no_data[0]; // select the batch here
+          if (!batch_to_use) {
+            batch_to_use = batch_no_data[0]; // select the batch here
+            //console.log("batch_to_use", batch_to_use);
+          }
         }
         item.batch_no = batch_to_use.batch_no;
         item.actual_batch_qty = batch_to_use.batch_qty;
