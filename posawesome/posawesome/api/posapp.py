@@ -590,8 +590,13 @@ def update_invoice(data):
         invoice_doc.set_posting_time = 1
 
     #frappe.throw(str(invoice_doc.taxes[0].as_dict()))
-    invoice_doc.save()
-    return invoice_doc
+    try:
+        invoice_doc.save()
+    except Exception as err:
+        return { "error": err }
+
+    else:
+        return invoice_doc
 
 
 @frappe.whitelist()
@@ -767,10 +772,11 @@ def create_sales_order(invoice):
             "invoice": invoice.get("name") # invoice draft to be deleted after print
         }
 
-@frappe.whitelist()
+""" @frappe.whitelist()
 def delete_invoice_draft(invoice_name):
     # deletes the draft invoice that gets created while making a Sales Order
-    frappe.delete_doc("Sales Invoice", invoice_name)
+    frappe.delete_doc("Sales Invoice", invoice_name) """
+# using delete_sales_invoice(sales_invoice) instead
 
 @frappe.whitelist()
 def submit_invoice(invoice, data):

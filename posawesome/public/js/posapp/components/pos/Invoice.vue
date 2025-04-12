@@ -888,7 +888,7 @@
               >
             </v-col>
             <v-col
-              v-if="pos_profile.posa_allow_print_draft_invoices && pos_profile.custom_allow_select_sales_order === 1"
+              v-if="pos_profile.custom_allow_select_sales_order === 1"
               cols="4"
               class="pa-1"
             >
@@ -901,7 +901,8 @@
                 >{{ __("Hold Bill") }}</v-btn
               >
             </v-col>
-            <v-col cols="6" class="pa-1">
+            <v-col v-if="pos_profile.custom_allow_select_sales_order !== 1"
+              cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -991,7 +992,7 @@
     <v-card v-if="!pos_profile.posa_enable_fs_payments"
       class="cards mb-0 mt-3 py-0 grey lighten-5">
       <v-row no-gutters>
-        <v-col cols="6">
+        <v-col cols="5">
           <v-row no-gutters class="pa-1 pt-9 pr-1">
             <v-col cols="6" class="pa-1">
               <v-text-field
@@ -1098,9 +1099,21 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="6">
+        <v-col cols="7">
           <v-row no-gutters class="pa-1 pt-2 pl-0">
-            <v-col cols="6" class="pa-1">
+            <v-col v-if="pos_profile.custom_allow_select_sales_order != 1"
+              cols="6" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                color="warning"
+                dark
+                @click="get_draft_invoices"
+                >{{ __("Held") }}</v-btn
+              >
+            </v-col>
+            <v-col v-if="pos_profile.custom_allow_select_sales_order === 1"
+              cols="4" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -1112,7 +1125,7 @@
             </v-col>
             <v-col
               v-if="pos_profile.custom_allow_select_sales_order === 1"
-              cols="6"
+              cols="4"
               class="pa-1"
             >
               <v-btn
@@ -1124,7 +1137,20 @@
                 >{{ __("Select S.O") }}</v-btn
               >
             </v-col>
-            <v-col cols="6" class="pa-1">
+            <v-col v-if="pos_profile.custom_allow_select_sales_order === 1"
+              cols="4" class="pa-1">
+              <v-btn
+                block
+                class="pa-0"
+                :class="{ 'disable-events': !pos_profile.posa_allow_return }"
+                color="secondary"
+                dark
+                @click="open_returns"
+                >{{ __("Return") }}</v-btn
+              >
+            </v-col>
+            <v-col v-if="pos_profile.custom_allow_select_sales_order != 1"
+              cols="6" class="pa-1">
               <v-btn
                 block
                 class="pa-0"
@@ -1822,7 +1848,7 @@ export default {
       });
     },
 
-    new_invoice(data = {}) {
+    async new_invoice(data = {}) {
       let old_invoice = null;
       evntBus.$emit("set_customer_readonly", false);
       this.expanded = [];
@@ -1839,11 +1865,11 @@ export default {
       })
       if (this.fs_transfer_pending) doc.custom_fs_transfer_status = "PENDING"; // for 'Offline FS Pay'
       if (doc.name) {
-        old_invoice = this.update_invoice(doc);
+        old_invoice = await this.update_invoice(doc);
         //console.log("A: old_invoice: ", old_invoice);
       } else {
         if (doc.items.length) {
-          old_invoice = this.update_invoice(doc);
+          old_invoice = await this.update_invoice(doc);
           //console.log("B: old_invoice: ", old_invoice);
         }
       }
@@ -2131,20 +2157,31 @@ export default {
     },
 
     update_invoice(doc) {
-      const vm = this;
-      frappe.call({
-        method: "posawesome.posawesome.api.posapp.update_invoice",
-        args: {
-          data: doc,
-        },
-        async: false,
-        callback: function (r) {
-          if (r.message) {
-            vm.invoice_doc = r.message;
-          }
-        },
-      });
-      return this.invoice_doc;
+      return new Promise((resolve, reject) => {
+        const vm = this;
+        frappe.call({
+          method: "posawesome.posawesome.api.posapp.update_invoice",
+          args: {
+            data: doc,
+          },
+          async: false,
+          callback: function (r) {
+            if (r.message) {
+              if (r.message.error) {
+                evntBus.$emit("show_mesage", {
+                  text: __(r.message.error),
+                  color: "error",
+                });
+                reject(r.message.error);
+              }
+              else {
+                vm.invoice_doc = r.message;
+                resolve(this.invoice_doc);
+              }
+            }
+          },
+        });
+      })
     },
 
     update_invoice_from_order(doc) {

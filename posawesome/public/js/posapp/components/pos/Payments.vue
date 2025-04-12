@@ -1149,8 +1149,8 @@ export default {
                 });
                 if (r.message.invoice) {
                   // delete the invoice draft
-                  frappe.call('posawesome.posawesome.api.posapp.delete_invoice_draft', {
-                    invoice_name: r.message.invoice
+                  frappe.call('posawesome.posawesome.api.posapp.delete_sales_invoice', {
+                    sales_invoice: r.message.invoice
                   });
                 }
               }
