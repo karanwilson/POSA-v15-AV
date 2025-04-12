@@ -988,7 +988,7 @@ export default {
       }
 
       let total_change = this.flt(
-        this.flt(this.paid_change) + this.flt(-this.credit_change)
+        this.flt(this.paid_change, this.currency_precision) + this.flt(-this.credit_change, this.currency_precision)
       );
 
       if (this.is_cashback && total_change != -this.diff_payment && this.invoiceType != "Order") {
