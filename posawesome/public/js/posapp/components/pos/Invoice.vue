@@ -1841,7 +1841,7 @@ export default {
         return;
       }
       this.fs_transfer_pending = true;
-      let await_new_invoice = await this.new_invoice();
+      const await_new_invoice = await this.new_invoice();
       evntBus.$emit('show_mesage', {
         text: 'Offline FS Invoice saved',
         color: 'info',
@@ -2176,7 +2176,7 @@ export default {
               }
               else {
                 vm.invoice_doc = r.message;
-                resolve(this.invoice_doc);
+                resolve(vm.invoice_doc.name);
               }
             }
           },
@@ -2309,14 +2309,16 @@ export default {
         } else {
           //console.log("Label-E");
           evntBus.$emit("show_payment", "true");
-          const invoice_doc = this.process_invoice();
-          evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+          const invoice_doc = this.process_invoice(); // this now returns a Promise object in case of a successful Invoice update/save
+          evntBus.$emit("send_invoice_doc_payment", this.invoice_doc); // hence using the updated this variable
+          console.log("send_invoice_doc_payment: ", invoice_doc);
         }
       } else {
         //console.log("Label-F");
         evntBus.$emit("show_payment", "true");
-        const invoice_doc = this.process_invoice();
-        evntBus.$emit("send_invoice_doc_payment", invoice_doc);
+        const invoice_doc = this.process_invoice(); // this now returns a Promise object in case of a successful Invoice update/save
+        evntBus.$emit("send_invoice_doc_payment", this.invoice_doc); // hence using the updated this variable
+        console.log("send_invoice_doc_payment: ", invoice_doc);
       }
     },
 
@@ -2453,7 +2455,7 @@ export default {
               //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
               (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no)) //&& Math.abs(element.qty) == Math.abs(item.qty)
             );
-            console.log("return_item.batch_no: ", return_item.batch_no);
+            //console.log("return_item.batch_no: ", return_item.batch_no);
 
             if (!return_item) {
               evntBus.$emit("show_mesage", {
@@ -2942,7 +2944,8 @@ export default {
         item.batch_no = batch_to_use.batch_no;
         item.actual_batch_qty = batch_to_use.batch_qty;
         item.batch_no_expiry_date = batch_to_use.expiry_date;
-        if (batch_to_use.batch_price) {
+        if (batch_to_use.batch_price && !this.invoice_doc.is_return) {
+          // do not update the price for return docs, as these are paid for, and the paid values should be returned.
           item.batch_price = batch_to_use.batch_price;
           item.price_list_rate = batch_to_use.batch_price;
           item.rate = batch_to_use.batch_price;
@@ -3773,8 +3776,8 @@ export default {
       let invoice_name = this.invoice_doc.name;
       frappe.run_serially([
         () => {
-          const invoice_doc = this.new_invoice();
-          invoice_name = invoice_doc.name ? invoice_doc.name : invoice_name;
+          const invoice_doc_name = this.new_invoice();
+          invoice_name = invoice_doc_name ? invoice_doc_name : invoice_name;
         },
         () => {
           this.load_print_page(invoice_name);

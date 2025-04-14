@@ -593,6 +593,7 @@ def update_invoice(data):
     try:
         invoice_doc.save()
     except Exception as err:
+        frappe.msgprint(err)
         return { "error": err }
 
     else:
