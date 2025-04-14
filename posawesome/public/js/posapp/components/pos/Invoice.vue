@@ -1866,10 +1866,18 @@ export default {
       if (this.fs_transfer_pending) doc.custom_fs_transfer_status = "PENDING"; // for 'Offline FS Pay'
       if (doc.name) {
         old_invoice = await this.update_invoice(doc);
+        if (old_invoice == "") {
+          console.log("old_invoice: ", old_invoice);
+          return;
+        }
         //console.log("A: old_invoice: ", old_invoice);
       } else {
         if (doc.items.length) {
           old_invoice = await this.update_invoice(doc);
+        if (old_invoice == "") {
+          console.log("old_invoice: ", old_invoice);
+          return;
+        }
           //console.log("B: old_invoice: ", old_invoice);
         }
       }
@@ -2157,31 +2165,26 @@ export default {
     },
 
     update_invoice(doc) {
-      return new Promise((resolve, reject) => {
-        const vm = this;
-        frappe.call({
-          method: "posawesome.posawesome.api.posapp.update_invoice",
-          args: {
-            data: doc,
-          },
-          async: false,
-          callback: function (r) {
-            if (r.message) {
-              if (r.message.error) {
-                evntBus.$emit("show_mesage", {
-                  text: __(r.message.error),
-                  color: "error",
-                });
-                reject(r.message.error);
-              }
-              else {
-                vm.invoice_doc = r.message;
-                resolve(vm.invoice_doc.name);
-              }
+      const vm = this;
+      frappe.call({
+        method: "posawesome.posawesome.api.posapp.update_invoice",
+        args: {
+          data: doc,
+        },
+        async: false,
+        callback: function (r) {
+          if (r.message) {
+            if (r.message == "error") {
+              console.log("r.message: ", r.message);
+              return r.message;
             }
-          },
-        });
-      })
+            else {
+              vm.invoice_doc = r.message;
+            }
+          }
+        },
+      });
+      return this.invoice_doc;
     },
 
     update_invoice_from_order(doc) {
@@ -2309,16 +2312,14 @@ export default {
         } else {
           //console.log("Label-E");
           evntBus.$emit("show_payment", "true");
-          const invoice_doc = this.process_invoice(); // this now returns a Promise object in case of a successful Invoice update/save
-          evntBus.$emit("send_invoice_doc_payment", this.invoice_doc); // hence using the updated this variable
-          console.log("send_invoice_doc_payment: ", invoice_doc);
+          const invoice_doc = await this.process_invoice();
+          evntBus.$emit("send_invoice_doc_payment", invoice_doc);
         }
       } else {
         //console.log("Label-F");
         evntBus.$emit("show_payment", "true");
-        const invoice_doc = this.process_invoice(); // this now returns a Promise object in case of a successful Invoice update/save
-        evntBus.$emit("send_invoice_doc_payment", this.invoice_doc); // hence using the updated this variable
-        console.log("send_invoice_doc_payment: ", invoice_doc);
+        const invoice_doc = await this.process_invoice();
+        evntBus.$emit("send_invoice_doc_payment", invoice_doc);
       }
     },
 

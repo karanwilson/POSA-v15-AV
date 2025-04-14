@@ -593,8 +593,8 @@ def update_invoice(data):
     try:
         invoice_doc.save()
     except Exception as err:
-        frappe.msgprint(err)
-        return { "error": err }
+        frappe.msgprint(str(err))
+        return "error"
 
     else:
         return invoice_doc
@@ -611,6 +611,7 @@ def create_advance_sales_order(invoice, remarks):
 
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
+    new_sales_order.custom_pos_profile = invoice.get("pos_profile")
 
     new_sales_order.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
 
@@ -738,6 +739,7 @@ def create_sales_order(invoice):
 
     new_sales_order = frappe.new_doc("Sales Order")
     new_sales_order.customer = invoice.get("customer")
+    new_sales_order.custom_pos_profile = invoice.get("pos_profile")
 
     new_sales_order.custom_fs_account_number = frappe.get_value("Customer", invoice.get("customer"), "custom_fs_account_number")
 
