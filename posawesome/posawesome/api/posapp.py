@@ -620,6 +620,7 @@ def create_advance_sales_order(invoice, remarks):
     else:
         new_sales_order.transaction_date = invoice.get("posting_date")
     new_sales_order.delivery_date = invoice.get("posa_delivery_date")
+    new_sales_order.custom_posting_time = invoice.get("posting_time")
     new_sales_order.company = invoice.get("company")
     new_sales_order.custom_remarks = remarks
 
