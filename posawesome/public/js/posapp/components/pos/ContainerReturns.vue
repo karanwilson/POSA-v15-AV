@@ -9,6 +9,20 @@
         </v-card-title>
         <v-container>
           <v-row class="mb-4">
+            <v-col cols="3">
+              <v-text-field
+                color="primary"
+                :label="frappe._('Full PT Account No.*')"
+                background-color="white"
+                hide-details
+                v-model="custom_fs_account_number"
+                dense
+                clearable
+                @keydown.enter="search_return_item"
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row class="mb-4">
             <v-col align="center" cols="4">
               <v-checkbox
                 dense
