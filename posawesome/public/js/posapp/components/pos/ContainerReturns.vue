@@ -1,71 +1,77 @@
 <template>
   <v-row justify="center">
-    <v-dialog v-model="invoicesDialog" max-width="800px" min-width="800px">
+    <v-dialog v-model="invoicesDialog" max-width="1000px" min-width="1000px">
       <v-card>
         <v-card-title>
           <span class="headline primary--text">{{
-            __('Select Return Invoice')
+            __('Container Returns')
           }}</span>
         </v-card-title>
         <v-container>
           <v-row class="mb-4">
-            <v-col cols="3">
-              <v-text-field
-                color="primary"
-                :label="frappe._('Invoice ID *')"
-                background-color="white"
-                hide-details
-                v-model="invoice_name"
+            <v-col align="center" cols="4">
+              <v-checkbox
                 dense
-                clearable
-                @keydown.enter="search_invoices"
-            ></v-text-field>
-            </v-col>
-            <v-col cols="3">
-              <v-text-field
-                color="primary"
-                :label="frappe._('Customer Name *')"
-                background-color="white"
+                :label="frappe._('0011 - 1L AV MILK GLASS BOTTLE')"
+                v-model="returnItem_0011"
                 hide-details
-                v-model="customer_name"
-                dense
-                clearable
-                @keydown.enter="search_invoices"
-              ></v-text-field>
+                class="shrink mr-2 mt-0"
+              ></v-checkbox>
             </v-col>
-            <v-col cols="3">
-              <v-text-field
-                color="primary"
-                :label="frappe._('Full FS Account No.*')"
-                background-color="white"
-                hide-details
-                v-model="custom_fs_account_number"
-                dense
-                clearable
-                @keydown.enter="search_invoices"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="2">
+            <v-col cols="1">
               <v-text-field
                 color="secondary"
-                :label="frappe._('Item Code')"
+                :label="frappe._('Qty')"
                 background-color="white"
                 hide-details
-                v-model="item_code"
+                v-model="returnQty_0011"
                 dense
                 clearable
-                @keydown.enter="search_invoices"
+                @keydown.enter="search_return_item"
               ></v-text-field>
             </v-col>
-            <!--v-col cols="2">
-              <v-btn
-                text
-                class="ml-2"
-                color="primary"
-                dark
-                @click="search_invoices"
-              >{{ __('Search') }}</v-btn>
-            </v-col-->
+            <v-col align="center" cols="4">
+              <v-checkbox
+                dense
+                :label="frappe._('0055- 0.5L AV MILK GLASS BOTTLE')"
+                v-model="returnItem_0055"
+                hide-details
+                class="shrink mr-2 mt-0"
+              ></v-checkbox>
+            </v-col>
+            <v-col cols="1">
+              <v-text-field
+                color="secondary"
+                :label="frappe._('Qty')"
+                background-color="white"
+                hide-details
+                v-model="returnQty_0055"
+                dense
+                clearable
+                @keydown.enter="search_return_item"
+              ></v-text-field>
+            </v-col>
+            <v-col align="center" cols="4">
+              <v-checkbox
+                dense
+                :label="frappe._('10060 - OLIVE OIL BOTTLE 500ML')"
+                v-model="returnItem_10060"
+                hide-details
+                class="shrink mr-2 mt-0"
+              ></v-checkbox>
+            </v-col>
+            <v-col cols="1">
+              <v-text-field
+                color="secondary"
+                :label="frappe._('Qty')"
+                background-color="white"
+                hide-details
+                v-model="returnQty_10060"
+                dense
+                clearable
+                @keydown.enter="search_return_item"
+              ></v-text-field>
+            </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
@@ -90,20 +96,12 @@
         </v-container>
         <v-card-actions class="mt-4">
           <v-spacer></v-spacer>
-          <v-btn
-            text
-            class="ml-2"
-            color="primary"
-            dark
-            @click="search_invoices"
-          >{{ __('Search') }}
-          </v-btn>
           <v-btn color="error mx-2" dark @click="close_dialog">Close</v-btn>
           <v-btn
-            v-if="selected.length"
+            v-if="returnItem_0011 || returnItem_0055 || returnItem_10060"
             color="success"
             dark
-            @click="submit_dialog"
+            @click="create_return_invoice_for_container"
             >{{ __('Select') }}</v-btn
           >
         </v-card-actions>
@@ -127,6 +125,15 @@ export default {
     customer_name: '', // for return search
     custom_fs_account_number: '', // for return search
     item_code: '', // for return search
+    //pos_profile: '', // for matching bottle returns
+    //returnableContainers: ["0011", "0055", "10060"],
+    //returnContainer: '',
+    returnItem_0011: 0,
+    returnItem_0055: 0,
+    returnItem_10060: 0,
+    returnQty_0011: 1,
+    returnQty_0055: 1,
+    returnQty_10060: 1,
     headers: [
       {
         text: __('Customer'),
@@ -159,21 +166,18 @@ export default {
     close_dialog() {
       this.invoicesDialog = false;
     },
-    search_invoices_by_enter(e) {
+    search_return_item(e) {
       if (e.keyCode === 13) {
-        this.search_invoices();
+        this.create_return_invoice_for_container();
       }
     },
-    search_invoices() {
+    create_return_invoice_for_container() {
       const vm = this;
       frappe.call({
-        method: 'posawesome.posawesome.api.posapp.search_invoices_for_return',
+        method: 'posawesome.posawesome.api.posapp.create_return_invoice_for_container',
         args: {
-          invoice_name: vm.invoice_name,
-          customer_name: vm.customer_name,
           custom_fs_account_number: vm.custom_fs_account_number,
           item_code: vm.item_code,
-          company: vm.company,
         },
         async: false,
         callback: function (r) {
@@ -191,7 +195,11 @@ export default {
         },
       });
     },
+
     submit_dialog() {
+      if (returnItem_0011 || returnItem_0055 || returnItem_10060) {
+
+      }
       if (this.selected.length > 0) {
         const return_doc = this.selected[0];
         const invoice_doc = {};
@@ -214,14 +222,27 @@ export default {
       }
     },
   },
+  mounted() {
+    evntBus.$on("register_pos_profile", (data) => {
+      this.pos_profile = data.pos_profile;
+    });
+  },
   created: function () {
-    evntBus.$on('open_returns', (data) => {
+    evntBus.$on('open_container_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
       this.invoice_name = '';
       this.customer_name = '';
       this.custom_fs_account_number = '';
       this.item_code = '';
+      //this.returnContainer = '',
+      //this.returnQty = 1,
+      this.returnItem_0011 = 0;
+      this.returnItem_0055 = 0;
+      this.returnItem_10060 = 0;
+      this.returnQty_0011 = 1;
+      this.returnQty_0055 = 1;
+      returnQty_10060: 1;
       this.dialog_data = '';
       this.selected = [];
     });

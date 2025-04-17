@@ -24,6 +24,7 @@ frappe
 					"Customer": "Participant",
 					"Customer Name / FS Account Number / Aurocard Number": "Participant Name / PT Account Number",
 					"Customer Name *": "Participant Name *",
+					"Full FS Account No.*": "Full PT Account No.*",
 					"Invoice": "Checkout-Note",
 					"Invoice ID *": "Checkout-Note ID *",
 					"There is no Customer !": "Enter a Participant",

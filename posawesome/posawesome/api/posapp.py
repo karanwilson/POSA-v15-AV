@@ -1644,6 +1644,9 @@ def get_fs_offline_invoices(invoice_name, customer_name, custom_fs_account_numbe
         data.append(frappe.get_doc("Sales Invoice", invoice["name"]))
     return data
 
+@frappe.whitelist()
+def create_return_invoice_for_container(custom_fs_account_number, item_code):
+    pass
 
 @frappe.whitelist()
 def search_invoices_for_return(invoice_name, customer_name, custom_fs_account_number, item_code, company):
