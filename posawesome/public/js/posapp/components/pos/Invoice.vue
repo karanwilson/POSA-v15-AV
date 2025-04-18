@@ -1557,7 +1557,11 @@ export default {
       }
       if (index === -1 || this.new_line) {
         //console.log("Label-E");
+        //console.log("item.stock_qty: ", item.stock_qty);
+        //console.log("item.actual_qty: ", item.actual_qty);
         if (item.has_batch_no && (item.stock_qty <= item.actual_qty)) { // incremental batch allocation
+          //console.log("Label-E-1");
+          //console.log("item.batch_no_data: ", item.batch_no_data);
           let item_qty_balance = item.stock_qty;
 
           for (batch of item.batch_no_data) {
@@ -1586,6 +1590,7 @@ export default {
         }
 
         else {
+          //console.log("Label-E-2");
           const new_item = await this.get_new_item(item);
           if (item.has_serial_no && item.to_set_serial_no) {
             new_item.serial_no_selected = [];
