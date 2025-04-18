@@ -1471,7 +1471,10 @@ export default {
     },
 
     add_one(item) {
-      item.qty++;
+      console.log('this.invoice_doc.is_return: ', this.invoice_doc.is_return);
+      if (this.invoice_doc.is_return) // return invoices have negative values, hence the math is reverse
+        item.qty--;
+      else item.qty++;
       if (item.qty == 0) {
         this.remove_item(item);
       }
@@ -1483,7 +1486,9 @@ export default {
             el.item_code === item.custom_item_add_on
         );
         let add_on_item = this.items[index];
-        add_on_item.qty++;
+        if (this.invoice_doc.is_return) // return invoices have negative values, hence the math is reverse
+          add_on_item.qty--;
+        else add_on_item.qty++;
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
@@ -1492,7 +1497,10 @@ export default {
       this.$forceUpdate();
     },
     subtract_one(item) {
-      item.qty--;
+      console.log('this.invoice_doc.is_return: ', this.invoice_doc.is_return);
+      if (this.invoice_doc.is_return) // return invoices have negative values, hence the math is reverse
+        item.qty++;
+      else item.qty--;
       if (item.qty == 0) {
         this.remove_item(item);
       }
@@ -1504,7 +1512,10 @@ export default {
             el.item_code === item.custom_item_add_on
         );
         let add_on_item = this.items[index];
-        add_on_item.qty--;
+        if (this.invoice_doc.is_return) // return invoices have negative values, hence the math is reverse
+          add_on_item.qty++;
+        else add_on_item.qty--;
+
         if (add_on_item.qty == 0) {
         this.remove_item(add_on_item);
         }
@@ -1557,7 +1568,11 @@ export default {
       }
       if (index === -1 || this.new_line) {
         //console.log("Label-E");
+        //console.log("item.stock_qty: ", item.stock_qty);
+        //console.log("item.actual_qty: ", item.actual_qty);
         if (item.has_batch_no && (item.stock_qty <= item.actual_qty)) { // incremental batch allocation
+          //console.log("Label-E-1");
+          //console.log("item.batch_no_data: ", item.batch_no_data);
           let item_qty_balance = item.stock_qty;
 
           for (batch of item.batch_no_data) {
@@ -1984,6 +1999,9 @@ export default {
       if (this.invoice_doc.name) {
         doc = { ...this.invoice_doc };
       }
+      //console.log("this.invoice_doc.container_return: ", this.invoice_doc);
+      if (this.invoice_doc.container_return) // needed at posapp.py update_invoice as return_against is not set for container returns
+        doc.container_return = this.invoice_doc.container_return
       doc.doctype = "Sales Invoice";
       doc.is_pos = 1;
       doc.ignore_pricing_rule = 1;
@@ -2428,7 +2446,8 @@ export default {
             value = false;
             return value;
           }
-          if (Math.abs(this.subtotal) > Math.abs(this.return_doc.total)) {
+          // container returns do not have a return_doc to validate with, hence excluding from this check
+          if ((Math.abs(this.subtotal) > Math.abs(this.return_doc.total)) && this.invoice_doc.container_return != 1) {
             evntBus.$emit("show_mesage", {
               text: __(`Return Invoice Total should not be higher than {0}`, [
                 this.return_doc.total,
@@ -2456,8 +2475,10 @@ export default {
               value = false;
               return value;
             } else if (
-              Math.abs(item.qty) > Math.abs(return_item.qty) ||
-              Math.abs(item.qty) == 0
+              (Math.abs(item.qty) > Math.abs(return_item.qty) ||
+              Math.abs(item.qty) == 0) &&
+              this.invoice_doc.container_return != 1
+              // container returns do not have a return_doc to validate with, hence excluding from this check
             ) {
               evntBus.$emit("show_mesage", {
                 text: __(`The QTY of the item {0} cannot be greater than {1}`, [

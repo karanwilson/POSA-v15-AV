@@ -191,6 +191,12 @@ def get_items(
                 )
             limit = " LIMIT {search_limit}".format(search_limit=search_limit)
 
+        else:
+            if item_group:
+                condition += " AND item_group like '%{item_group}%'".format(
+                    item_group=item_group
+                )
+
         if not posa_show_template_items:
             condition += " AND has_variants = 0"
 
@@ -426,6 +432,24 @@ def get_customer_group_condition(pos_profile):
 
 
 @frappe.whitelist()
+def get_customer(custom_fs_account_number):
+    # Added custom_fs_account_number in the DB fetch, to be able to filter/search based on FS Account Numbers
+    # custom_fs_account_number is a custom field added via fixtures from ptdc_av app
+    customer = frappe.db.sql(
+        """
+        SELECT name, customer_name, custom_fs_account_number
+        FROM tabCustomer
+        WHERE disabled = 0 and custom_fs_account_number = '{0}'
+        """.format(custom_fs_account_number),
+        as_dict=1,
+    )
+    if customer:
+        return customer
+    else:
+        return {"error": "PT Account not found"}
+
+
+@frappe.whitelist()
 def get_customer_names(pos_profile):
     _pos_profile = json.loads(pos_profile)
     ttl = _pos_profile.get("posa_server_cache_duration")
@@ -558,6 +582,16 @@ def update_invoice(data):
         for payment in invoice_doc.payments:
             if payment.default:
                 payment.amount = invoice_doc.paid_amount
+
+    elif invoice_doc.is_return and invoice_doc.container_return:
+        invoice_doc.update_stock = 1
+        invoice_doc.paid_amount = (
+            invoice_doc.rounded_total or invoice_doc.grand_total or invoice_doc.total
+        )
+        for payment in invoice_doc.payments:
+            if payment.default:
+                payment.amount = invoice_doc.paid_amount
+
     allow_zero_rated_items = frappe.get_cached_value(
         "POS Profile", invoice_doc.pos_profile, "posa_allow_zero_rated_items"
     )
