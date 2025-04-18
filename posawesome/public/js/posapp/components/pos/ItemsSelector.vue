@@ -442,6 +442,7 @@ export default {
         new_item.to_set_batch_no = this.flags.batch_no;
       }
       if (match) {
+        console.log("before 'if (await this.verify_input_qty(new_item))'");
         if (await this.verify_input_qty(new_item))
           this.add_item(new_item);
         this.search = null;

@@ -1601,6 +1601,7 @@ export default {
         }
 
         else {
+          //console.log("Label-E-2");
           const new_item = await this.get_new_item(item);
           if (item.has_serial_no && item.to_set_serial_no) {
             new_item.serial_no_selected = [];
