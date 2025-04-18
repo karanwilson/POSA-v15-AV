@@ -558,7 +558,7 @@ def update_invoice_from_order(data):
 
 
 @frappe.whitelist()
-def update_invoice(data):
+def update_invoice(data, container_return=None):
     data = json.loads(data)
     if data.get("name"):
         invoice_doc = frappe.get_doc("Sales Invoice", data.get("name"))
@@ -583,11 +583,17 @@ def update_invoice(data):
             if payment.default:
                 payment.amount = invoice_doc.paid_amount
 
-    elif invoice_doc.is_return and invoice_doc.container_return:
+    elif invoice_doc.is_return and container_return:
         invoice_doc.update_stock = 1
-        invoice_doc.paid_amount = (
-            invoice_doc.rounded_total or invoice_doc.grand_total or invoice_doc.total
-        )
+        if invoice_doc.total != 0:
+            invoice_doc.paid_amount = invoice_doc.total
+        elif invoice_doc.grand_total != 0:
+            invoice_doc.paid_amount = invoice_doc.grand_total
+        else:
+            invoice_doc.paid_amount = invoice_doc.rounded_total
+        #invoice_doc.paid_amount = (
+        #    invoice_doc.rounded_total or invoice_doc.grand_total or invoice_doc.total
+        #)
         for payment in invoice_doc.payments:
             if payment.default:
                 payment.amount = invoice_doc.paid_amount

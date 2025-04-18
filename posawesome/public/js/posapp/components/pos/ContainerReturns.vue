@@ -34,40 +34,6 @@
               ></v-text-field>
             </v-col>
           </v-row>
-          <!-- <v-row class="mb-4">
-            <v-col align="center" cols="4">
-              <v-checkbox
-                dense
-                :label="frappe._('10060 - OLIVE OIL BOTTLE 500ML')"
-                v-model="returnItem_10060"
-                hide-details
-                class="shrink mr-2 mt-0"
-              ></v-checkbox>
-            </v-col>
-            <v-col cols="1">
-              <v-text-field
-                color="secondary"
-                :label="frappe._('Qty')"
-                background-color="white"
-                hide-details
-                v-model="returnQty_10060"
-                dense
-                clearable
-              ></v-text-field>
-            </v-col>
-            <v-col cols="1">
-              <v-text-field
-                color="secondary"
-                :label="frappe._('Rate')"
-                background-color="white"
-                hide-details
-                v-model="returnQty_0055"
-                dense
-                clearable
-                @keydown.enter="search_return_item"
-              ></v-text-field>
-            </v-col>
-          </v-row> -->
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
               <template>
@@ -268,7 +234,8 @@ export default {
         invoice_doc.items = items;
         invoice_doc.is_return = 1;
         invoice_doc.return_against = "";
-        invoice_doc.container_return = 1; // needed at posapp.py update_invoice as return_against is not set for container returns
+        //invoice_doc.container_return = 1; // needed at posapp.py update_invoice as return_against is not set for container returns
+        evntBus.$emit('container_return', true);
         //console.log('invoice_doc: ', invoice_doc);
         if (this.customer) {
           invoice_doc.customer = this.customer.name;

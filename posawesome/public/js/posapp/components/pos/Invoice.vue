@@ -1255,6 +1255,7 @@ export default {
       fs_transfer_pending: false, // for 'Offline FS Pay'
       fs_offline: false, // to manually switch off FS Balance checks
       display_pending_bill_details: false, // toggles display of pending bill details
+      container_return: false,
       new_line: false,
       delivery_charges: [],
       delivery_charges_rate: 0,
@@ -1804,6 +1805,7 @@ export default {
       this.reset_pending_fs_bills_status();
       evntBus.$emit('input_customer'); // pass event to Customer.vue
       this.cancel_dialog = false;
+      this.container_return = false;
     },
 
     offline_fs_pay() {
@@ -2000,9 +2002,6 @@ export default {
       if (this.invoice_doc.name) {
         doc = { ...this.invoice_doc };
       }
-      //console.log("this.invoice_doc.container_return: ", this.invoice_doc);
-      if (this.invoice_doc.container_return) // needed at posapp.py update_invoice as return_against is not set for container returns
-        doc.container_return = this.invoice_doc.container_return
       doc.doctype = "Sales Invoice";
       doc.is_pos = 1;
       doc.ignore_pricing_rule = 1;
@@ -2172,10 +2171,12 @@ export default {
 
     update_invoice(doc) {
       const vm = this;
+      //console.log("vm.container_return: ", vm.container_return);
       frappe.call({
         method: "posawesome.posawesome.api.posapp.update_invoice",
         args: {
           data: doc,
+          container_return: vm.container_return
         },
         async: false,
         callback: function (r) {
@@ -2448,7 +2449,7 @@ export default {
             return value;
           }
           // container returns do not have a return_doc to validate with, hence excluding from this check
-          if ((Math.abs(this.subtotal) > Math.abs(this.return_doc.total)) && this.invoice_doc.container_return != 1) {
+          if ((Math.abs(this.subtotal) > Math.abs(this.return_doc.total)) && !this.container_return) {
             evntBus.$emit("show_mesage", {
               text: __(`Return Invoice Total should not be higher than {0}`, [
                 this.return_doc.total,
@@ -2478,7 +2479,7 @@ export default {
             } else if (
               (Math.abs(item.qty) > Math.abs(return_item.qty) ||
               Math.abs(item.qty) == 0) &&
-              this.invoice_doc.container_return != 1
+              !this.container_return
               // container returns do not have a return_doc to validate with, hence excluding from this check
             ) {
               evntBus.$emit("show_mesage", {
@@ -3878,6 +3879,9 @@ export default {
     evntBus.$on("reset_fs_variables", () => {
       this.reset_fs_variables();
     });
+    evntBus.$on('container_return', (data) => {
+      this.container_return = data;
+    });
     evntBus.$on("fetch_customer_details", () => {
       this.fetch_customer_details();
     });
@@ -3956,6 +3960,7 @@ export default {
     evntBus.$off("update_invoice_coupons");
     evntBus.$off("set_all_items");
     evntBus.$off("reset_fs_variables");
+    evntBus.$off('container_return');
   },
   created() {
     document.addEventListener("keydown", this.shortOpenPayment.bind(this));
