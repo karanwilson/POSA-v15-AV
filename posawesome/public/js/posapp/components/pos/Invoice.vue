@@ -2462,7 +2462,7 @@ export default {
           this.items.forEach((item) => {
             const return_item = this.return_doc.items.find(
               //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
-              (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no)) //&& Math.abs(element.qty) == Math.abs(item.qty)
+              (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no) && (element.posa_row_id == item.posa_row_id))
             );
             //console.log("return_item.batch_no: ", return_item.batch_no);
 

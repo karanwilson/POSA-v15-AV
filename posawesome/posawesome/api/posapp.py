@@ -576,9 +576,17 @@ def update_invoice(data, container_return=None):
             invoice_doc.update_stock = 0
         if len(invoice_doc.payments) == 0:
             invoice_doc.payments = ref_doc.payments
-        invoice_doc.paid_amount = (
+
+        if invoice_doc.total != 0:
+            invoice_doc.paid_amount = invoice_doc.total
+        elif invoice_doc.grand_total != 0:
+            invoice_doc.paid_amount = invoice_doc.grand_total
+        else:
+            invoice_doc.paid_amount = invoice_doc.rounded_total
+        """ invoice_doc.paid_amount = (
             invoice_doc.rounded_total or invoice_doc.grand_total or invoice_doc.total
-        )
+        ) """
+
         for payment in invoice_doc.payments:
             if payment.default:
                 payment.amount = invoice_doc.paid_amount
