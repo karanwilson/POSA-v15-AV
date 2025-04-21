@@ -2460,10 +2460,21 @@ export default {
             return value;
           }
           this.items.forEach((item) => {
-            const return_item = this.return_doc.items.find(
-              //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
-              (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no) && (element.posa_row_id == item.posa_row_id))
-            );
+            let return_item;
+            if (this.container_return) {
+              //console.log("this.container_return: ", this.container_return);
+              return_item = this.return_doc.items.find(
+                //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
+                (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no)) //&& (element.posa_row_id == item.posa_row_id))
+              );
+            }
+            else {
+              return_item = this.return_doc.items.find(
+                //(element) => element.batch_no == item.batch_no //&& Math.abs(element.qty) == Math.abs(item.qty)
+                (element) => ((element.item_code == item.item_code) && (element.batch_no == item.batch_no) && (element.posa_row_id == item.posa_row_id))
+              );
+            }
+            //console.log("return_item: ", return_item);
             //console.log("return_item.batch_no: ", return_item.batch_no);
 
             if (!return_item) {
