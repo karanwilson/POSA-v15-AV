@@ -37,7 +37,8 @@
             :label="frappe._('QTY')"
             background-color="white"
             hide-details
-            v-model.number="qty"
+            v-model.parseFloat="qty"
+            type="float"
             @keydown.esc="esc_event"
             @keydown.enter="enter_event"
             @keydown.right="scale_button"
