@@ -38,7 +38,6 @@
             background-color="white"
             hide-details
             v-model.number="qty"
-            type="number"
             @keydown.esc="esc_event"
             @keydown.enter="enter_event"
             @keydown.right="scale_button"
