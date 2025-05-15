@@ -15,7 +15,7 @@ frappe.pages['posapp'].on_page_load = function (wrapper) {
 	$("head").append("<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900' />");
 };
 
-frappe
+/* frappe
 	.call("posawesome.posawesome.api.posapp.pourtous_settings")
 	.then((r) => {
 		if (r.message.ptdc_pos_translations == 1) {
@@ -41,7 +41,7 @@ frappe
 				}
 			);
 		};
-	});
+	}); */
 
 //Only if PT as we are not being able to load from pt.csv
 if (frappe.boot.lang == "pt") {
